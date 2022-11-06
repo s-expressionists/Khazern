@@ -1,4 +1,4 @@
-(cl:in-package #:sicl-loop)
+(cl:in-package #:khazern)
 
 (define-condition loop-runtime-error (error acclimation:condition)
   ())

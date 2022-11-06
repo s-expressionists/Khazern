@@ -1,4 +1,4 @@
-(cl:in-package #:sicl-loop)
+(cl:in-package #:khazern)
 
 (defclass repeat-clause (termination-test-clause var-and-type-spec-mixin)
   ((%form :initarg :form :reader form))

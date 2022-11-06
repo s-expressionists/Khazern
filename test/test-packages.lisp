@@ -1,5 +1,5 @@
 (cl:in-package #:common-lisp-user)
 
-(defpackage #:sicl-loop-test
+(defpackage #:khazern/test
   (:use #:common-lisp)
   (:shadow #:loop #:loop-finish))

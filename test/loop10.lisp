@@ -3,7 +3,7 @@
 ;;;; Created:  Sat Nov 16 09:07:02 2002
 ;;;; Contains: Tests of LOOP numeric value accumulation clauses
 
-(cl:in-package :sicl-loop-test)
+(cl:in-package :khazern/test)
 
 ;; Tests of COUNT, COUNTING
 

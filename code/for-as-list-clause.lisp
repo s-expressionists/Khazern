@@ -1,4 +1,4 @@
-(cl:in-package #:sicl-loop)
+(cl:in-package #:khazern)
 
 (defclass for-as-list (for-as-subclause)
   ((%list-form :initarg :list-form :reader list-form)

@@ -1,4 +1,4 @@
-(cl:in-package #:sicl-loop-test)
+(cl:in-package #:khazern/test)
 
 (defmacro loop (&rest forms)
   (if (every #'consp forms)
@@ -11,4 +11,4 @@
     (let ((end-tag (gensym)))
       `(macrolet ((loop-finish ()
                     `(go ,',end-tag)))
-         ,(sicl-loop::expand-body forms end-tag)))))
+         ,(khazern::expand-body forms end-tag)))))

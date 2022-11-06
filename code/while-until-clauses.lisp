@@ -1,4 +1,4 @@
-(cl:in-package #:sicl-loop)
+(cl:in-package #:khazern)
 
 (defclass while-clause (termination-test-clause)
   ((%form :initarg :form :reader form)))

@@ -1,4 +1,4 @@
-(cl:in-package #:sicl-loop)
+(cl:in-package #:khazern)
 
 (defclass thereis-clause (termination-test-clause form-mixin) ())
 

@@ -3,7 +3,7 @@
 ;;;; Created:  Mon Nov 11 21:40:05 2002
 ;;;; Contains: Tests for FOR-AS-PACKAGE clause for LOOP
 
-(cl:in-package :sicl-loop-test)
+(cl:in-package :khazern/test)
 
 (defpackage "LOOP.CL-TEST.1"
   (:use)

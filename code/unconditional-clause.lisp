@@ -1,3 +1,3 @@
-(cl:in-package #:sicl-loop)
+(cl:in-package #:khazern)
 
 (defclass unconditional-clause (selectable-clause) ())

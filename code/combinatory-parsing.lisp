@@ -1,4 +1,4 @@
-(cl:in-package #:sicl-loop)
+(cl:in-package #:khazern)
 
 ;;; A parser is a function that takes a list of tokens to parse, and
 ;;; that returns three values:

@@ -4,7 +4,7 @@
 ;;;; Contains: Tests of the FOR-AS-IN-LIST loop iteration control form,
 ;;;;      and of destructuring in loop forms
 
-(cl:in-package :sicl-loop-test)
+(cl:in-package :khazern/test)
 
 (deftest loop.2.1
   (loop for x in '(1 2 3) sum x)

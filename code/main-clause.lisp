@@ -1,4 +1,4 @@
-(cl:in-package #:sicl-loop)
+(cl:in-package #:khazern)
 
 ;;; In the dictionary entry for LOOP, the HyperSpec says:
 ;;;

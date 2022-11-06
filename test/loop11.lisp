@@ -3,7 +3,7 @@
 ;;;; Created:  Sat Nov 16 21:39:33 2002
 ;;;; Contains: Tests for loop termination clauses REPEAT, WHILE and UNTIL
 
-(cl:in-package :sicl-loop-test)
+(cl:in-package :khazern/test)
 
 ;;; Tests of REPEAT
 

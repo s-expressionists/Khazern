@@ -1,4 +1,4 @@
-(cl:in-package #:sicl-loop)
+(cl:in-package #:khazern)
 
 (defclass conditional-clause (selectable-clause)
   ((%condition :initarg :condition :reader condition)

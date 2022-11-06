@@ -1,4 +1,4 @@
-(cl:in-package #:sicl-loop)
+(cl:in-package #:khazern)
 
 ;;; We define a class that is the root class of all termination-test
 ;;; clauses.  Recall that a termination-test clause is a main clause,

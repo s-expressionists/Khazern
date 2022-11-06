@@ -1,4 +1,4 @@
-(cl:in-package #:sicl-loop)
+(cl:in-package #:khazern)
 
 ;;; This function is called in a SUM clause in order to sum the
 ;;; accumulated value with the new one.

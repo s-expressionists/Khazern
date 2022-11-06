@@ -1,6 +1,6 @@
 (cl:in-package #:common-lisp-user)
 
-(defpackage #:sicl-loop
+(defpackage #:khazern
   (:use #:common-lisp)
   (:shadow
    ;; We use TYPE as an accessor for a TYPE-SPEC so we need to shadow

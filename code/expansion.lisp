@@ -1,4 +1,4 @@
-(cl:in-package #:sicl-loop)
+(cl:in-package #:khazern)
 
 ;;; The purpose of this generic function is to generate a list of all
 ;;; bound variables in a clause.  The same variable occurs as many

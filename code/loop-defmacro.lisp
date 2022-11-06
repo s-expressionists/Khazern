@@ -1,4 +1,4 @@
-(cl:in-package #:sicl-loop)
+(cl:in-package #:khazern)
 
 (defmacro loop (&rest forms)
   (if (every #'consp forms)

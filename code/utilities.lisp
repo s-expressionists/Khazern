@@ -1,4 +1,4 @@
-(cl:in-package #:sicl-loop)
+(cl:in-package #:khazern)
 
 ;;; Loop keywords are symbols, but they are not recognized by symbol
 ;;; identity as is usually the case, but instead by their names.  The

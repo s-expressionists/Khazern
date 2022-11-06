@@ -1,4 +1,4 @@
-(cl:in-package #:sicl-loop)
+(cl:in-package #:khazern)
 
 ;;;; The terminology used here is that of the BNF grammar in the
 ;;;; dictionary description of the loop macro in the HyperSpec.  It is

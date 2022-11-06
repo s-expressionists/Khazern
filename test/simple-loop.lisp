@@ -3,7 +3,7 @@
 ;;;; Created:  Fri Oct 25 18:48:59 2002
 ;;;; Contains: Tests of LOOP
 
-(cl:in-package :sicl-loop-test)
+(cl:in-package :khazern/test)
 
 ;;; Simple loops
 (deftest sloop.1
