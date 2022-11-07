@@ -2,6 +2,7 @@
 
 (defsystem :khazern
   :depends-on (:acclimation)
+  :in-order-to ((asdf:test-op (asdf:test-op #:khazern/test)))
   :serial t
   :components ((:module code
                 :components ((:file "packages")
@@ -65,6 +66,7 @@
 
 (defsystem :khazern/test
   :depends-on (:khazern)
+  :perform (asdf:test-op (op c) (uiop:symbol-call :khazern/test :loop-test))
   :serial t
   :components ((:module test
                 :components ((:file "test-packages")

@@ -2,4 +2,5 @@
 
 (defpackage #:khazern/test
   (:use #:common-lisp)
-  (:shadow #:loop #:loop-finish))
+  (:shadow #:loop #:loop-finish)
+  (:export #:loop-test))
