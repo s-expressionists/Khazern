@@ -1,6 +1,13 @@
 (cl:in-package #:asdf-user)
 
 (defsystem :khazern
+  :description "A portable and extensible Common Lisp LOOP implementation"
+  :license "BSD"
+  :author "Robert Strandh"
+  :maintainer "Robert Strandh"
+  :version (:read-file-form "version.sexp")
+  :homepage "https://github.com/s-expressionists/Khazern"
+  :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
   :depends-on (:acclimation)
   :in-order-to ((asdf:test-op (asdf:test-op #:khazern/test)))
   :serial t
@@ -52,17 +59,38 @@
                              (:file "run-time-support")))))
 
 (defsystem :khazern/environment
+  :description "Khazern's initial environment contents for bootstrapping."
+  :license "BSD"
+  :author "Robert Strandh"
+  :maintainer "Robert Strandh"
+  :version (:read-file-form "version.sexp")
+  :homepage "https://github.com/s-expressionists/Khazern"
+  :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
   :serial t
   :components ((:module code
                 :components ((:file "loop-defmacro")))))
 
 (defsystem :khazern/intrinsic
+  :description "System for loading Khazern intrinsically into an implementation."
+  :license "BSD"
+  :author "Robert Strandh"
+  :maintainer "Robert Strandh"
+  :version (:read-file-form "version.sexp")
+  :homepage "https://github.com/s-expressionists/Khazern"
+  :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
   :depends-on (:khazern)
   :serial t
   :components ((:module code
                 :components ((:file "loop-defmacro")))))
 
 (defsystem :khazern/extrinsic
+  :description "System for loading Khazern extrinsically into an implementation."
+  :license "BSD"
+  :author "Robert Strandh"
+  :maintainer "Robert Strandh"
+  :version (:read-file-form "version.sexp")
+  :homepage "https://github.com/s-expressionists/Khazern"
+  :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
   :depends-on (:khazern)
   :serial t
   :components ((:module code
@@ -70,6 +98,13 @@
                              (:file "loop-defmacro")))))
 
 (defsystem :khazern/test
+  :description "Test system for Khazern"
+  :license "BSD"
+  :author "Robert Strandh"
+  :maintainer "Robert Strandh"
+  :version (:read-file-form "version.sexp")
+  :homepage "https://github.com/s-expressionists/Khazern"
+  :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
   :depends-on (:khazern)
   :perform (asdf:test-op (op c) (uiop:symbol-call :khazern/test :loop-test))
   :serial t
