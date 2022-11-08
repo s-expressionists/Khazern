@@ -51,6 +51,11 @@
                              (:file "analysis")
                              (:file "run-time-support")))))
 
+(defsystem :khazern/environment
+  :serial t
+  :components ((:module code
+                :components ((:file "loop-defmacro")))))
+
 (defsystem :khazern/intrinsic
   :depends-on (:khazern)
   :serial t
