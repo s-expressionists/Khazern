@@ -10,8 +10,8 @@
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
   :depends-on (:acclimation)
   :in-order-to ((asdf:test-op (asdf:test-op #:khazern/test)))
-  :serial t
   :components ((:module code
+                :serial t
                 :components ((:file "packages")
                              (:file "compile-time-conditions")
                              (:file "run-time-conditions")
@@ -66,8 +66,8 @@
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
-  :serial t
   :components ((:module code
+                :serial t
                 :components ((:file "loop-defmacro")))))
 
 (defsystem :khazern/intrinsic
@@ -79,8 +79,8 @@
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
   :depends-on (:khazern)
-  :serial t
   :components ((:module code
+                :serial t
                 :components ((:file "loop-defmacro")))))
 
 (defsystem :khazern/extrinsic
@@ -92,8 +92,8 @@
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
   :depends-on (:khazern)
-  :serial t
   :components ((:module code
+                :serial t
                 :components ((:file "shadow-export")
                              (:file "loop-defmacro")))))
 
@@ -107,8 +107,8 @@
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
   :depends-on (:khazern)
   :perform (asdf:test-op (op c) (uiop:symbol-call :khazern/test :loop-test))
-  :serial t
   :components ((:module test
+                :serial t
                 :components ((:file "test-packages")
                              (:file "loop-defmacro")
                              (:file "loop-test")
