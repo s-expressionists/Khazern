@@ -105,12 +105,11 @@
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
-  :depends-on (:khazern)
-  :perform (asdf:test-op (op c) (uiop:symbol-call :khazern/test :loop-test))
+  :depends-on (:khazern/extrinsic :parachute)
+  :perform (asdf:test-op (op c) (uiop:symbol-call :parachute :test :khazern/test))
   :components ((:module test
                 :serial t
-                :components ((:file "test-packages")
-                             (:file "loop-defmacro")
+                :components ((:file "packages")
                              (:file "loop-test")
                              (:file "simple-loop")
                              (:file "loop1")

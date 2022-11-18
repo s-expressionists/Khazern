@@ -7,25 +7,25 @@
 
 ;;; Simple loops
 (deftest sloop.1
-  (loop (return 'a))
+  (khazern:loop (return 'a))
   a)
 
 (deftest sloop.2
-  (loop (return (values))))
+  (khazern:loop (return (values))))
 
 (deftest sloop.3
-  (loop (return (values 'a 'b 'c 'd)))
+  (khazern:loop (return (values 'a 'b 'c 'd)))
   a b c d)
 
 (deftest sloop.4
   (block nil
-    (loop (return 'a))
+    (khazern:loop (return 'a))
     'b)
   b)
 
 (deftest sloop.5
   (let ((i 0) (x nil))
-    (loop
+    (khazern:loop
      (when (>= i 4) (return x))
      (incf i)
      (push 'a x)))
@@ -35,7 +35,7 @@
   (let ((i 0) (x nil))
     (block foo
       (tagbody
-       (loop
+       (khazern:loop
         (when (>= i 4) (go a))
         (incf i)
         (push 'a x))
@@ -46,7 +46,7 @@
 (deftest sloop.7
   (catch 'foo
     (let ((i 0) (x nil))
-    (loop
+    (khazern:loop
      (when (>= i 4) (throw 'foo x))
      (incf i)
      (push 'a x))))
@@ -54,11 +54,11 @@
 
 ;;; Loop errors
 
-(def-macro-test loop.error.1 (loop))
+(def-macro-test loop.error.1 (khazern:loop))
 
 (deftest loop-finish.error.1
   (block done
-    (loop
+    (khazern:loop
      for i from 1 to 10
      do (macrolet
             ((%m (&environment env)
@@ -69,12 +69,12 @@
                                                 program-error)))
                      '(return-from done :fail2))
                     ((not (eval `(signals-error (funcall ,mfn
-                                                         '(loop-finish))
+                                                         '(khazern:loop-finish))
                                                 program-error)))
                      '(return-from done :fail3))
 
                     ((not (eval `(signals-error (funcall ,mfn
-                                                         '(loop-finish)
+                                                         '(khazern:loop-finish)
                                                          nil nil)
                                                 program-error)))
                      '(return-from done :fail4))

@@ -7,25 +7,25 @@
 
 ;;; Simple loops
 (deftest sloop.1
-  (loop (return 'a))
+  (khazern:loop (return 'a))
   a)
 
 (deftest sloop.2
-  (loop (return (cl:values))))
+  (khazern:loop (return (cl:values))))
 
 (deftest sloop.3
-  (loop (return (cl:values 'a 'b 'c 'd)))
+  (khazern:loop (return (cl:values 'a 'b 'c 'd)))
   a b c d)
 
 (deftest sloop.4
   (block nil
-    (loop (return 'a))
+    (khazern:loop (return 'a))
     'b)
   b)
 
 (deftest sloop.5
   (let ((i 0) (x nil))
-    (loop
+    (khazern:loop
      (when (>= i 4) (return x))
      (incf i)
      (push 'a x)))
@@ -35,7 +35,7 @@
   (let ((i 0) (x nil))
     (block foo
       (tagbody
-       (loop
+       (khazern:loop
         (when (>= i 4) (go a))
         (incf i)
         (push 'a x))
@@ -46,7 +46,7 @@
 (deftest sloop.7
   (catch 'foo
     (let ((i 0) (x nil))
-    (loop
+    (khazern:loop
      (when (>= i 4) (throw 'foo x))
      (incf i)
      (push 'a x))))
