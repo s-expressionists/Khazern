@@ -9,7 +9,7 @@
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
   :depends-on (:acclimation)
-  :in-order-to ((asdf:test-op (asdf:test-op #:khazern/test)))
+  :in-order-to ((asdf:test-op (asdf:test-op #:khazern/ansi)))
   :components ((:module code
                 :serial t
                 :components ((:file "packages")
@@ -78,10 +78,12 @@
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
-  :depends-on (:khazern)
+  :depends-on (:khazern :trivial-package-locks)
   :components ((:module code
                 :serial t
-                :components ((:file "loop-defmacro")))))
+                :components ((:file "unlock-pkg")
+                             (:file "loop-defmacro")
+                             (:file "lock-pkg")))))
 
 (defsystem :khazern/extrinsic
   :description "System for loading Khazern extrinsically into an implementation."
@@ -97,6 +99,27 @@
                 :components ((:file "shadow-export")
                              (:file "loop-defmacro")))))
 
+(defsystem :khazern/ansi
+  :description "ANSI Test system for Khazern"
+  :license "BSD"
+  :author "Robert Strandh"
+  :maintainer "Robert Strandh"
+  :version (:read-file-form "version.sexp")
+  :homepage "https://github.com/s-expressionists/Khazern"
+  :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
+  :depends-on (:khazern/intrinsic)
+  :perform (asdf:test-op (op c)
+             (handler-case (uiop:symbol-call :khazern/ansi :test)
+               (error (condition)
+                 (format *error-output* "~%~%~a~%" condition)
+                 (uiop:quit 100))
+               (:no-error (result)
+                 (uiop:quit))))
+  :components ((:module ansi
+                :serial t
+                :components ((:file "packages")
+                             (:file "test")))))
+
 (defsystem :khazern/test
   :description "Test system for Khazern"
   :license "BSD"
@@ -106,26 +129,10 @@
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
   :depends-on (:khazern/extrinsic :parachute)
-  :perform (asdf:test-op (op c) (uiop:symbol-call :parachute :test :khazern/test))
+  :perform (asdf:test-op (op c)
+             (defparameter cl-user::*exit-on-test-failures* t)
+             (uiop:symbol-call :parachute :test :khazern/test))
   :components ((:module test
                 :serial t
                 :components ((:file "packages")
-                             (:file "loop-test")
-                             (:file "simple-loop")
-                             (:file "loop1")
-                             (:file "loop2")
-                             (:file "loop3")
-                             (:file "loop4")
-                             (:file "loop5")
-                             (:file "loop6")
-                             (:file "loop7")
-                             (:file "loop8")
-                             (:file "loop9")
-                             (:file "loop10")
-                             (:file "loop11")
-                             (:file "loop12")
-                             (:file "loop13")
-                             (:file "loop14")
-                             (:file "loop15")
-                             (:file "loop16")
-                             (:file "loop17")))))
+                             (:file "test")))))

@@ -1,0 +1,54 @@
+name: test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+  pull_request:
+
+jobs:
+  test:
+    name: ${{ matrix.os }}
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - macos-latest
+        - ubuntu-22.04
+
+    # run the job on every combination of "os" above
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Install Ubuntu dependencies
+      if: matrix.os == 'ubuntu-22.04'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y sbcl
+
+    - name: Install MacOS dependencies
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install sbcl
+
+    - uses: actions/checkout@v3
+
+    - name: Install Quicklisp
+      run: |
+        mkdir -p $HOME/.config/common-lisp/source-registry.conf.d
+        echo "(:TREE #P\"${{ github.workspace }}/\")" > $HOME/.config/common-lisp/source-registry.conf.d/khazern.conf
+        curl -kLO https://beta.quicklisp.org/quicklisp.lisp
+        sbcl --non-interactive --load quicklisp.lisp --eval "(quicklisp-quickstart:install)" --eval "(ql-util:without-prompting (ql:add-to-init-file))" --eval "(ql:quickload '(:khazern/test :khazern/ansi))"
+        
+    - name: Run Regression Tests
+      run: |
+        sbcl --eval "(asdf:test-system :khazern/test)"
+
+    - name: Run ANSI Tests
+      run: |
+        sbcl --eval "(asdf:test-system :khazern/ansi)"
