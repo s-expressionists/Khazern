@@ -92,7 +92,7 @@
 (defparameter *clause-parsers* '())
 
 (defun add-clause-parser (parser)
-  (push parser *clause-parsers*))
+  (pushnew parser *clause-parsers*))
 
 ;;; A parser that tries every parser in *CLAUSE-PARSERS* until one
 ;;; succeeds.

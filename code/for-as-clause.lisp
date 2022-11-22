@@ -58,7 +58,7 @@
 (defparameter *for-as-subclause-parsers* '())
 
 (defun add-for-as-subclause-parser (parser)
-  (push parser *for-as-subclause-parsers*))
+  (pushnew parser *for-as-subclause-parsers*))
 
 ;;; A parser that tries every parser in *FOR-AS-SUBCLAUSE-PARSERS* until one
 ;;; succeeds.
