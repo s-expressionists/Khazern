@@ -2,16 +2,16 @@
 
 (defclass minimize-clause (max/min-accumulation-clause) ())
 
-(defclass minimize-it-clause (minimize-clause it-mixin)
-  ())
-
 (defclass minimize-form-clause (minimize-clause form-mixin)
   ())
 
-(defclass minimize-it-into-clause (into-mixin minimize-clause it-mixin)
+(defclass minimize-it-clause (minimize-form-clause it-mixin)
   ())
 
 (defclass minimize-form-into-clause (into-mixin minimize-clause form-mixin)
+  ())
+
+(defclass minimize-it-into-clause (minimize-form-into-clause it-mixin)
   ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -20,8 +20,9 @@
 
 (define-parser minimize-it-into-clause-parser
   (consecutive (lambda (minimize it into var type-spec)
-                 (declare (ignore minimize it into))
+                 (declare (ignore minimize into))
                  (make-instance 'minimize-it-into-clause
+                   :form it
                    :into-var var
                    :type-spec type-spec))
                (alternative (keyword-parser 'minimize)
@@ -35,8 +36,9 @@
 
 (define-parser minimize-it-clause-parser
   (consecutive (lambda (minimize it type-spec)
-                 (declare (ignore minimize it))
+                 (declare (ignore minimize))
                  (make-instance 'minimize-it-clause
+                   :form it
                    :type-spec type-spec))
                (alternative (keyword-parser 'minimize)
                             (keyword-parser 'minimizing))
@@ -100,16 +102,20 @@
 
 (defmethod body-form ((clause minimize-it-clause) end-tag)
   (declare (ignore end-tag))
-  `(if (null ,*accumulation-variable*)
-       (setq ,*accumulation-variable*
-             (ensure-real ,*it-var* 'min-argument-must-be-real))
-       (setq ,*accumulation-variable*
-             (minimize ,*accumulation-variable* ,*it-var*))))
+  (if *it-var*
+      `(if (null ,*accumulation-variable*)
+           (setq ,*accumulation-variable*
+                 (ensure-real ,*it-var* 'min-argument-must-be-real))
+           (setq ,*accumulation-variable*
+                 (minimize ,*accumulation-variable* ,*it-var*)))
+      (call-next-method)))
 
 (defmethod body-form ((clause minimize-it-into-clause) end-tag)
   (declare (ignore end-tag))
-  `(if (null ,(into-var clause))
-       (setq ,(into-var clause)
-             (ensure-real ,*it-var* 'min-argument-must-be-real))
-       (setq ,(into-var clause)
-             (minimize ,(into-var clause) ,*it-var*))))
+  (if *it-var*
+      `(if (null ,(into-var clause))
+           (setq ,(into-var clause)
+                 (ensure-real ,*it-var* 'min-argument-must-be-real))
+           (setq ,(into-var clause)
+                 (minimize ,(into-var clause) ,*it-var*)))
+      (call-next-method)))

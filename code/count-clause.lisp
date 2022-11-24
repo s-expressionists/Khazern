@@ -2,16 +2,16 @@
 
 (defclass count-clause (count/sum-accumulation-clause) ())
 
-(defclass count-it-clause (count-clause it-mixin)
-  ())
-
 (defclass count-form-clause (count-clause form-mixin)
   ())
 
-(defclass count-it-into-clause (into-mixin count-clause it-mixin)
+(defclass count-it-clause (count-form-clause it-mixin)
   ())
 
 (defclass count-form-into-clause (into-mixin count-clause form-mixin)
+  ())
+
+(defclass count-it-into-clause (count-form-into-clause it-mixin)
   ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -20,8 +20,9 @@
 
 (define-parser count-it-into-clause-parser
   (consecutive (lambda (count it into var type-spec)
-                 (declare (ignore count it into))
+                 (declare (ignore count into))
                  (make-instance 'count-it-into-clause
+                   :form it
                    :into-var var
                    :type-spec type-spec))
                (alternative (keyword-parser 'count)
@@ -35,8 +36,9 @@
 
 (define-parser count-it-clause-parser
   (consecutive (lambda (count it type-spec)
-                 (declare (ignore count it))
+                 (declare (ignore count))
                  (make-instance 'count-it-clause
+                   :form it
                    :type-spec type-spec))
                (alternative (keyword-parser 'count)
                             (keyword-parser 'counting))
@@ -96,12 +98,18 @@
 
 (defmethod body-form ((clause count-it-clause) end-tag)
   (declare (ignore end-tag))
-  `(when ,*it-var*
-     (setq ,*accumulation-variable*
-           (1+ ,*accumulation-variable*))))
+  (if *it-var*
+      `(when ,*it-var*
+         (setq ,*accumulation-variable*
+               (1+ ,*accumulation-variable*)))
+      (call-next-method)))
 
 (defmethod body-form ((clause count-it-into-clause) end-tag)
   (declare (ignore end-tag))
-  `(when ,*it-var*
-     (setq ,(into-var clause)
-           (1+ ,(into-var clause)))))
+  (if *it-var*
+      `(when ,*it-var*
+         (setq ,(into-var clause)
+               (1+ ,(into-var clause))))
+      (call-next-method)))
+ 
+  

@@ -2,16 +2,16 @@
 
 (defclass maximize-clause (max/min-accumulation-clause) ())
 
-(defclass maximize-it-clause (maximize-clause it-mixin)
-  ())
-
 (defclass maximize-form-clause (maximize-clause form-mixin)
   ())
 
-(defclass maximize-it-into-clause (into-mixin maximize-clause it-mixin)
+(defclass maximize-it-clause (maximize-form-clause it-mixin)
   ())
 
 (defclass maximize-form-into-clause (into-mixin maximize-clause form-mixin)
+  ())
+
+(defclass maximize-it-into-clause (maximize-form-into-clause it-mixin)
   ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -20,8 +20,9 @@
 
 (define-parser maximize-it-into-clause-parser
   (consecutive (lambda (maximize it into var type-spec)
-                 (declare (ignore maximize it into))
+                 (declare (ignore maximize into))
                  (make-instance 'maximize-it-into-clause
+                   :form it
                    :into-var var
                    :type-spec type-spec))
                (alternative (keyword-parser 'maximize)
@@ -35,8 +36,9 @@
 
 (define-parser maximize-it-clause-parser
   (consecutive (lambda (maximize it type-spec)
-                 (declare (ignore maximize it))
+                 (declare (ignore maximize))
                  (make-instance 'maximize-it-clause
+                   :form it
                    :type-spec type-spec))
                (alternative (keyword-parser 'maximize)
                             (keyword-parser 'maximizing))
@@ -100,16 +102,20 @@
 
 (defmethod body-form ((clause maximize-it-clause) end-tag)
   (declare (ignore end-tag))
-  `(if (null ,*accumulation-variable*)
-       (setq ,*accumulation-variable*
-             (ensure-real ,*it-var* 'max-argument-must-be-real))
-       (setq ,*accumulation-variable*
-             (maximize ,*accumulation-variable* ,*it-var*))))
+  (if *it-var*
+      `(if (null ,*accumulation-variable*)
+           (setq ,*accumulation-variable*
+                 (ensure-real ,*it-var* 'max-argument-must-be-real))
+           (setq ,*accumulation-variable*
+                 (maximize ,*accumulation-variable* ,*it-var*)))
+      (call-next-method)))
 
 (defmethod body-form ((clause maximize-it-into-clause) end-tag)
   (declare (ignore end-tag))
-  `(if (null ,(into-var clause))
-       (setq ,(into-var clause)
-             (ensure-real ,*it-var* 'max-argument-must-be-real))
-       (setq ,(into-var clause)
-             (maximize ,(into-var clause) ,*it-var*))))
+  (if *it-var*
+      `(if (null ,(into-var clause))
+           (setq ,(into-var clause)
+                 (ensure-real ,*it-var* 'max-argument-must-be-real))
+           (setq ,(into-var clause)
+                 (maximize ,(into-var clause) ,*it-var*)))
+      (call-next-method)))

@@ -4,10 +4,10 @@
 ;;;
 ;;; Given a symbol S (no matter what package), return a singleton
 ;;; parser Q that recognizes symbols with the same name as S.  If Q
-;;; succeeds, it returns S.
+;;; succeeds, it returns the first token.
 
 (defun keyword-parser (symbol)
-  (singleton (constantly symbol)
+  (singleton #'identity
              (lambda (token) (symbol-equal symbol token))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

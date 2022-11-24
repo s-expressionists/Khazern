@@ -94,7 +94,7 @@
 ;;; This variable is bound by the code generator for
 ;;; CONDITIONAL-CLAUSE before calling the code generators for the
 ;;; clauses in its THEN and ELSE branches.
-(defvar *it-var*)
+(defvar *it-var* nil)
 
 (defvar *accumulation-variable*)
 
