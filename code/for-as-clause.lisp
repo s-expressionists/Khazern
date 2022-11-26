@@ -121,9 +121,11 @@
 ;;; Compute the prologue-form.
 
 (defmethod prologue-form ((clause for-as-clause) end-tag)
-  `(progn ,@(mapcar (lambda (subclause)
-                      (prologue-form subclause end-tag))
-                    (subclauses clause))))
+  `(let* ,(reduce #'append (mapcar #'prologue-form-bindings (subclauses clause))
+                  :from-end t)
+     ,@(mapcar (lambda (subclause)
+                 (prologue-form subclause end-tag))
+               (subclauses clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -148,4 +150,6 @@
 ;;; Step a FOR-AS clause.
 
 (defmethod step-form ((clause for-as-clause))
-  `(progn ,@(mapcar #'step-form (subclauses clause))))
+  `(let* ,(reduce #'append (mapcar #'step-form-bindings (subclauses clause))
+                  :from-end t)
+     ,@(mapcar #'step-form (subclauses clause))))

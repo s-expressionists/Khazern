@@ -38,6 +38,13 @@
   (:method (clause)
     (append (initial-bindings clause) (final-bindings clause))))
 
+;;; This generic function returns a binding for CLAUSE that should go in
+;;; the LOOP prologue.
+(defgeneric prologue-form-bindings (clause)
+  (:method (clause)
+    (declare (ignore clause))
+    nil))
+
 ;;; This generic function returns a form for CLAUSE that should go in
 ;;; the LOOP prologue.  The INITIALLY clause is an obvious candidate
 ;;; for such code.  But the stepping clauses also have code that goes
@@ -78,6 +85,11 @@
 ;;; the expanded code.  The FOR-AS clauses and also the REPEAT clause
 ;;; generate code here.
 (defgeneric step-form (clause)
+  (:method (clause)
+    (declare (ignore clause))
+    nil))
+
+(defgeneric step-form-bindings (clause)
   (:method (clause)
     (declare (ignore clause))
     nil))

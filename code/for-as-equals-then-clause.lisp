@@ -6,8 +6,19 @@
 
 (defclass for-as-equals-then (for-as-subclause)
   ((%initial-form :initarg :initial-form :reader initial-form)
-   (%subsequent-form :initarg :subsequent-form :reader subsequent-form)))
+   (%subsequent-form :initarg :subsequent-form :reader subsequent-form)
+   (%temp-tree :accessor temp-tree)
+   (%directory :accessor %directory)))
 
+(defmethod initialize-instance :after
+    ((clause for-as-equals-then) &rest initargs &key)
+  (declare (ignore initargs))
+  (with-accessors ((temp-tree temp-tree)
+                   (%directory %directory))
+                  clause
+    (multiple-value-setq (temp-tree %directory)
+                         (fresh-variables (var-spec clause)))))
+                         
 (defmethod bound-variables ((subclause for-as-equals-then))
   (mapcar #'car
           (extract-variables (var-spec subclause) nil)))
@@ -73,25 +84,33 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
+;;; Compute the prologue-form-bindings.
+
+(defmethod prologue-form-bindings ((clause for-as-equals-then))
+  (destructure-variables (temp-tree clause) (initial-form clause)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
 ;;; Compute the prologue-form.
 
 (defmethod prologue-form ((clause for-as-equals-then) end-tag)
   (declare (ignore end-tag))
-  (multiple-value-bind (temp-tree dictionary)
-      (fresh-variables (var-spec clause))
-    `(let* ,(destructure-variables temp-tree (initial-form clause))
-       (setq ,@(loop for (original . temp) in dictionary
-                     collect original
-                     collect temp)))))
+  `(setq ,@(loop for (original . temp) in (%directory clause)
+                 collect original
+                 collect temp)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Compute the step-form-bindings.
+
+(defmethod step-form-bindings ((clause for-as-equals-then))
+  (destructure-variables (temp-tree clause) (subsequent-form clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the step-form.
 
 (defmethod step-form ((clause for-as-equals-then))
-  (multiple-value-bind (temp-tree dictionary)
-      (fresh-variables (var-spec clause))
-    `(let* ,(destructure-variables temp-tree (subsequent-form clause))
-       (setq ,@(loop for (original . temp) in dictionary
-                     collect original
-                     collect temp)))))
+  `(setq ,@(loop for (original . temp) in (%directory clause)
+                 collect original
+                 collect temp)))
