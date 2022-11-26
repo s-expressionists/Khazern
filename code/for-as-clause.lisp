@@ -64,12 +64,12 @@
 ;;; succeeds.
 
 (defun for-as-subclause-parser (tokens)
-  (loop for parser in *for-as-subclause-parsers*
-        do (multiple-value-bind (successp result rest)
-               (funcall parser tokens)
-             (when successp
-               (return (values t result rest))))
-        finally (return (values nil nil tokens))))
+  (cl:loop for parser in *for-as-subclause-parsers*
+           do (multiple-value-bind (successp result rest)
+                  (funcall parser tokens)
+                (when successp
+                  (return (values t result rest))))
+           finally (return (values nil nil tokens))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

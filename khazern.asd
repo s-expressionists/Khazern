@@ -56,7 +56,8 @@
                              (:file "for-as-hash-clause")
                              (:file "for-as-package-clause")
                              (:file "analysis")
-                             (:file "run-time-support")))))
+                             (:file "run-time-support")
+                             (:file "loop-defmacro")))))
 
 (defsystem :khazern/environment
   :description "Khazern's initial environment contents for bootstrapping."
@@ -81,23 +82,7 @@
   :depends-on (:khazern :trivial-package-locks)
   :components ((:module code
                 :serial t
-                :components ((:file "unlock-pkg")
-                             (:file "loop-defmacro")
-                             (:file "lock-pkg")))))
-
-(defsystem :khazern/extrinsic
-  :description "System for loading Khazern extrinsically into an implementation."
-  :license "BSD"
-  :author "Robert Strandh"
-  :maintainer "Robert Strandh"
-  :version (:read-file-form "version.sexp")
-  :homepage "https://github.com/s-expressionists/Khazern"
-  :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
-  :depends-on (:khazern)
-  :components ((:module code
-                :serial t
-                :components ((:file "shadow-export")
-                             (:file "loop-defmacro")))))
+                :components ((:file "intrinsic")))))
 
 (defsystem :khazern/ansi
   :description "ANSI Test system for Khazern"
@@ -128,7 +113,7 @@
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
-  :depends-on (:khazern/extrinsic :parachute)
+  :depends-on (:khazern :parachute)
   :perform (asdf:test-op (op c)
              (defparameter cl-user::*exit-on-test-failures* t)
              (uiop:symbol-call :parachute :test :khazern/test))

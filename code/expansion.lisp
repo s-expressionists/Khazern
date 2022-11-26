@@ -129,20 +129,20 @@
                       (and (eq (first d1) (first d2))
                            (eq (second d1) (second d2)))))
          (unique (remove-duplicates descriptors :test equal-fun)))
-    (loop for (name category type) in unique
-          for initial-value = (cond  ((eq category 'count/sum)
-                                      (coerce 0 type))
-                                     ((eq category 'always/never)
-                                      t)
-                                     (t
-                                      nil))
-          collect (if (null name)
-                      `(,*accumulation-variable* ,initial-value)
-                      `(,name ,initial-value))
-          when (eq category 'list)
-            collect (if (null name)
-                      `(,*list-tail-accumulation-variable* nil)
-                      `(,(tail-variable name) nil)))))
+    (cl:loop for (name category type) in unique
+             for initial-value = (cond  ((eq category 'count/sum)
+                                         (coerce 0 type))
+                                        ((eq category 'always/never)
+                                         t)
+                                        (t
+                                         nil))
+             collect (if (null name)
+                         `(,*accumulation-variable* ,initial-value)
+                         `(,name ,initial-value))
+             when (eq category 'list)
+               collect (if (null name)
+                           `(,*list-tail-accumulation-variable* nil)
+                           `(,(tail-variable name) nil)))))
 
 (defvar *loop-name*)
 

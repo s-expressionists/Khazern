@@ -98,12 +98,12 @@
 ;;; succeeds.
 
 (defun parse-clause (tokens)
-  (loop for parser in *clause-parsers*
-        do (multiple-value-bind (successp result rest)
-               (funcall parser tokens)
-             (when successp
-               (return (values t result rest))))
-        finally (return (values nil nil tokens))))
+  (cl:loop for parser in *clause-parsers*
+           do (multiple-value-bind (successp result rest)
+                  (funcall parser tokens)
+                (when successp
+                  (return (values t result rest))))
+           finally (return (values nil nil tokens))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -121,13 +121,13 @@
 (defun parse-loop-body (body)
   (let ((remaining-body body)
         (clauses '()))
-    (loop until (null remaining-body)
-          do (multiple-value-bind (success-p clause rest)
-                 (parse-clause remaining-body)
-               (if success-p
-                   (progn (setf remaining-body rest)
-                          (push clause clauses))
-                   ;; FIXME: this is not the right error to signal.
-                   (error 'expected-keyword-but-found
-                          :found (car rest)))))
+    (cl:loop until (null remaining-body)
+             do (multiple-value-bind (success-p clause rest)
+                    (parse-clause remaining-body)
+                  (if success-p
+                      (progn (setf remaining-body rest)
+                             (push clause clauses))
+                      ;; FIXME: this is not the right error to signal.
+                      (error 'expected-keyword-but-found
+                             :found (car rest)))))
     (reverse clauses)))

@@ -60,8 +60,8 @@
   (multiple-value-bind (temp-d-var-spec dictionary)
       (fresh-variables d-var-spec)
     `(let* ,(destructure-variables temp-d-var-spec form)
-       (setq ,@(loop for (orig-var . temp-var) in dictionary
-                     append `(,orig-var ,temp-var))))))
+       (setq ,@(cl:loop for (orig-var . temp-var) in dictionary
+                        append `(,orig-var ,temp-var))))))
 
 ;;; Extract variables
 (defun extract-variables (d-var-spec d-type-spec)

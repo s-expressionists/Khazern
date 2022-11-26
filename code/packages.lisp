@@ -8,11 +8,15 @@
    #:type
    ;; We use CONDITION as an accessor for a conditional clause so we
    ;; need to shadow this name
-   #:condition)
-  (:export #:define-parser
-           #:expand-body
-           #:clause
-           #:subclauses-mixin
-           #:var-and-type-spec-mixin
+   #:condition
+   #:loop
+   #:loop-finish)
+  (:export #:clause
            #:compound-forms-mixin
-           #:loop-return-clause-mixin))
+           #:define-parser
+           #:expand-body
+           #:loop
+           #:loop-finish
+           #:loop-return-clause-mixin
+           #:subclauses-mixin
+           #:var-and-type-spec-mixin))

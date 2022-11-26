@@ -154,12 +154,12 @@
   (let* ((vars-and-types
            (extract-variables (var-spec subclause) (type-spec subclause)))
          (vars-and-values
-           (loop for (var type) in vars-and-types
-                 collect (list var
-                               (case type
-                                 (fixnum 0)
-                                 (float 0.0)
-                                 (t nil))))))
+           (cl:loop for (var type) in vars-and-types
+                    collect (list var
+                                  (case type
+                                    (fixnum 0)
+                                    (float 0.0)
+                                    (t nil))))))
     `(let ,vars-and-values
        ,inner-form)))
 

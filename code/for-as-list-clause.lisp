@@ -107,20 +107,20 @@
 
 (defmethod final-bindings ((clause for-as-list))
   `((,(rest-var clause) ,(list-var clause))
-    ,@(loop with d-var-spec = (var-spec clause)
-            with d-type-spec = (type-spec clause)
-            for (variable) in (extract-variables d-var-spec d-type-spec)
-            collect `(,variable nil))))
+    ,@(cl:loop with d-var-spec = (var-spec clause)
+               with d-type-spec = (type-spec clause)
+               for (variable) in (extract-variables d-var-spec d-type-spec)
+               collect `(,variable nil))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the declarations.
 
 (defmethod declarations ((clause for-as-list))
-  (loop with d-var-spec = (var-spec clause)
-        with d-type-spec = (type-spec clause)
-        for (variable type) in (extract-variables d-var-spec d-type-spec)
-        collect `(cl:type (or null ,type) ,variable)))
+  (cl:loop with d-var-spec = (var-spec clause)
+           with d-type-spec = (type-spec clause)
+           for (variable type) in (extract-variables d-var-spec d-type-spec)
+           collect `(cl:type (or null ,type) ,variable)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

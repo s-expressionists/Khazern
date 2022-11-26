@@ -47,10 +47,8 @@ jobs:
         
     - name: Run Regression Tests
       run: |
-        rm -rf $HOME/.cache/common-lisp
         sbcl --eval "(asdf:test-system :khazern/test)"
 
     - name: Run ANSI Tests
       run: |
-        rm -rf $HOME/.cache/common-lisp
         sbcl --eval "(asdf:test-system :khazern/ansi)"
