@@ -42,10 +42,10 @@
          (unique-variables (remove-duplicates variables :test #'eq)))
     (unless (= (length variables)
                (length unique-variables))
-      (cl:loop for var in unique-variables
-               do (when (> (count var variables :test #'eq) 1)
-                    (error 'multiple-variable-occurrences
-                           :bound-variable var))))))
+      (loop for var in unique-variables
+            when (> (count var variables :test #'eq) 1)
+              do (error 'multiple-variable-occurrences
+                        :bound-variable var)))))
 
 ;;; Check that for a given accumulation variable, there is only one
 ;;; category.  Recall that the accumlation categores are represented
@@ -57,16 +57,16 @@
                       (and (eq (first d1) (first d2))
                            (eq (second d1) (second d2)))))
          (unique (remove-duplicates descriptors :test equal-fun)))
-    (cl:loop for remaining on unique
-             do (let ((entry (member (first (first remaining))
-                                     (rest remaining)
-                                     :test #'eq
-                                     :key #'first)))
-                  (unless (null entry)
-                    (error 'multiple-accumulation-occurrences
-                           :bound-variable (first (first remaining))
-                           :first-clause (second (first remaining))
-                           :second-clause (second (first entry))))))))
+    (loop for remaining on unique
+          do (let ((entry (member (first (first remaining))
+                                  (rest remaining)
+                                  :test #'eq
+                                  :key #'first)))
+               (unless (null entry)
+                 (error 'multiple-accumulation-occurrences
+                        :bound-variable (first (first remaining))
+                        :first-clause (second (first remaining))
+                        :second-clause (second (first entry))))))))
 
 ;;; Check that there is no overlap between the bound variables and the
 ;;; accumulation variables.

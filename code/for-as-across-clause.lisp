@@ -61,18 +61,18 @@
 
 (defmethod final-bindings ((clause for-as-across))
   `((,(length-var clause) (length ,(form-var clause)))
-    ,@(cl:loop for (real-var) in (dictionary clause)
-               collect `(,real-var nil))))
+    ,@(loop for (real-var) in (dictionary clause)
+            collect `(,real-var nil))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute declarations.
 
 (defmethod declarations ((clause for-as-across))
-  (cl:loop with d-var-spec = (var-spec clause)
-           with d-type-spec = (type-spec clause)
-           for (variable type) in (extract-variables d-var-spec d-type-spec)
-           collect `(cl:type (or null ,type) ,variable)))
+  (loop with d-var-spec = (var-spec clause)
+        with d-type-spec = (type-spec clause)
+        for (variable type) in (extract-variables d-var-spec d-type-spec)
+        collect `(cl:type (or null ,type) ,variable)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

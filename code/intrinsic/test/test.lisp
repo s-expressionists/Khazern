@@ -37,7 +37,7 @@
 (defvar +ansi-test-repository+ "https://gitlab.common-lisp.net/ansi-test/ansi-test.git")
 
 (defun test (&rest args &key skip-sync &allow-other-keys)
-  (let ((*default-pathname-defaults* (merge-pathnames (make-pathname :directory '(:relative "ansi" "ansi-test"))
+  (let ((*default-pathname-defaults* (merge-pathnames (make-pathname :directory '(:relative "dependencies" "ansi-test"))
                                                       (asdf:component-pathname (asdf:find-system :khazern-intrinsic/test)))))
     (if skip-sync
         (check-repo :directory *default-pathname-defaults* :repository +ansi-test-repository+)

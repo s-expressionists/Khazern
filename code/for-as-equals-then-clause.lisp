@@ -67,20 +67,20 @@
 ;;; Compute the bindings.
 
 (defmethod initial-bindings ((clause for-as-equals-then))
-  (cl:loop with d-var-spec = (var-spec clause)
-           with d-type-spec = (type-spec clause)
-           for (variable) in (extract-variables d-var-spec d-type-spec)
-           collect `(,variable nil)))
+  (loop with d-var-spec = (var-spec clause)
+        with d-type-spec = (type-spec clause)
+        for (variable) in (extract-variables d-var-spec d-type-spec)
+        collect `(,variable nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the declarations.
 
 (defmethod declarations ((clause for-as-equals-then))
-  (cl:loop with d-var-spec = (var-spec clause)
-           with d-type-spec = (type-spec clause)
-           for (variable type) in (extract-variables d-var-spec d-type-spec)
-           collect `(cl:type (or null ,type) ,variable)))
+  (loop with d-var-spec = (var-spec clause)
+        with d-type-spec = (type-spec clause)
+        for (variable type) in (extract-variables d-var-spec d-type-spec)
+        collect `(cl:type (or null ,type) ,variable)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -95,9 +95,9 @@
 
 (defmethod prologue-form ((clause for-as-equals-then) end-tag)
   (declare (ignore end-tag))
-  `(setq ,@(cl:loop for (original . temp) in (%directory clause)
-                    collect original
-                    collect temp)))
+  `(setq ,@(loop for (original . temp) in (%directory clause)
+                 collect original
+                 collect temp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -111,6 +111,6 @@
 ;;; Compute the step-form.
 
 (defmethod step-form ((clause for-as-equals-then))
-  `(setq ,@(cl:loop for (original . temp) in (%directory clause)
-                    collect original
-                    collect temp)))
+  `(setq ,@(loop for (original . temp) in (%directory clause)
+                 collect original
+                 collect temp)))
