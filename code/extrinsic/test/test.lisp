@@ -1,32 +1,32 @@
-(cl:in-package #:khazern/test)
+(cl:in-package #:khazern-extrinsic/test)
 
 (define-test loop-finish-in-simple-loop
   (is equal
       nil
-      (khazern:loop do (khazern:loop (khazern:loop-finish)))))
+      (khazern-extrinsic:loop do (khazern-extrinsic:loop (khazern-extrinsic:loop-finish)))))
 
 (define-test loop-until-t
   (is equal
       nil
-      (khazern:loop until t)))
+      (khazern-extrinsic:loop until t)))
 
 (define-test loop-while-nil
   (is equal
       nil
-      (khazern:loop while nil)))
+      (khazern-extrinsic:loop while nil)))
 
 (define-test loop-until-expr
   (is equal
       10
       (let ((n 0))
-        (khazern:loop until (= (incf n) 10))
+        (khazern-extrinsic:loop until (= (incf n) 10))
         n)))
 
 (define-test loop-while-expr
   (is equal
       10
       (let ((n 0))
-        (khazern:loop while (< (incf n) 10))
+        (khazern-extrinsic:loop while (< (incf n) 10))
         n)))
 
 (define-test loop-do
@@ -34,7 +34,7 @@
       10
       (let ((n 0))
         (block abc
-          (khazern:loop do (progn (incf n)
+          (khazern-extrinsic:loop do (progn (incf n)
                              (when (= n 10)
                                (return-from abc nil)))))
         n)))

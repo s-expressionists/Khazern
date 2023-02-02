@@ -1,5 +1,5 @@
 (in-package #:common-lisp-user)
 
-(defpackage #:khazern/ansi
+(defpackage #:khazern-intrinsic/test
   (:use #:common-lisp)
   (:export #:test))

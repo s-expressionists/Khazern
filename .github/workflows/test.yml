@@ -43,12 +43,12 @@ jobs:
         mkdir -p $HOME/.config/common-lisp/source-registry.conf.d
         echo "(:TREE #P\"${{ github.workspace }}/\")" > $HOME/.config/common-lisp/source-registry.conf.d/khazern.conf
         curl -kLO https://beta.quicklisp.org/quicklisp.lisp
-        sbcl --non-interactive --load quicklisp.lisp --eval "(quicklisp-quickstart:install)" --eval "(ql-util:without-prompting (ql:add-to-init-file))" --eval "(ql:quickload '(:khazern/test :khazern/ansi))"
+        sbcl --non-interactive --load quicklisp.lisp --eval "(quicklisp-quickstart:install)" --eval "(ql-util:without-prompting (ql:add-to-init-file))" --eval "(ql:quickload '(:khazern-extrinsic/test :khazern-intrinsic/test))"
         
     - name: Run Regression Tests
       run: |
-        sbcl --eval "(asdf:test-system :khazern/test)"
+        sbcl --eval "(asdf:test-system :khazern-extrinsic)"
 
     - name: Run ANSI Tests
       run: |
-        sbcl --eval "(asdf:test-system :khazern/ansi)"
+        sbcl --eval "(asdf:test-system :khazern-intrinsic)"

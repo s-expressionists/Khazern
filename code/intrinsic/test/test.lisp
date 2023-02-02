@@ -1,4 +1,4 @@
-(in-package #:khazern/ansi)
+(in-package #:khazern-intrinsic/test)
 
 (defun check-repo (&key directory repository &allow-other-keys)
   (format t "~:[Did not find~;Found~] ~A clone in ~A, assuming everything is okay.~%"
@@ -38,7 +38,7 @@
 
 (defun test (&rest args &key skip-sync &allow-other-keys)
   (let ((*default-pathname-defaults* (merge-pathnames (make-pathname :directory '(:relative "ansi" "ansi-test"))
-                                                      (asdf:component-pathname (asdf:find-system :khazern/ansi)))))
+                                                      (asdf:component-pathname (asdf:find-system :khazern-intrinsic/test)))))
     (if skip-sync
         (check-repo :directory *default-pathname-defaults* :repository +ansi-test-repository+)
         (apply #'sync-repo :directory *default-pathname-defaults* :repository +ansi-test-repository+ args))
