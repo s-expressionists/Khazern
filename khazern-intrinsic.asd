@@ -1,17 +1,3 @@
-(asdf:defsystem :khazern-intrinsic/environment
-  :description "Khazern's initial environment contents for bootstrapping."
-  :license "BSD"
-  :author "Robert Strandh"
-  :maintainer "Robert Strandh"
-  :version (:read-file-form "version.sexp")
-  :homepage "https://github.com/s-expressionists/Khazern"
-  :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
-  :components ((:module code
-                :pathname "code/intrinsic/"
-                :serial t
-                :components ((:file "packages")
-                             (:file "loop-defmacro")))))
-
 (asdf:defsystem :khazern-intrinsic
   :description "System for loading Khazern intrinsically into an implementation."
   :license "BSD"
