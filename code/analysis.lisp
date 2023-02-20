@@ -43,9 +43,9 @@
     (unless (= (length variables)
                (length unique-variables))
       (loop for var in unique-variables
-            do (when (> (count var variables :test #'eq) 1)
-                 (error 'multiple-variable-occurrences
-                        :bound-variable var))))))
+            when (> (count var variables :test #'eq) 1)
+              do (error 'multiple-variable-occurrences
+                        :bound-variable var)))))
 
 ;;; Check that for a given accumulation variable, there is only one
 ;;; category.  Recall that the accumlation categores are represented
@@ -63,11 +63,10 @@
                                   :test #'eq
                                   :key #'first)))
                (unless (null entry)
-                 (error "the accumulation variable ~s is used both~@
-                         for ~s accumulation and ~s accumulation."
-                        (first (first remaining))
-                        (second (first remaining))
-                        (second (first entry))))))))
+                 (error 'multiple-accumulation-occurrences
+                        :bound-variable (first (first remaining))
+                        :first-clause (second (first remaining))
+                        :second-clause (second (first entry))))))))
 
 ;;; Check that there is no overlap between the bound variables and the
 ;;; accumulation variables.
@@ -83,9 +82,8 @@
             (intersection bound-variables accumulation-variables
                           :test #'eq)))
       (unless (null intersection)
-        (error "The variable ~s is used both as an iteration variable~@
-                and as an accumulation variable."
-               (car intersection))))))
+        (error 'iteration-accumulation-overlap
+               :bound-variable (car intersection))))))
 
 ;;; FIXME: Add more analyses.
 (defun analyze-clauses (clauses)

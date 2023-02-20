@@ -297,3 +297,23 @@
           "Multiple occurrences of the following variable were found:~@
            ~s"
           (bound-variable condition)))
+
+(defmethod acclimation:report-condition
+    ((condition iteration-accumulation-overlap)
+     stream
+     (language acclimation:english))
+  (format stream
+          "The variable ~s is used both as an iteration variable~@
+          and as an accumulation variable."
+          (bound-variable condition)))
+
+(defmethod acclimation:report-condition
+    ((condition multiple-accumulation-occurrences)
+     stream
+     (language acclimation:english))
+  (format stream
+          "the accumulation variable ~s is used both~@
+           for ~s accumulation and ~s accumulation."
+          (bound-variable condition)
+          (first-clause condition)
+          (second-clause condition)))

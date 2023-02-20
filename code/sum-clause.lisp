@@ -2,16 +2,16 @@
 
 (defclass sum-clause (count/sum-accumulation-clause) ())
 
-(defclass sum-it-clause (sum-clause it-mixin)
-  ())
-
 (defclass sum-form-clause (sum-clause form-mixin)
   ())
 
-(defclass sum-it-into-clause (into-mixin sum-clause it-mixin)
+(defclass sum-it-clause (sum-form-clause it-mixin)
   ())
 
 (defclass sum-form-into-clause (into-mixin sum-clause form-mixin)
+  ())
+
+(defclass sum-it-into-clause (sum-form-into-clause it-mixin)
   ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -20,8 +20,9 @@
 
 (define-parser sum-it-into-clause-parser
   (consecutive (lambda (sum it into var type-spec)
-                 (declare (ignore sum it into))
+                 (declare (ignore sum into))
                  (make-instance 'sum-it-into-clause
+                   :form it
                    :into-var var
                    :type-spec type-spec))
                (alternative (keyword-parser 'sum)
@@ -35,8 +36,9 @@
 
 (define-parser sum-it-clause-parser
   (consecutive (lambda (sum it type-spec)
-                 (declare (ignore sum it))
+                 (declare (ignore sum))
                  (make-instance 'sum-it-clause
+                   :form it
                    :type-spec type-spec))
                (alternative (keyword-parser 'sum)
                             (keyword-parser 'summing))
@@ -94,10 +96,14 @@
 
 (defmethod body-form ((clause sum-it-clause) end-tag)
   (declare (ignore end-tag))
-  `(setq ,*accumulation-variable*
-         (sum ,*accumulation-variable* ,*it-var*)))
-
+  (if *it-var*
+      `(setq ,*accumulation-variable*
+             (sum ,*accumulation-variable* ,*it-var*))
+      (call-next-method)))
+    
 (defmethod body-form ((clause sum-it-into-clause) end-tag)
   (declare (ignore end-tag))
-  `(setq ,(into-var clause)
-         (sum ,(into-var clause) ,*it-var*)))
+  (if *it-var*
+      `(setq ,(into-var clause)
+             (sum ,(into-var clause) ,*it-var*))
+      (call-next-method)))

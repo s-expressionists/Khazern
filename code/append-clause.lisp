@@ -2,16 +2,16 @@
 
 (defclass append-clause (list-accumulation-clause) ())
 
-(defclass append-it-clause (append-clause it-mixin)
-  ())
-
 (defclass append-form-clause (append-clause form-mixin)
   ())
 
-(defclass append-it-into-clause (into-mixin append-clause it-mixin)
+(defclass append-it-clause (append-form-clause it-mixin)
   ())
 
 (defclass append-form-into-clause (into-mixin append-clause form-mixin)
+  ())
+
+(defclass append-it-into-clause (append-form-into-clause it-mixin)
   ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -20,8 +20,9 @@
 
 (define-parser append-it-into-clause-parser
   (consecutive (lambda (append it into var)
-                 (declare (ignore append it into))
+                 (declare (ignore append into))
                  (make-instance 'append-it-into-clause
+                   :form it
                    :into-var var))
                (alternative (keyword-parser 'append)
                             (keyword-parser 'appending))
@@ -33,8 +34,9 @@
 
 (define-parser append-it-clause-parser
   (consecutive (lambda (append it)
-                 (declare (ignore append it))
-                 (make-instance 'append-it-clause))
+                 (declare (ignore append))
+                 (make-instance 'append-it-clause
+                   :form it))
                (alternative (keyword-parser 'append)
                             (keyword-parser 'appending))
                (keyword-parser 'it)))
@@ -114,10 +116,14 @@
 
 (defmethod body-form ((clause append-it-clause) end-tag)
   (declare (ignore end-tag))
-  (append-clause-expander
-   *it-var*  *accumulation-variable* *list-tail-accumulation-variable*))
+  (if *it-var*
+      (append-clause-expander
+       *it-var*  *accumulation-variable* *list-tail-accumulation-variable*)
+      (call-next-method)))
 
 (defmethod body-form ((clause append-it-into-clause) end-tag)
   (declare (ignore end-tag))
-  (append-clause-expander
-   *it-var* (into-var clause) (tail-variable (into-var clause))))
+  (if *it-var*
+      (append-clause-expander
+       *it-var* (into-var clause) (tail-variable (into-var clause)))
+      (call-next-method)))

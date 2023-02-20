@@ -1,4 +1,4 @@
 (cl:in-package #:common-lisp-user)
 
-(defpackage #:khazern/test
+(defpackage #:khazern-intrinsic
   (:use #:common-lisp))

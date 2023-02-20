@@ -17,11 +17,11 @@
 (defmethod accumulation-variables ((clause return-clause))
   '())
 
-(defclass return-it-clause (return-clause)
-  ())
-
 (defclass return-form-clause (return-clause)
   ((%form :initarg :form :reader form)))
+
+(defclass return-it-clause (return-form-clause)
+  ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -29,8 +29,9 @@
 
 (define-parser return-it-clause-parser
   (consecutive (lambda (return it)
-                 (declare (ignore return it))
-                 (make-instance 'return-it-clause))
+                 (declare (ignore return))
+                 (make-instance 'return-it-clause
+                   :form it))
                (keyword-parser 'return)
                (keyword-parser 'it)))
 
@@ -58,4 +59,6 @@
 
 (defmethod body-form ((clause return-it-clause) end-tag)
   (declare (ignore end-tag))
-  `(return-from ,*loop-name* ,*it-var*))
+  (if *it-var*
+      `(return-from ,*loop-name* ,*it-var*)
+      (call-next-method)))

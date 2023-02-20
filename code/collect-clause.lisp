@@ -2,16 +2,16 @@
 
 (defclass collect-clause (list-accumulation-clause) ())
 
-(defclass collect-it-clause (collect-clause it-mixin)
-  ())
-
 (defclass collect-form-clause (collect-clause form-mixin)
   ())
 
-(defclass collect-it-into-clause (into-mixin collect-clause it-mixin)
+(defclass collect-it-clause (collect-form-clause it-mixin)
   ())
 
 (defclass collect-form-into-clause (into-mixin collect-clause form-mixin)
+  ())
+
+(defclass collect-it-into-clause (collect-form-into-clause it-mixin)
   ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -20,8 +20,9 @@
 
 (define-parser collect-it-into-clause-parser
   (consecutive (lambda (collect it into var)
-                 (declare (ignore collect it into))
+                 (declare (ignore collect into))
                  (make-instance 'collect-it-into-clause
+                   :form it
                    :into-var var))
                (alternative (keyword-parser 'collect)
                             (keyword-parser 'collecting))
@@ -33,8 +34,9 @@
 
 (define-parser collect-it-clause-parser
   (consecutive (lambda (collect it)
-                 (declare (ignore collect it))
-                 (make-instance 'collect-it-clause))
+                 (declare (ignore collect))
+                 (make-instance 'collect-it-clause
+                   :form it))
                (alternative (keyword-parser 'collect)
                             (keyword-parser 'collecting))
                (keyword-parser 'it)))
@@ -117,10 +119,14 @@
 
 (defmethod body-form ((clause collect-it-clause) end-tag)
   (declare (ignore end-tag))
-  (collect-clause-expander
-   *it-var*  *accumulation-variable* *list-tail-accumulation-variable*))
-
+  (if *it-var*
+      (collect-clause-expander
+       *it-var*  *accumulation-variable* *list-tail-accumulation-variable*)
+      (call-next-method)))
+    
 (defmethod body-form ((clause collect-it-into-clause) end-tag)
   (declare (ignore end-tag))
-  (collect-clause-expander
-   *it-var* (into-var clause) (tail-variable (into-var clause))))
+  (if *it-var*
+      (collect-clause-expander
+       *it-var* (into-var clause) (tail-variable (into-var clause)))
+      (call-next-method)))

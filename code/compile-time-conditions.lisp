@@ -125,6 +125,18 @@
 (define-condition multiple-variable-occurrences (loop-syntax-error)
   ((%bound-variable :initarg :bound-variable :reader bound-variable)))
 
+;;; This condition is signaled when there are overlaps betweeen
+;;; iteration and accumulation variables.
+(define-condition iteration-accumulation-overlap (loop-syntax-error)
+  ((%bound-variable :initarg :bound-variable :reader bound-variable)))
+
+;;; This condition is signaled when there are multiple occurrences of
+;;; a variable used in accumulation clauses.
+(define-condition multiple-accumulation-occurrences (loop-syntax-error)
+  ((%bound-variable :initarg :bound-variable :reader bound-variable)
+   (%first-clause :initarg :first-clause :reader first-clause)
+   (%second-clause :initarg :second-clause :reader second-clause)))
+
 ;;; The root of all semantic errors.
 (define-condition loop-semantic-error (program-error acclimation:condition)
   ())

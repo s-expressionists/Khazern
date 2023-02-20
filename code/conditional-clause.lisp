@@ -157,10 +157,14 @@
     `(let ((,*it-var* ,(condition clause)))
        (if ,*it-var*
            (progn
-             ,@(mapcar (lambda (clause)
-                         (body-form clause end-tag))
-                       (then-clauses clause)))
+             ,(body-form (car (then-clauses clause)) end-tag)
+             ,@(let (*it-var*)
+                 (mapcar (lambda (clause)
+                           (body-form clause end-tag))
+                         (cdr (then-clauses clause)))))
            (progn
-             ,@(mapcar (lambda (clause)
-                         (body-form clause end-tag))
-                       (else-clauses clause)))))))
+             ,(body-form (car (else-clauses clause)) end-tag)
+             ,@(let (*it-var*)
+                 (mapcar (lambda (clause)
+                           (body-form clause end-tag))
+                         (cdr (else-clauses clause)))))))))

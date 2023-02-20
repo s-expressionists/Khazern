@@ -38,6 +38,13 @@
   (:method (clause)
     (append (initial-bindings clause) (final-bindings clause))))
 
+;;; This generic function returns a binding for CLAUSE that should go in
+;;; the LOOP prologue.
+(defgeneric prologue-form-bindings (clause)
+  (:method (clause)
+    (declare (ignore clause))
+    nil))
+
 ;;; This generic function returns a form for CLAUSE that should go in
 ;;; the LOOP prologue.  The INITIALLY clause is an obvious candidate
 ;;; for such code.  But the stepping clauses also have code that goes
@@ -73,6 +80,14 @@
     (declare (ignore clause end-tag))
     nil))
 
+;;; This generic function returns the bindings for CLAUSE that go
+;;; after the main body code and the termination tests in the body of
+;;; the expanded code.
+(defgeneric step-form-bindings (clause)
+  (:method (clause)
+    (declare (ignore clause))
+    nil))
+
 ;;; This generic function returns a form for CLAUSE that should go
 ;;; after the main body code and the termination tests in the body of
 ;;; the expanded code.  The FOR-AS clauses and also the REPEAT clause
@@ -94,7 +109,7 @@
 ;;; This variable is bound by the code generator for
 ;;; CONDITIONAL-CLAUSE before calling the code generators for the
 ;;; clauses in its THEN and ELSE branches.
-(defvar *it-var*)
+(defvar *it-var* nil)
 
 (defvar *accumulation-variable*)
 
@@ -129,17 +144,19 @@
                       `(,name ,initial-value))
           when (eq category 'list)
             collect (if (null name)
-                      `(,*list-tail-accumulation-variable* nil)
-                      `(,(tail-variable name) nil)))))
+                        `(,*list-tail-accumulation-variable* nil)
+                        `(,(tail-variable name) nil)))))
 
 (defvar *loop-name*)
 
 (defun prologue-body-epilogue (clauses end-tag)
   (let ((start-tag (gensym)))
     `(tagbody
-        (progn ,@(mapcar (lambda (clause)
-                           (prologue-form clause end-tag))
-                         clauses))
+        (let* ,(reduce #'append (mapcar #'prologue-form-bindings clauses)
+                       :from-end t)
+          ,@(mapcar (lambda (clause)
+                      (prologue-form clause end-tag))
+                    clauses))
         ,start-tag
         (progn ,@(mapcar (lambda (clause)
                            (body-form clause end-tag))
@@ -147,7 +164,9 @@
         (progn ,@(mapcar (lambda (clause)
                            (termination-form clause end-tag))
                          clauses))
-        (progn ,@(mapcar #'step-form clauses))
+        (let* ,(reduce #'append (mapcar #'step-form-bindings clauses)
+                        :from-end t)
+          ,@(mapcar #'step-form clauses))
         (go ,start-tag)
         ,end-tag
         (progn ,@(mapcar #'epilogue-form clauses)

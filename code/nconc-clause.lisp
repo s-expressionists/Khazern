@@ -2,16 +2,16 @@
 
 (defclass nconc-clause (list-accumulation-clause) ())
 
-(defclass nconc-it-clause (nconc-clause it-mixin)
-  ())
-
 (defclass nconc-form-clause (nconc-clause form-mixin)
   ())
 
-(defclass nconc-it-into-clause (into-mixin nconc-clause it-mixin)
+(defclass nconc-it-clause (nconc-form-clause it-mixin)
   ())
 
 (defclass nconc-form-into-clause (into-mixin nconc-clause form-mixin)
+  ())
+
+(defclass nconc-it-into-clause (nconc-form-into-clause it-mixin)
   ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -20,8 +20,9 @@
 
 (define-parser nconc-it-into-clause-parser
   (consecutive (lambda (nconc it into var)
-                 (declare (ignore nconc it into))
+                 (declare (ignore nconc into))
                  (make-instance 'nconc-it-into-clause
+                   :form it
                    :into-var var))
                (alternative (keyword-parser 'nconc)
                             (keyword-parser 'nconcing))
@@ -33,8 +34,9 @@
 
 (define-parser nconc-it-clause-parser
   (consecutive (lambda (nconc it)
-                 (declare (ignore nconc it))
-                 (make-instance 'nconc-it-clause))
+                 (declare (ignore nconc))
+                 (make-instance 'nconc-it-clause
+                   :form it))
                (alternative (keyword-parser 'nconc)
                             (keyword-parser 'nconcing))
                (keyword-parser 'it)))
@@ -112,10 +114,14 @@
 
 (defmethod body-form ((clause nconc-it-clause) end-tag)
   (declare (ignore end-tag))
-  (nconc-clause-expander
-   *it-var*  *accumulation-variable* *list-tail-accumulation-variable*))
+  (if *it-var*
+      (nconc-clause-expander
+       *it-var*  *accumulation-variable* *list-tail-accumulation-variable*)
+      (call-next-method)))
 
 (defmethod body-form ((clause nconc-it-into-clause) end-tag)
   (declare (ignore end-tag))
-  (nconc-clause-expander
-   *it-var* (into-var clause) (tail-variable (into-var clause))))
+  (if *it-var*
+      (nconc-clause-expander
+       *it-var* (into-var clause) (tail-variable (into-var clause)))
+      (call-next-method)))
