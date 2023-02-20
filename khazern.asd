@@ -1,10 +1,9 @@
-(cl:in-package #:asdf-user)
-
-(defsystem :khazern
+(asdf:defsystem :khazern
   :description "A portable and extensible Common Lisp LOOP implementation"
   :license "BSD"
-  :author "Robert Strandh"
-  :maintainer "Robert Strandh"
+  :author ("Robert Strandh"
+           "Tarn W. Burton")
+  :maintainer "Tarn W. Burton"
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"

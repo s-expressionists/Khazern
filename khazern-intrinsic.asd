@@ -1,8 +1,9 @@
 (asdf:defsystem :khazern-intrinsic
   :description "System for loading Khazern intrinsically into an implementation."
   :license "BSD"
-  :author "Robert Strandh"
-  :maintainer "Robert Strandh"
+  :author ("Robert Strandh"
+           "Tarn W. Burton")
+  :maintainer "Tarn W. Burton"
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
@@ -17,8 +18,9 @@
 (asdf:defsystem :khazern-intrinsic/test
   :description "ANSI Test system for Khazern"
   :license "BSD"
-  :author "Robert Strandh"
-  :maintainer "Robert Strandh"
+  :author ("Robert Strandh"
+           "Tarn W. Burton")
+  :maintainer "Tarn W. Burton"
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"

@@ -1,8 +1,9 @@
 (asdf:defsystem :khazern-extrinsic
   :description "System for loading Khazern extrinsically into an implementation."
   :license "BSD"
-  :author "Robert Strandh"
-  :maintainer "Robert Strandh"
+  :author ("Robert Strandh"
+           "Tarn W. Burton")
+  :maintainer "Tarn W. Burton"
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
@@ -14,11 +15,12 @@
                 :components ((:file "packages")
                              (:file "loop-defmacro")))))
 
-(defsystem :khazern-extrinsic/test
+(asdf:defsystem :khazern-extrinsic/test
   :description "Test system for Khazern"
   :license "BSD"
-  :author "Robert Strandh"
-  :maintainer "Robert Strandh"
+  :author ("Robert Strandh"
+           "Tarn W. Burton")
+  :maintainer "Tarn W. Burton"
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
