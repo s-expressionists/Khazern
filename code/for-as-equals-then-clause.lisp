@@ -7,17 +7,17 @@
 (defclass for-as-equals-then (for-as-subclause)
   ((%initial-form :initarg :initial-form :reader initial-form)
    (%subsequent-form :initarg :subsequent-form :reader subsequent-form)
-   (%temp-tree :accessor temp-tree)
-   (%directory :accessor %directory)))
+   (%temp-tree :initarg :temp-tree :accessor temp-tree)
+   (%directory :initarg :dictionary :accessor %directory)))
 
 (defmethod initialize-instance :after
-    ((clause for-as-equals-then) &rest initargs &key)
+    ((clause for-as-equals-then) &rest initargs &key &allow-other-keys)
   (declare (ignore initargs))
-  (with-accessors ((temp-tree temp-tree)
-                   (%directory %directory))
-                  clause
-    (multiple-value-setq (temp-tree %directory)
-                         (fresh-variables (var-spec clause)))))
+  (multiple-value-bind (temp-tree dictionary)
+      (fresh-variables (var-spec clause))
+    (reinitialize-instance clause
+                           :temp-tree temp-tree
+                           :dictionary dictionary)))
                          
 (defmethod bound-variables ((subclause for-as-equals-then))
   (mapcar #'car
