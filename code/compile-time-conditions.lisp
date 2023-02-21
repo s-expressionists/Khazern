@@ -107,6 +107,10 @@
 (define-condition loop-syntax-error (program-error acclimation:condition)
   ())
 
+;;; This condition is signaled when a NIL is found
+;;; in a simple LOOOP
+(define-condition non-compound-form (loop-syntax-error) ())
+
 ;;; This condition is signaled when a name-clause is found
 ;;; and the first clause is not a name-clause. 
 (define-condition name-clause-not-first (loop-syntax-error) ())

@@ -234,14 +234,24 @@
        ,(do-clauses all-clauses end-tag))))
 
 (defun expand-body (loop-body end-tag)
-  (let ((clauses (parse-loop-body loop-body)))
-    (analyze-clauses clauses)
-    (let* ((name (if (typep (car clauses) 'name-clause)
-                     (name (car clauses))
-                     nil))
-           (*loop-name* name)
-           (*accumulation-variable* (gensym))
-           (*list-tail-accumulation-variable* (gensym))
-           (*tail-variables* (make-hash-table :test #'eq)))
-      `(block ,name
-         ,(expand-clauses clauses end-tag)))))
+  (cond ((notevery #'listp loop-body)
+         (let ((clauses (parse-loop-body loop-body)))
+           (analyze-clauses clauses)
+           (let* ((name (if (typep (car clauses) 'name-clause)
+                            (name (car clauses))
+                            nil))
+                  (*loop-name* name)
+                  (*accumulation-variable* (gensym))
+                  (*list-tail-accumulation-variable* (gensym))
+                  (*tail-variables* (make-hash-table :test #'eq)))
+             `(block ,name
+                ,(expand-clauses clauses end-tag)))))
+        ((some #'null loop-body)
+         (error 'non-compound-form))
+        (t
+         (let ((tag (gensym)))
+            `(block nil
+               (tagbody
+                ,tag
+                 ,@loop-body
+                 (go ,tag)))))))

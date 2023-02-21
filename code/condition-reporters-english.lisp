@@ -265,6 +265,15 @@
 ;;; Condition reporters for syntax errors.
 
 (defmethod acclimation:report-condition
+    ((condition non-compound-form)
+     stream
+     (language acclimation:english))
+  (declare (ignorable condition))
+  (format stream
+          "A non-compound form was found in a simple~@
+           loop."))
+
+(defmethod acclimation:report-condition
     ((condition name-clause-not-first)
      stream
      (language acclimation:english))
