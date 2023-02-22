@@ -1,9 +1,9 @@
 (cl:in-package #:khazern-intrinsic)
 
-(trivial-package-locks:with-unlocked-packages (:common-lisp)
+(trivial-package-locks:with-unlocked-system-packages
 
-(defmacro cl:loop-finish ()
-  '(go end-loop))
+  (defmacro cl:loop-finish ()
+    '(go end-loop))
 
-(defmacro loop (&rest forms)
-  (khazern:expand-body forms 'end-loop)))
+  (defmacro loop (&rest forms)
+    (khazern:expand-body forms 'end-loop)))
