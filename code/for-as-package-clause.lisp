@@ -13,36 +13,32 @@
    (%iterator-keywords :initarg :iterator-keywords :reader iterator-keywords)))
 
 (defmethod bound-variables ((subclause for-as-package))
-  (mapcar #'car
-          (extract-variables (var-spec subclause) nil)))
+  (extract-variables (var-spec subclause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parsers
 
-(define-parser symbol-parser
-  (alternative (keyword-parser 'symbol)
-               (keyword-parser 'symbols)))
+(define-parser symbol-parser ()
+  (keyword 'symbol 'symbols))
 
-(define-parser present-symbol-parser
-  (alternative (keyword-parser 'present-symbol)
-               (keyword-parser 'present-symbols)))
+(define-parser present-symbol-parser ()
+  (keyword 'present-symbol 'present-symbols))
 
-(define-parser external-symbol-parser
-  (alternative (keyword-parser 'external-symbol)
-               (keyword-parser 'external-symbols)))
+(define-parser external-symbol-parser ()
+  (keyword 'external-symbol 'external-symbols))
 
 ;;; This parser recognizes IN/OF followed by any form, and returns
 ;;; that form, or, if there is no IN/OF, returns the symbol *PACKAGE*.
-(define-parser package-form-parser
+(define-parser package-form-parser ()
   (optional '*package*
             (consecutive (lambda (of form)
                            (declare (ignore of))
                            form)
                          'in-of-parser
-                         'anything-parser)))
+                         'anything)))
 
-(define-parser package-symbol-parser
+(define-parser package-symbol-parser ()
   (consecutive (lambda (var-spec
                         type-spec
                         being
@@ -55,14 +51,14 @@
                    :type-spec type-spec
                    :package-form package-form
                    :iterator-keywords '(:internal :external :inherited)))
-               'anything-parser
-               'optional-type-spec-parser
+               'anything
+               'optional-type-spec
                'being-parser
                'each-the-parser
                'symbol-parser
                'package-form-parser))
 
-(define-parser package-present-symbol-parser
+(define-parser package-present-symbol-parser ()
   (consecutive (lambda (var-spec
                         type-spec
                         being
@@ -75,15 +71,15 @@
                    :type-spec type-spec
                    :package-form package-form
                    :iterator-keywords '(:internal :external)))
-               'anything-parser
-               'optional-type-spec-parser
+               'anything
+               'optional-type-spec
                'being-parser
                'each-the-parser
                'present-symbol-parser
                'package-form-parser))
 
 
-(define-parser package-external-symbol-parser
+(define-parser package-external-symbol-parser ()
   (consecutive (lambda (var-spec
                         type-spec
                         being
@@ -96,19 +92,17 @@
                    :type-spec type-spec
                    :package-form package-form
                    :iterator-keywords '(:external)))
-               'anything-parser
-               'optional-type-spec-parser
+               'anything
+               'optional-type-spec
                'being-parser
                'each-the-parser
                'external-symbol-parser
                'package-form-parser))
 
-(define-parser for-as-package-parser
+(define-parser for-as-package-parser (:for-as-subclause)
   (alternative 'package-symbol-parser
                'package-present-symbol-parser
                'package-external-symbol-parser))
-
-(add-for-as-subclause-parser 'for-as-package-parser)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -124,15 +118,8 @@
 (defmethod wrap-subclause ((subclause for-as-package) inner-form)
   `(let ((,(temp-entry-p-var subclause) nil)
          (,(temp-symbol-var subclause) nil)
-         ,@(loop with d-var-spec = (var-spec subclause)
-                 with d-type-spec = (type-spec subclause)
-                 for (variable) in (extract-variables d-var-spec d-type-spec)
-                 collect `(,variable nil)))
-     (declare ,@(loop with d-var-spec = (var-spec subclause)
-                      with d-type-spec = (type-spec subclause)
-                      for (variable type)
-                        in (extract-variables d-var-spec d-type-spec)
-                      collect `(cl:type (or null ,type) ,variable)))
+         ,.(generate-variable-bindings (var-spec subclause)))
+     (declare ,.(generate-variable-declarations (var-spec subclause) (type-spec subclause)))
      (with-package-iterator
          (,(iterator-var subclause)
           ,(package-var subclause)

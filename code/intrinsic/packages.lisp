@@ -1,4 +1,5 @@
 (cl:in-package #:common-lisp-user)
 
 (defpackage #:khazern-intrinsic
-  (:use #:common-lisp))
+  (:use #:common-lisp)
+  (:export #:*parser-table*))

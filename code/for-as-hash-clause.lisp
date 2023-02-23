@@ -18,23 +18,20 @@
 (defclass for-as-hash-value (for-as-hash) ())
 
 (defmethod bound-variables ((subclause for-as-hash))
-  (mapcar #'car
-          (append (extract-variables (var-spec subclause) nil)
-                  (extract-variables (other-var-spec subclause) nil))))
+  (nconc (extract-variables (var-spec subclause))
+         (extract-variables (other-var-spec subclause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parsers
 
-(define-parser hash-key-parser
-  (alternative (keyword-parser 'hash-key)
-               (keyword-parser 'hash-keys)))
+(define-parser hash-key-parser ()
+  (keyword 'hash-key 'hash-keys))
 
-(define-parser hash-value-parser
-  (alternative (keyword-parser 'hash-value)
-               (keyword-parser 'hash-values)))
+(define-parser hash-value-parser ()
+  (keyword 'hash-value 'hash-values))
 
-(define-parser hash-value-other-parser
+(define-parser hash-value-other-parser ()
   (singleton #'second
              (lambda (token)
                (and (consp token)
@@ -43,7 +40,7 @@
                     (symbolp (car token))
                     (equal (symbol-name (car token)) (string '#:hash-value))))))
 
-(define-parser hash-key-other-parser
+(define-parser hash-key-other-parser ()
   (singleton #'second
              (lambda (token)
                (and (consp token)
@@ -52,7 +49,7 @@
                     (symbolp (car token))
                     (equal (symbol-name (car token)) (string '#:hash-key))))))
 
-(define-parser hash-key-using-parser
+(define-parser hash-key-using-parser ()
   (consecutive (lambda (var-spec
                         type-spec
                         being
@@ -68,17 +65,17 @@
                    :type-spec type-spec
                    :hash-table-form hash-table-form
                    :other-var-spec other))
-               'anything-parser
-               'optional-type-spec-parser
+               'anything
+               'optional-type-spec
                'being-parser
                'each-the-parser
                'hash-key-parser
                'in-of-parser
-               'anything-parser
-               (keyword-parser 'using)
+               'anything
+               (keyword 'using)
                'hash-value-other-parser))
 
-(define-parser hash-key-no-using-parser
+(define-parser hash-key-no-using-parser ()
   (consecutive (lambda (var-spec
                         type-spec
                         being
@@ -92,15 +89,15 @@
                    :type-spec type-spec
                    :hash-table-form hash-table-form
                    :other-var-spec nil))
-               'anything-parser
-               'optional-type-spec-parser
+               'anything
+               'optional-type-spec
                'being-parser
                'each-the-parser
                'hash-key-parser
                'in-of-parser
-               'anything-parser))
+               'anything))
 
-(define-parser hash-value-using-parser
+(define-parser hash-value-using-parser ()
   (consecutive (lambda (var-spec
                         type-spec
                         being
@@ -116,17 +113,17 @@
                    :type-spec type-spec
                    :hash-table-form hash-table-form
                    :other-var-spec other))
-               'anything-parser
-               'optional-type-spec-parser
+               'anything
+               'optional-type-spec
                'being-parser
                'each-the-parser
                'hash-value-parser
                'in-of-parser
-               'anything-parser
-               (keyword-parser 'using)
+               'anything
+               (keyword 'using)
                'hash-key-other-parser))
 
-(define-parser hash-value-no-using-parser
+(define-parser hash-value-no-using-parser ()
   (consecutive (lambda (var-spec
                         type-spec
                         being
@@ -140,21 +137,19 @@
                    :type-spec type-spec
                    :hash-table-form hash-table-form
                    :other-var-spec nil))
-               'anything-parser
-               'optional-type-spec-parser
+               'anything
+               'optional-type-spec
                'being-parser
                'each-the-parser
                'hash-value-parser
                'in-of-parser
-               'anything-parser))
+               'anything))
 
-(define-parser for-as-hash-parser
+(define-parser for-as-hash-parser (:for-as-subclause)
   (alternative 'hash-key-using-parser
                'hash-key-no-using-parser
                'hash-value-using-parser
                'hash-value-no-using-parser))
-
-(add-for-as-subclause-parser 'for-as-hash-parser)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -171,18 +166,9 @@
   `(let ((,(temp-entry-p-var subclause) nil)
          (,(temp-key-var subclause) nil)
          (,(temp-value-var subclause) nil)
-         ,@(loop with d-var-spec = (var-spec subclause)
-                 with d-type-spec = (type-spec subclause)
-                 for (variable) in (extract-variables d-var-spec d-type-spec)
-                 collect `(,variable nil))
-         ,@(loop with other-var-spec = (other-var-spec subclause)
-                 for (variable) in (extract-variables other-var-spec nil)
-                 collect `(,variable nil)))
-     (declare ,@(loop with d-var-spec = (var-spec subclause)
-                      with d-type-spec = (type-spec subclause)
-                      for (variable type)
-                        in (extract-variables d-var-spec d-type-spec)
-                      collect `(cl:type (or null ,type) ,variable)))
+         ,.(generate-variable-bindings (var-spec subclause))
+         ,.(generate-variable-bindings (other-var-spec subclause)))
+     (declare ,@(generate-variable-declarations (var-spec subclause) (type-spec subclause)))
      (with-hash-table-iterator
          (,(iterator-var subclause) ,(hash-table-var subclause))
        ,inner-form)))

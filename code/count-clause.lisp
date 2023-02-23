@@ -18,67 +18,61 @@
 ;;;
 ;;; Parsers.
 
-(define-parser count-it-into-clause-parser
+(define-parser count-it-into-clause ()
   (consecutive (lambda (count it into var type-spec)
                  (declare (ignore count into))
                  (make-instance 'count-it-into-clause
                    :form it
                    :into-var var
                    :type-spec type-spec))
-               (alternative (keyword-parser 'count)
-                            (keyword-parser 'counting))
-               (keyword-parser 'it)
-               (keyword-parser 'into)
+               (keyword 'count 'counting)
+               (keyword 'it)
+               (keyword 'into)
                (singleton #'identity
                           (lambda (x)
                             (and (symbolp x) (not (constantp x)))))
-               'optional-type-spec-parser))
+               'optional-type-spec))
 
-(define-parser count-it-clause-parser
+(define-parser count-it-clause ()
   (consecutive (lambda (count it type-spec)
                  (declare (ignore count))
                  (make-instance 'count-it-clause
                    :form it
                    :type-spec type-spec))
-               (alternative (keyword-parser 'count)
-                            (keyword-parser 'counting))
-               (keyword-parser 'it)
-               'optional-type-spec-parser))
+               (keyword 'count 'counting)
+               (keyword 'it)
+               'optional-type-spec))
 
-(define-parser count-form-into-clause-parser
+(define-parser count-form-into-clause ()
   (consecutive (lambda (count form into var type-spec)
                  (declare (ignore count into))
                  (make-instance 'count-form-into-clause
                    :form form
                    :into-var var
                    :type-spec type-spec))
-               (alternative (keyword-parser 'count)
-                            (keyword-parser 'counting))
-               'anything-parser
-               (keyword-parser 'into)
+               (keyword 'count 'counting)
+               'anything
+               (keyword 'into)
                (singleton #'identity
                           (lambda (x)
                             (and (symbolp x) (not (constantp x)))))
-               'optional-type-spec-parser))
+               'optional-type-spec))
 
-(define-parser count-form-clause-parser
+(define-parser count-form-clause ()
   (consecutive (lambda (count form type-spec)
                  (declare (ignore count))
                  (make-instance 'count-form-clause
                    :form form
                    :type-spec type-spec))
-               (alternative (keyword-parser 'count)
-                            (keyword-parser 'counting))
-               'anything-parser
-               'optional-type-spec-parser))
+               (keyword 'count 'counting)
+               'anything
+               'optional-type-spec))
 
-(define-parser count-clause-parser
-  (alternative 'count-it-into-clause-parser
-               'count-it-clause-parser
-               'count-form-into-clause-parser
-               'count-form-clause-parser))
-
-(add-clause-parser 'count-clause-parser)
+(define-parser count-clause (:body-clause :selectable-clause)
+  (alternative 'count-it-into-clause
+               'count-it-clause
+               'count-form-into-clause
+               'count-form-clause))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

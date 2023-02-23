@@ -18,67 +18,61 @@
 ;;;
 ;;; Parsers.
 
-(define-parser maximize-it-into-clause-parser
+(define-parser maximize-it-into-clause ()
   (consecutive (lambda (maximize it into var type-spec)
                  (declare (ignore maximize into))
                  (make-instance 'maximize-it-into-clause
                    :form it
                    :into-var var
                    :type-spec type-spec))
-               (alternative (keyword-parser 'maximize)
-                            (keyword-parser 'maximizing))
-               (keyword-parser 'it)
-               (keyword-parser 'into)
+               (keyword 'maximize 'maximizing)
+               (keyword 'it)
+               (keyword 'into)
                (singleton #'identity
                           (lambda (x)
                             (and (symbolp x) (not (constantp x)))))
-               'optional-type-spec-parser))
+               'optional-type-spec))
 
-(define-parser maximize-it-clause-parser
+(define-parser maximize-it-clause ()
   (consecutive (lambda (maximize it type-spec)
                  (declare (ignore maximize))
                  (make-instance 'maximize-it-clause
                    :form it
                    :type-spec type-spec))
-               (alternative (keyword-parser 'maximize)
-                            (keyword-parser 'maximizing))
-               (keyword-parser 'it)
-               'optional-type-spec-parser))
+               (keyword 'maximize 'maximizing)
+               (keyword 'it)
+               'optional-type-spec))
 
-(define-parser maximize-form-into-clause-parser
+(define-parser maximize-form-into-clause ()
   (consecutive (lambda (maximize form into var type-spec)
                  (declare (ignore maximize into))
                  (make-instance 'maximize-form-into-clause
                    :form form
                    :into-var var
                    :type-spec type-spec))
-               (alternative (keyword-parser 'maximize)
-                            (keyword-parser 'maximizing))
-               'anything-parser
-               (keyword-parser 'into)
+               (keyword 'maximize 'maximizing)
+               'anything
+               (keyword 'into)
                (singleton #'identity
                           (lambda (x)
                             (and (symbolp x) (not (constantp x)))))
-               'optional-type-spec-parser))
+               'optional-type-spec))
 
-(define-parser maximize-form-clause-parser
+(define-parser maximize-form-clause ()
   (consecutive (lambda (maximize form type-spec)
                  (declare (ignore maximize))
                  (make-instance 'maximize-form-clause
                    :form form
                    :type-spec type-spec))
-               (alternative (keyword-parser 'maximize)
-                            (keyword-parser 'maximizing))
-               'anything-parser
-               'optional-type-spec-parser))
+               (keyword 'maximize 'maximizing)
+               'anything
+               'optional-type-spec))
 
-(define-parser maximize-clause-parser
-  (alternative 'maximize-it-into-clause-parser
-               'maximize-it-clause-parser
-               'maximize-form-into-clause-parser
-               'maximize-form-clause-parser))
-
-(add-clause-parser 'maximize-clause-parser)
+(define-parser maximize-clause  (:body-clause :selectable-clause)
+  (alternative 'maximize-it-into-clause
+               'maximize-it-clause
+               'maximize-form-into-clause
+               'maximize-form-clause))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

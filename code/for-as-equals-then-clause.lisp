@@ -20,14 +20,13 @@
                            :dictionary dictionary)))
                          
 (defmethod bound-variables ((subclause for-as-equals-then))
-  (mapcar #'car
-          (extract-variables (var-spec subclause) nil)))
+  (extract-variables (var-spec subclause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parsers.
 
-(define-parser for-as-equals-then-parser-1
+(define-parser for-as-equals-then-parser-1 ()
   (consecutive (lambda (var-spec type-spec = form1 then form2)
                  (declare (ignore = then))
                  (make-instance 'for-as-equals-then
@@ -36,14 +35,14 @@
                    :initial-form form1
                    :subsequent-form form2))
                ;; Accept anything for now.  Analyze later.
-               'anything-parser
-               'optional-type-spec-parser
-               (keyword-parser '=)
-               'anything-parser
-               (keyword-parser 'then)
-               'anything-parser))
+               'anything
+               'optional-type-spec
+               (keyword '=)
+               'anything
+               (keyword 'then)
+               'anything))
 
-(define-parser for-as-equals-then-parser-2
+(define-parser for-as-equals-then-parser-2 ()
   (consecutive (lambda (var-spec type-spec = form1)
                  (declare (ignore =))
                  (make-instance 'for-as-equals-then
@@ -52,35 +51,28 @@
                    :initial-form form1
                    :subsequent-form form1))
                ;; Accept anything for now.  Analyze later.
-               'anything-parser
-               'optional-type-spec-parser
-               (keyword-parser '=)
-               'anything-parser))
+               'anything
+               'optional-type-spec
+               (keyword '=)
+               'anything))
 
-;;; Make sure parser 1 is tried first.  For that, it must be added
-;;; last.
-(add-for-as-subclause-parser 'for-as-equals-then-parser-2)
-(add-for-as-subclause-parser 'for-as-equals-then-parser-1)
+(define-parser for-as-equals-then-parser (:for-as-subclause)
+  (alternative 'for-as-equals-then-parser-1
+               'for-as-equals-then-parser-2))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the bindings.
 
 (defmethod initial-bindings ((clause for-as-equals-then))
-  (loop with d-var-spec = (var-spec clause)
-        with d-type-spec = (type-spec clause)
-        for (variable) in (extract-variables d-var-spec d-type-spec)
-        collect `(,variable nil)))
+  (generate-variable-bindings (var-spec clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the declarations.
 
-(defmethod declarations ((clause for-as-equals-then))
-  (loop with d-var-spec = (var-spec clause)
-        with d-type-spec = (type-spec clause)
-        for (variable type) in (extract-variables d-var-spec d-type-spec)
-        collect `(cl:type (or null ,type) ,variable)))
+(defmethod initial-declarations ((clause for-as-equals-then))
+  (generate-variable-declarations (var-spec clause) (type-spec clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

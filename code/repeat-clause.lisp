@@ -8,14 +8,12 @@
 ;;;
 ;;; Parsers.
 
-(define-parser repeat-clause-parser
+(define-parser repeat-clause (:body-clause)
   (consecutive (lambda (repeat form)
                  (declare (ignore repeat))
                  (make-instance 'repeat-clause :form form))
-               (keyword-parser 'repeat)
-               'anything-parser))
-
-(add-clause-parser 'repeat-clause-parser)
+               (keyword 'repeat)
+               'anything))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -28,8 +26,8 @@
 ;;;
 ;;; Compute the declarations.
 
-(defmethod declarations ((clause repeat-clause))
-  `((cl:type (integer 0) ,(var-spec clause))))
+(defmethod initial-declarations ((clause repeat-clause))
+  `((cl:type number ,(var-spec clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

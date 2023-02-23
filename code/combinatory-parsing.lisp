@@ -33,7 +33,7 @@
       (parse-trace-output "~asuccess~%" (if successp "" "no "))
       (values successp result rest))))
 
-(defmacro define-parser (name &body body)
+(defmacro define-parser (name categories &body body)
   `(progn
      ;; At compile time, we define a parser that generates an error
      ;; message if invoked.  The reason for doing that is to avoid
@@ -48,7 +48,14 @@
      (eval-when (:load-toplevel :execute)
        (setf (fdefinition ',name)
              (lambda (tokens)
-               (trace-parser ',name (progn ,@body) tokens))))))
+               (trace-parser ',name (progn ,@body) tokens))
+             (get ',name :khazern-categories) ',categories))))
+
+(defun none ()
+  (lambda (tokens)
+    (if tokens
+        (values nil nil tokens)
+        (values t nil nil))))
 
 ;;; Take a function designator (called the TRANSFORMER) and a
 ;;; predicate P and return a parser Q that invokes the predicate on
@@ -178,5 +185,17 @@
       (if successp
           (values t result rest)
           (values t default tokens)))))
+
+(defun alternative-by-category (category)
+  (lambda (tokens)
+    (block parse-category
+      (map nil (lambda (name)
+                 (when (member category (get name :khazern-categories))
+                   (multiple-value-bind (successp result rest)
+                       (funcall name tokens)
+                     (when successp
+                       (return-from parse-category (values t result rest))))))
+           (parser-table-parsers *parser-table*))
+      (values nil nil tokens))))
 
 ;;;  LocalWords:  parsers

@@ -20,133 +20,121 @@
 ;;;
 ;;; Parsers.
 
-(define-parser then-or-else-parser
-  (consecutive #'cons
-               'selectable-clause-parser
-               (repeat* #'list
-                        'and-selectable-clause-parser)))
-(define-parser if-else-end-clause-parser
+(define-parser if-else-end-clause ()
   (consecutive (lambda (if form then-clauses else else-clauses end)
                  (declare (ignore if else end))
                  (make-instance 'conditional-clause
                    :condition form
                    :then-clauses then-clauses
                    :else-clauses else-clauses))
-               (alternative (keyword-parser 'if)
-                            (keyword-parser 'when))
-               'anything-parser
-               'then-or-else-parser
-               (keyword-parser 'else)
-               'then-or-else-parser
-               (keyword-parser 'end)))
+               (keyword 'if 'when)
+               'anything
+               'selectable-clause+
+               (keyword 'else)
+               'selectable-clause+
+               (keyword 'end)))
 
-(define-parser if-end-clause-parser
+(define-parser if-end-clause ()
   (consecutive (lambda (if form then-clauses end)
                  (declare (ignore if end))
                  (make-instance 'conditional-clause
                    :condition form
                    :then-clauses then-clauses
                    :else-clauses nil))
-               (alternative (keyword-parser 'if)
-                            (keyword-parser 'when))
-               'anything-parser
-               'then-or-else-parser
-               (keyword-parser 'end)))
+               (keyword 'if 'when)
+               'anything
+               'selectable-clause+
+               (keyword 'end)))
                
-(define-parser if-else-clause-parser
+(define-parser if-else-clause ()
   (consecutive (lambda (if form then-clauses else else-clauses)
                  (declare (ignore if else))
                  (make-instance 'conditional-clause
                    :condition form
                    :then-clauses then-clauses
                    :else-clauses else-clauses))
-               (alternative (keyword-parser 'if)
-                            (keyword-parser 'when))
-               'anything-parser
-               'then-or-else-parser
-               (keyword-parser 'else)
-               'then-or-else-parser))
+               (keyword 'if 'when)
+               'anything
+               'selectable-clause+
+               (keyword 'else)
+               'selectable-clause+))
 
-(define-parser if-clause-parser
+(define-parser if-clause ()
   (consecutive (lambda (if form then-clauses)
                  (declare (ignore if))
                  (make-instance 'conditional-clause
                    :condition form
                    :then-clauses then-clauses
                    :else-clauses nil))
-               (alternative (keyword-parser 'if)
-                            (keyword-parser 'when))
-               'anything-parser
-               'then-or-else-parser))
+               (keyword 'if 'when)
+               'anything
+               'selectable-clause+))
 
-(define-parser if-when-parser
-  (alternative 'if-else-end-clause-parser
-               'if-end-clause-parser
-               'if-else-clause-parser
-               'if-clause-parser))
+(define-parser if-when-clauses ()
+  (alternative 'if-else-end-clause
+               'if-end-clause
+               'if-else-clause
+               'if-clause))
 
-(define-parser unless-else-end-clause-parser
+(define-parser unless-else-end-clause ()
   (consecutive (lambda (unless form else-clauses else then-clauses end)
                  (declare (ignore unless else end))
                  (make-instance 'conditional-clause
                    :condition form
                    :then-clauses then-clauses
                    :else-clauses else-clauses))
-               (keyword-parser 'unless)
-               'anything-parser
-               'then-or-else-parser
-               (keyword-parser 'else)
-               'then-or-else-parser
-               (keyword-parser 'end)))
+               (keyword 'unless)
+               'anything
+               'selectable-clause+
+               (keyword 'else)
+               'selectable-clause+
+               (keyword 'end)))
 
-(define-parser unless-end-clause-parser
+(define-parser unless-end-clause ()
   (consecutive (lambda (unless form else-clauses end)
                  (declare (ignore unless end))
                  (make-instance 'conditional-clause
                    :condition form
                    :then-clauses nil
                    :else-clauses else-clauses))
-               (keyword-parser 'unless)
-               'anything-parser
-               'then-or-else-parser
-               (keyword-parser 'end)))
+               (keyword 'unless)
+               'anything
+               'selectable-clause+
+               (keyword 'end)))
                
-(define-parser unless-else-clause-parser
+(define-parser unless-else-clause ()
   (consecutive (lambda (unless form else-clauses else then-clauses)
                  (declare (ignore unless else))
                  (make-instance 'conditional-clause
                    :condition form
                    :then-clauses then-clauses
                    :else-clauses else-clauses))
-               (keyword-parser 'unless)
-               'anything-parser
-               'then-or-else-parser
-               (keyword-parser 'else)
-               'then-or-else-parser))
+               (keyword 'unless)
+               'anything
+               'selectable-clause+
+               (keyword 'else)
+               'selectable-clause+))
 
-(define-parser unless-clause-parser
+(define-parser unless-clause ()
   (consecutive (lambda (unless form else-clauses)
                  (declare (ignore unless))
                  (make-instance 'conditional-clause
                    :condition form
                    :then-clauses nil
                    :else-clauses else-clauses))
-               (alternative (keyword-parser 'unless)
-                            (keyword-parser 'when))
-               'anything-parser
-               'then-or-else-parser))
+               (keyword 'unless 'when)
+               'anything
+               'selectable-clause+))
 
-(define-parser unless-parser
-  (alternative 'unless-else-end-clause-parser
-               'unless-end-clause-parser
-               'unless-else-clause-parser
-               'unless-clause-parser))
+(define-parser unless-clauses ()
+  (alternative 'unless-else-end-clause
+               'unless-end-clause
+               'unless-else-clause
+               'unless-clause))
 
-(define-parser conditional-clause-parser
-  (alternative 'if-when-parser
-               'unless-parser))
-
-(add-clause-parser 'conditional-clause-parser)
+(define-parser conditional-clause (:body-clause :selectable-clause)
+  (alternative 'if-when-clauses
+               'unless-clauses))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

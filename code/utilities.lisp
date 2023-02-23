@@ -63,31 +63,47 @@
        (setq ,@(loop for (orig-var . temp-var) in dictionary
                      append `(,orig-var ,temp-var))))))
 
-;;; Extract variables
-(defun extract-variables (d-var-spec d-type-spec)
+(defun map-variable-types (function var-spec &optional type-spec)
   (let ((result '()))
-    (labels ((extract-aux (d-var-spec d-type-spec)
-               (cond ((null d-var-spec)
+    (labels ((extract-aux (var-spec type-spec)
+               (cond ((null var-spec)
                       nil)
-                     ((symbolp d-var-spec)
-                      (push (list d-var-spec (or d-type-spec t)) result))
-                     ((symbolp d-type-spec)
-                      (if (not (consp d-var-spec))
-                          (error 'expected-var-spec-but-found
-                                 :found d-var-spec)
-                          (progn (extract-aux (car d-var-spec) d-type-spec)
-                                 (extract-aux (cdr d-var-spec) d-type-spec))))
-                     ((not (consp d-var-spec))
+                     ((symbolp var-spec)
+                      (push (funcall function var-spec (or type-spec t)) result))
+                     ((symbolp type-spec)
+                      (unless (consp var-spec)
+                        (error 'expected-var-spec-but-found
+                               :found var-spec))
+                      (extract-aux (car var-spec) type-spec)
+                      (extract-aux (cdr var-spec) type-spec))
+                     ((not (consp var-spec))
                       (error 'expected-var-spec-but-found
-                             :found d-var-spec))
-                     ((not (consp d-type-spec))
+                             :found var-spec))
+                     ((not (consp type-spec))
                       (error 'expected-type-spec-but-found
-                             :found d-type-spec))
+                             :found type-spec))
                      (t
-                      (extract-aux (car d-var-spec) (car d-type-spec))
-                      (extract-aux (cdr d-var-spec) (cdr d-type-spec))))))
-      (extract-aux d-var-spec d-type-spec)
+                      (extract-aux (car var-spec) (car type-spec))
+                      (extract-aux (cdr var-spec) (cdr type-spec))))))
+      (extract-aux var-spec type-spec)
       result)))
+
+(defun generate-variable-declarations (var-spec type-spec)
+  (map-variable-types (lambda (var type)
+                        `(cl:type (or null ,type) ,var))
+                      var-spec type-spec))
+
+(defun generate-variable-bindings (var-spec)
+  (map-variable-types (lambda (var type)
+                        (declare (ignore type))
+                        `(,var nil))
+                      var-spec))
+
+(defun extract-variables (var-spec)
+  (map-variable-types (lambda (var type)
+                        (declare (ignore type))
+                        var)
+                      var-spec))
 
 ;;; This function is used in the list accumulation clauses COLLECT,
 ;;; APPEND, and NCONC.  The idea is that CONS cells in a suffix of the

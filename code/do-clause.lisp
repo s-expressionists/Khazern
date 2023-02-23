@@ -21,16 +21,13 @@
 ;;;
 ;;; Parser
 
-(define-parser do-clause-parser
-  (consecutive (lambda (do compound+)
+(define-parser do-clause (:body-clause :selectable-clause)
+  (consecutive (lambda (do compound-form+)
                  (declare (ignore do))
                  (make-instance 'do-clause
-                   :body compound+))
-               (alternative (keyword-parser 'do)
-                            (keyword-parser 'doing))
-               'compound+))
-
-(add-clause-parser 'do-clause-parser)
+                   :body compound-form+))
+               (keyword 'do 'doing)
+               'compound-form+))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

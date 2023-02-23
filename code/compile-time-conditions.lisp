@@ -54,9 +54,6 @@
 (define-condition expected-for/as-subclause-but-end (loop-parse-error)
   ())
 
-(define-condition expected-symbol-but-found (loop-parse-error-found)
-  ())
-
 (define-condition expected-each/the-but-end (loop-parse-error)
   ())
 

@@ -18,59 +18,53 @@
 ;;;
 ;;; Parsers.
 
-(define-parser nconc-it-into-clause-parser
+(define-parser nconc-it-into-clause ()
   (consecutive (lambda (nconc it into var)
                  (declare (ignore nconc into))
                  (make-instance 'nconc-it-into-clause
                    :form it
                    :into-var var))
-               (alternative (keyword-parser 'nconc)
-                            (keyword-parser 'nconcing))
-               (keyword-parser 'it)
-               (keyword-parser 'into)
+               (keyword 'nconc 'nconcing)
+               (keyword 'it)
+               (keyword 'into)
                (singleton #'identity
                           (lambda (x)
                             (and (symbolp x) (not (constantp x)))))))
 
-(define-parser nconc-it-clause-parser
+(define-parser nconc-it-clause ()
   (consecutive (lambda (nconc it)
                  (declare (ignore nconc))
                  (make-instance 'nconc-it-clause
                    :form it))
-               (alternative (keyword-parser 'nconc)
-                            (keyword-parser 'nconcing))
-               (keyword-parser 'it)))
+               (keyword 'nconc 'nconcing)
+               (keyword 'it)))
 
-(define-parser nconc-form-into-clause-parser
+(define-parser nconc-form-into-clause ()
   (consecutive (lambda (nconc form into var)
                  (declare (ignore nconc into))
                  (make-instance 'nconc-form-into-clause
                    :form form
                    :into-var var))
-               (alternative (keyword-parser 'nconc)
-                            (keyword-parser 'nconcing))
-               'anything-parser
-               (keyword-parser 'into)
+               (keyword 'nconc 'nconcing)
+               'anything
+               (keyword 'into)
                (singleton #'identity
                           (lambda (x)
                             (and (symbolp x) (not (constantp x)))))))
 
-(define-parser nconc-form-clause-parser
+(define-parser nconc-form-clause ()
   (consecutive (lambda (nconc form)
                  (declare (ignore nconc))
                  (make-instance 'nconc-form-clause
                    :form form))
-               (alternative (keyword-parser 'nconc)
-                            (keyword-parser 'nconcing))
-               'anything-parser))
+               (keyword 'nconc 'nconcing)
+               'anything))
 
-(define-parser nconc-clause-parser
-  (alternative 'nconc-it-into-clause-parser
-               'nconc-it-clause-parser
-               'nconc-form-into-clause-parser
-               'nconc-form-clause-parser))
-
-(add-clause-parser 'nconc-clause-parser)
+(define-parser nconc-clause (:body-clause :selectable-clause)
+  (alternative 'nconc-it-into-clause
+               'nconc-it-clause
+               'nconc-form-into-clause
+               'nconc-form-clause))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

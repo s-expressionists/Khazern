@@ -38,10 +38,8 @@
 
 (defclass with-clause (variable-clause subclauses-mixin) ())
 
-(defclass with-subclause ()
-  ((%var-spec :initarg :var-spec :reader var-spec)
-   (%type-spec :initarg :type-spec :reader type-spec)
-   ;; This slot contains a copy of the tree contained in the VAR-SPEC
+(defclass with-subclause (var-and-type-spec-mixin)
+  (;; This slot contains a copy of the tree contained in the VAR-SPEC
    ;; slot except that the non-NIL leaves have been replaced by
    ;; GENSYMs.
    (%temp-vars :initarg :temp-vars :reader temp-vars)
@@ -69,13 +67,10 @@
   nil)
 
 (defmethod bound-variables ((clause with-clause))
-  (reduce #'append
-          (mapcar #'bound-variables (subclauses clause))
-          :from-end t))
+  (mapcan #'bound-variables (subclauses clause)))
 
 (defmethod bound-variables ((subclause with-subclause))
-  (mapcar #'car
-          (extract-variables (var-spec subclause) nil)))
+  (extract-variables (var-spec subclause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -83,7 +78,7 @@
 
 ;;; Parser for var [type-spec] = form
 ;;; We try this parser first.
-(define-parser with-subclause-type-1-parser
+(define-parser with-subclause-type-1 ()
   (consecutive (lambda (var-spec type-spec = form)
                  (declare (ignore =))
                  (make-instance 'with-subclause-with-form
@@ -91,46 +86,44 @@
                    :type-spec type-spec
                    :form form))
                ;; Accept anything for now.  Analyze later.
-               'anything-parser
-               'optional-type-spec-parser
-               (keyword-parser '=)
-               'anything-parser))
+               'anything
+               'optional-type-spec
+               (keyword '=)
+               'anything))
 
 ;;; Parser for var [type-spec]
-(define-parser with-subclause-type-2-parser
+(define-parser with-subclause-type-2 ()
   (consecutive (lambda (var-spec type-spec)
                  (make-instance 'with-subclause-no-form
                    :var-spec var-spec
                    :type-spec type-spec))
                ;; Accept anything for now.  Analyze later.
-               'anything-parser
-               'optional-type-spec-parser))
+               'anything
+               'optional-type-spec))
 
 ;;; Parser for any type of with subclause without the leading keyword
-(define-parser with-subclause-no-keyword-parser
-  (alternative 'with-subclause-type-1-parser
-               'with-subclause-type-2-parser))
+(define-parser with-subclause-no-keyword ()
+  (alternative 'with-subclause-type-1
+               'with-subclause-type-2))
 
 ;;; Parser for the with subclause starting with the AND keyword.
-(define-parser with-subclause-and-parser
+(define-parser with-subclause-and ()
   (consecutive (lambda (and subclause)
                  (declare (ignore and))
                  subclause)
-               (keyword-parser 'and)
-               'with-subclause-no-keyword-parser))
+               (keyword 'and)
+               'with-subclause-no-keyword))
 
 ;;; Parser for a with clause
-(define-parser with-clause-parser
+(define-parser with-clause (:body-clause)
   (consecutive (lambda (with first rest)
                  (declare (ignore with))
                  (make-instance 'with-clause
                    :subclauses (cons first rest)))
-               (keyword-parser 'with)
-               'with-subclause-no-keyword-parser
+               (keyword 'with)
+               'with-subclause-no-keyword
                (repeat* #'list
-                        'with-subclause-and-parser)))
-
-(add-clause-parser 'with-clause-parser)
+                        'with-subclause-and)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -151,22 +144,18 @@
      ,inner-form))
 
 (defmethod wrap-subclause ((subclause with-subclause-no-form) inner-form)
-  (let* ((vars-and-types
-           (extract-variables (var-spec subclause) (type-spec subclause)))
-         (vars-and-values
-           (loop for (var type) in vars-and-types
-                 collect (list var
-                               (case type
-                                 (fixnum 0)
-                                 (float 0.0)
-                                 (t nil))))))
-    `(let ,vars-and-values
-       ,inner-form)))
+  `(let ,(map-variable-types (lambda (var type)
+                               `(,var ,(case type
+                                         (fixnum 0)
+                                         (float 0.0)
+                                         (t nil))))
+                             (var-spec subclause) (type-spec subclause))
+     ,inner-form))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the declarations.
 
-(defmethod declarations ((clause with-subclause))
-  (reduce #'append (mapcar #'declarations (subclauses clause))
+(defmethod initial-declarations ((clause with-subclause))
+  (reduce #'append (mapcar #'initial-declarations (subclauses clause))
           :from-end t))

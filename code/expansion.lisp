@@ -19,7 +19,12 @@
 ;;; declaration specifiers from the clause.  Notice that it is a list
 ;;; of declaration specifiers, not a list of declarations.  In other
 ;;; words, the symbol DECLARE is omitted.
-(defgeneric declarations (clause)
+(defgeneric initial-declarations (clause)
+  (:method (clause)
+    (declare (ignore clause))
+    '()))
+
+(defgeneric final-declarations (clause)
   (:method (clause)
     (declare (ignore clause))
     '()))
@@ -33,10 +38,6 @@
   (:method (clause)
     (declare (ignore clause))
     '()))
-
-(defgeneric bindings (clause)
-  (:method (clause)
-    (append (initial-bindings clause) (final-bindings clause))))
 
 ;;; This generic function returns a binding for CLAUSE that should go in
 ;;; the LOOP prologue.
@@ -102,6 +103,21 @@
 ;;; standard, only the method specialized to the FINALLY clause
 ;;; returns a value other than NIL.
 (defgeneric epilogue-form (clause)
+  (:method (clause)
+    (declare (ignore clause))
+    nil))
+
+(defgeneric main-clause-p (clause)
+  (:method (clause)
+    (declare (ignore clause))
+    nil))
+
+(defgeneric name-clause-p (clause)
+  (:method (clause)
+    (declare (ignore clause))
+    nil))
+
+(defgeneric variable-clause-p (clause)
   (:method (clause)
     (declare (ignore clause))
     nil))
@@ -192,27 +208,20 @@
 ;;; initial bindings to a single binding form of the entire clause.
 (defmethod wrap-subclause (subclause inner-form)
   `(let ,(final-bindings subclause)
+     (declare ,@(final-declarations subclause))
      ,inner-form))
 
 ;;; Default method for WRAP-CLAUSE.  This method is applicable only if
-;;; the clause type does not admit any subclauses.  For this type of
-;;; clause, the default implemented here is to wrap the clause in all
-;;; the bindings, i.e., both the initial and the final bindings of
-;;; both exist.
-(defmethod wrap-clause (clause inner-form)
-  `(let* ,(bindings clause)
-     ,inner-form))
-
-;;; Method on WRAP-CLAUSE specialized to clause types that admit
-;;; subclauses.  This method overrides the default method above.  It
+;;; the clause type does not admit any subclauses.  It
 ;;; wraps each subclause individually, and then wraps the result in
 ;;; the initial bindings for the entire clause.
-(defmethod wrap-clause ((clause subclauses-mixin) inner-form)
+(defmethod wrap-clause (clause inner-form)
   (let ((result inner-form))
     (mapc (lambda (subclause)
             (setf result (wrap-subclause subclause result)))
           (reverse (subclauses clause)))
     `(let ,(initial-bindings clause)
+       (declare ,@(initial-declarations clause))
        ,result)))
 
 ;;; Process all clauses by first computing the prologue, the body, and
@@ -233,11 +242,11 @@
            ,@acc)
        ,(do-clauses all-clauses end-tag))))
 
-(defun expand-body (loop-body end-tag)
+(defun expand-body (loop-body end-tag parser-table)
   (cond ((notevery #'listp loop-body)
-         (let ((clauses (parse-loop-body loop-body)))
+         (let ((clauses (parse-loop-body loop-body parser-table)))
            (analyze-clauses clauses)
-           (let* ((name (if (typep (car clauses) 'name-clause)
+           (let* ((name (if (name-clause-p (car clauses))
                             (name (car clauses))
                             nil))
                   (*loop-name* name)

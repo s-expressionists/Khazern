@@ -7,26 +7,22 @@
 ;;;
 ;;; Parsers.
 
-(define-parser while-clause-parser
+(define-parser while-clause (:body-clause)
   (consecutive (lambda (while form)
                  (declare (ignore while))
                  (make-instance 'while-clause
                    :form form))
-               (keyword-parser 'while)
-               'anything-parser))
+               (keyword 'while)
+               'anything))
 
-(add-clause-parser 'while-clause-parser)
-
-(define-parser until-clause-parser
+(define-parser until-clause (:body-clause)
   (consecutive (lambda (until form)
                  (declare (ignore until))
                  (make-instance 'while-clause
                    :form `(not ,form)))
-               (keyword-parser 'until)
-               'anything-parser))
+               (keyword 'until)
+               'anything))
   
-(add-clause-parser 'until-clause-parser)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the body-form

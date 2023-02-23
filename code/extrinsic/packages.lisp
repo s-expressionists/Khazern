@@ -2,5 +2,6 @@
   (:use #:common-lisp)
   (:shadow #:loop
            #:loop-finish)
-  (:export #:loop
+  (:export #:*parser-table*
+           #:loop
            #:loop-finish))

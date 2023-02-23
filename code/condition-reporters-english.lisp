@@ -128,16 +128,6 @@
            subclause, but reached the end of the loop body."))
 
 (defmethod acclimation:report-condition
-    ((condition expected-symbol-but-found)
-     stream
-     (language acclimation:english))
-  (format stream
-          "Expected a loop keyword indicating a for/as~@
-           subclause, but found the following instead:~@
-           ~s"
-          (found condition)))
-
-(defmethod acclimation:report-condition
     ((condition expected-each/the-but-end)
      stream
      (language acclimation:english))

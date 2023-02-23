@@ -18,59 +18,53 @@
 ;;;
 ;;; Parsers.
 
-(define-parser append-it-into-clause-parser
+(define-parser append-it-into-clause ()
   (consecutive (lambda (append it into var)
                  (declare (ignore append into))
                  (make-instance 'append-it-into-clause
                    :form it
                    :into-var var))
-               (alternative (keyword-parser 'append)
-                            (keyword-parser 'appending))
-               (keyword-parser 'it)
-               (keyword-parser 'into)
+               (keyword 'append 'appending)
+               (keyword 'it)
+               (keyword 'into)
                (singleton #'identity
                           (lambda (x)
                             (and (symbolp x) (not (constantp x)))))))
 
-(define-parser append-it-clause-parser
+(define-parser append-it-clause ()
   (consecutive (lambda (append it)
                  (declare (ignore append))
                  (make-instance 'append-it-clause
                    :form it))
-               (alternative (keyword-parser 'append)
-                            (keyword-parser 'appending))
-               (keyword-parser 'it)))
+               (keyword 'append 'appending)
+               (keyword 'it)))
 
-(define-parser append-form-into-clause-parser
+(define-parser append-form-into-clause ()
   (consecutive (lambda (append form into var)
                  (declare (ignore append into))
                  (make-instance 'append-form-into-clause
                    :form form
                    :into-var var))
-               (alternative (keyword-parser 'append)
-                            (keyword-parser 'appending))
-               'anything-parser
-               (keyword-parser 'into)
+               (keyword 'append 'appending)
+               'anything
+               (keyword 'into)
                (singleton #'identity
                           (lambda (x)
                             (and (symbolp x) (not (constantp x)))))))
 
-(define-parser append-form-clause-parser
+(define-parser append-form-clause ()
   (consecutive (lambda (append form)
                  (declare (ignore append))
                  (make-instance 'append-form-clause
                    :form form))
-               (alternative (keyword-parser 'append)
-                            (keyword-parser 'appending))
-               'anything-parser))
+               (keyword 'append 'appending)
+               'anything))
 
-(define-parser append-clause-parser
-  (alternative 'append-it-into-clause-parser
-               'append-it-clause-parser
-               'append-form-into-clause-parser
-               'append-form-clause-parser))
-
-(add-clause-parser 'append-clause-parser)
+(define-parser append-clause (:body-clause :selectable-clause)
+  (alternative 'append-it-into-clause
+               'append-it-clause
+               'append-form-into-clause
+               'append-form-clause))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

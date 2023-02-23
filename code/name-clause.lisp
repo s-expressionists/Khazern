@@ -24,16 +24,17 @@
 (defmethod accumulation-variables ((clause name-clause))
   '())
 
+(defmethod name-clause-p ((clause name-clause))
+  t)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parser.
 
-(define-parser name-clause-parser
+(define-parser name-clause (:body-clause)
   (consecutive (lambda (named name)
                  (declare (ignore named))
                  (make-instance 'name-clause
                    :name name))
-               (keyword-parser 'named)
+               (keyword 'named)
                (singleton #'identity #'symbolp)))
-
-(add-clause-parser 'name-clause-parser)
