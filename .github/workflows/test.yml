@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.os }}
+    name: ${{ matrix.os }} / ${{ matrix.lisp }}
 
     defaults:
       run:
@@ -20,11 +20,27 @@ jobs:
         os:
         - macos-latest
         - ubuntu-22.04
+        lisp:
+        - ccl
+        - sbcl
+        exclude:
+        - os: ubuntu-22.04
+          lisp: ccl
 
     # run the job on every combination of "os" above
     runs-on: ${{ matrix.os }}
 
     steps:
+    - name: CCL environment variables
+      if: matrix.lisp == 'ccl'
+      run: |
+        echo -e "LISP=ccl64\nLOAD=--load\nEVAL=--eval\nQUIT=--eval \"(quit)\"" >> $GITHUB_ENV
+
+    - name: SBCL environment variables
+      if: matrix.lisp == 'sbcl'
+      run: |
+        echo -e "LISP=sbcl\nLOAD=--load\nEVAL=--eval\nQUIT=--quit" >> $GITHUB_ENV
+
     - name: Install Ubuntu dependencies
       if: matrix.os == 'ubuntu-22.04'
       run: |
@@ -34,7 +50,7 @@ jobs:
     - name: Install MacOS dependencies
       if: matrix.os == 'macos-latest'
       run: |
-        brew install sbcl
+        brew install sbcl clozure-cl
 
     - uses: actions/checkout@v3
 
@@ -43,14 +59,14 @@ jobs:
         mkdir -p $HOME/.config/common-lisp/source-registry.conf.d
         echo "(:TREE #P\"${{ github.workspace }}/\")" > $HOME/.config/common-lisp/source-registry.conf.d/khazern.conf
         curl -kLO https://beta.quicklisp.org/quicklisp.lisp
-        sbcl --non-interactive --load quicklisp.lisp --eval "(quicklisp-quickstart:install)" --eval "(ql-util:without-prompting (ql:add-to-init-file))"
+        $LISP $LOAD quicklisp.lisp $EVAL "(quicklisp-quickstart:install)" $EVAL "(ql-util:without-prompting (ql:add-to-init-file))" $QUIT
         git clone https://github.com/yitzchak/trivial-package-locks.git $HOME/quicklisp/local-projects/trivial-package-locks
-        sbcl --non-interactive --eval "(ql:quickload '(:khazern-extrinsic/test :khazern-intrinsic/test))"
+        $LISP $EVAL "(ql:quickload '(:khazern-extrinsic/test :khazern-intrinsic/test))" $QUIT
         
     - name: Run Regression Tests
       run: |
-        sbcl --eval "(asdf:test-system :khazern-extrinsic)"
+        $LISP $EVAL "(asdf:test-system :khazern-extrinsic)"
 
     - name: Run ANSI Tests
       run: |
-        sbcl --eval "(asdf:test-system :khazern-intrinsic)"
+        $LISP $EVAL "(asdf:test-system :khazern-intrinsic)"
