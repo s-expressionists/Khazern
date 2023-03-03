@@ -18,53 +18,27 @@
 ;;;
 ;;; Parsers.
 
-(define-parser nconc-it-into-clause ()
-  (consecutive (lambda (nconc it into var)
-                 (declare (ignore nconc into))
-                 (make-instance 'nconc-it-into-clause
-                   :form it
-                   :into-var var))
-               (keyword 'nconc 'nconcing)
-               (keyword 'it)
-               (keyword 'into)
-               (singleton #'identity
-                          (lambda (x)
-                            (and (symbolp x) (not (constantp x)))))))
-
-(define-parser nconc-it-clause ()
-  (consecutive (lambda (nconc it)
-                 (declare (ignore nconc))
-                 (make-instance 'nconc-it-clause
-                   :form it))
-               (keyword 'nconc 'nconcing)
-               (keyword 'it)))
-
-(define-parser nconc-form-into-clause ()
-  (consecutive (lambda (nconc form into var)
-                 (declare (ignore nconc into))
-                 (make-instance 'nconc-form-into-clause
-                   :form form
-                   :into-var var))
-               (keyword 'nconc 'nconcing)
-               'anything
-               (keyword 'into)
-               (singleton #'identity
-                          (lambda (x)
-                            (and (symbolp x) (not (constantp x)))))))
-
-(define-parser nconc-form-clause ()
-  (consecutive (lambda (nconc form)
-                 (declare (ignore nconc))
-                 (make-instance 'nconc-form-clause
-                   :form form))
-               (keyword 'nconc 'nconcing)
-               'anything))
-
 (define-parser nconc-clause (:body-clause :selectable-clause)
-  (alternative 'nconc-it-into-clause
-               'nconc-it-clause
-               'nconc-form-into-clause
-               'nconc-form-clause))
+  (consecutive (lambda (form var
+                        &aux (itp (it-keyword-p form)))
+                 (cond ((and itp var)
+                        (make-instance 'nconc-it-into-clause
+                                       :form form
+                                       :into-var var))
+                       (itp
+                        (make-instance 'nconc-it-clause
+                                       :form form))
+                       (var
+                        (make-instance 'nconc-form-into-clause
+                                       :form form
+                                       :into-var var))
+                       (t
+                        (make-instance 'nconc-form-clause
+                                       :form form))))
+               (keyword :nconc :nconcing)
+               'terminal
+               'anything
+               'optional-into-phrase))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

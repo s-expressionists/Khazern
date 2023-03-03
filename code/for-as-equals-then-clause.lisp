@@ -26,39 +26,24 @@
 ;;;
 ;;; Parsers.
 
-(define-parser for-as-equals-then-parser-1 ()
-  (consecutive (lambda (var-spec type-spec = form1 then form2)
-                 (declare (ignore = then))
-                 (make-instance 'for-as-equals-then
-                   :var-spec var-spec
-                   :type-spec type-spec
-                   :initial-form form1
-                   :subsequent-form form2))
-               ;; Accept anything for now.  Analyze later.
-               'anything
-               'optional-type-spec
-               (keyword '=)
-               'anything
-               (keyword 'then)
-               'anything))
-
-(define-parser for-as-equals-then-parser-2 ()
-  (consecutive (lambda (var-spec type-spec = form1)
-                 (declare (ignore =))
-                 (make-instance 'for-as-equals-then
-                   :var-spec var-spec
-                   :type-spec type-spec
-                   :initial-form form1
-                   :subsequent-form form1))
-               ;; Accept anything for now.  Analyze later.
-               'anything
-               'optional-type-spec
-               (keyword '=)
-               'anything))
-
 (define-parser for-as-equals-then-parser (:for-as-subclause)
-  (alternative 'for-as-equals-then-parser-1
-               'for-as-equals-then-parser-2))
+  (consecutive (lambda (var-spec type-spec form1 initargs)
+                 (apply #'make-instance 'for-as-equals-then
+                        :var-spec var-spec
+                        :type-spec type-spec
+                        :initial-form form1
+                        (or initargs (cl:list :subsequent-form form1))))
+               'd-var-spec
+               'optional-type-spec
+               (keyword :=)
+               'terminal
+               'anything
+               (optional nil
+                         (consecutive (lambda (form)
+                                        (cl:list :subsequent-form form))
+                                      (keyword :then)
+                                      'terminal
+                                      'anything))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

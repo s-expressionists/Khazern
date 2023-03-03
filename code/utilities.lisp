@@ -10,6 +10,9 @@
        (symbolp symbol2)
        (string= symbol1 symbol2)))
 
+(defun it-keyword-p (symbol)
+  (symbol-equal symbol :it))
+
 ;;; This function generates code for destructuring a value according
 ;;; to a tree of variables.  D-VAR-SPEC is a tree of variable names
 ;;; (symbols).  FORM is a form that, at runtime, computes the value to
@@ -25,7 +28,7 @@
                      ((symbolp d-var-spec)
                       (push `(,d-var-spec ,form) bindings))
                      ((not (consp d-var-spec))
-                      (error 'expected-var-spec-but-found
+                      (error 'zexpected-var-spec-but-found
                              :found d-var-spec))
                      (t
                       (let ((temp (gensym)))
@@ -151,3 +154,15 @@
                          (cdr ,list-tail-accumulation-variable))
                    (go again)))
       out)))
+
+(defun first-result (&rest rest)
+  (first rest))
+
+(defun second-result (&rest rest)
+  (second rest))
+
+(defun third-result (&rest rest)
+  (third rest))
+
+(defun fourth-result (&rest rest)
+  (fourth rest))

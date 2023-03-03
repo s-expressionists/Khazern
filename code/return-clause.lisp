@@ -27,25 +27,15 @@
 ;;;
 ;;; Parser
 
-(define-parser return-it-clause ()
-  (consecutive (lambda (return it)
-                 (declare (ignore return))
-                 (make-instance 'return-it-clause
-                   :form it))
-               (keyword 'return)
-               (keyword 'it)))
-
-(define-parser return-form-clause ()
-  (consecutive (lambda (return form)
-                 (declare (ignore return))
-                 (make-instance 'return-form-clause
-                   :form form))
-               (keyword 'return)
-               'anything))
-
 (define-parser return-clause (:body-clause :selectable-clause)
-  (alternative 'return-it-clause
-               'return-form-clause))
+  (consecutive (lambda (form)
+                 (make-instance (if (it-keyword-p form)
+                                    'return-it-clause
+                                    'return-form-clause)
+                                :form form))
+               (keyword :return)
+               'terminal
+               'anything))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

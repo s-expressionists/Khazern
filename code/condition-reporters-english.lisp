@@ -5,6 +5,50 @@
 ;;; Condition reporters for parse errors.
 
 (defmethod acclimation:report-condition
+    ((condition expected-token-but-end)
+     stream
+     (language acclimation:english))
+  (format stream
+          "Expected a token~:[~; either~]~
+           ~@[ being a loop keyword of ~{~#[~;~a~;~a and ~a~:;~@{~a~#[~;, or ~:;, ~]~}~]~}~]~
+           ~:[~; or~]~@[ being of type ~s~]~
+           ~@[ at location ~s~] but reached the end of the loop body instead."
+          (and (expected-keywords condition)
+               (expected-type condition))
+          (expected-keywords condition)
+          (and (expected-keywords condition)
+               (expected-type condition))
+          (expected-type condition)
+          (location condition)))
+
+(defmethod acclimation:report-condition
+    ((condition expected-token-but-found)
+     stream
+     (language acclimation:english))
+  (format stream
+          "Expected a token~:[~; either~]~
+           ~@[ being a loop keyword of ~{~#[~;~a~;~a and ~a~:;~@{~a~#[~;, or ~:;, ~]~}~]~}~]~
+           ~:[~; or~]~@[ being of type ~s~]~
+           ~@[ at location ~s~] but found ~a instead."
+          (and (expected-keywords condition)
+               (expected-type condition))
+          (expected-keywords condition)
+          (and (expected-keywords condition)
+               (expected-type condition))
+          (expected-type condition)
+          (location condition)
+          (found condition)))
+
+(defmethod acclimation:report-condition
+    ((condition unexpected-tokens-found)
+     stream
+     (language acclimation:english))
+  (format stream
+          "Unexpected tokens ~s found~@[at location ~s ~]."
+          (found  condition)
+          (location condition)))
+
+(defmethod acclimation:report-condition
     ((condition expected-var-spec-but-end)
      stream
      (language acclimation:english))
@@ -22,215 +66,6 @@
            the following instead:~@
            ~s"
           (found condition)))
-
-(defmethod acclimation:report-condition
-    ((condition expected-simple-var-but-end)
-     stream
-     (language acclimation:english))
-  (declare (ignorable condition))
-  (format stream
-          "Expected a simple variable but reached~@
-           the end of the loop body."))
-
-(defmethod acclimation:report-condition
-    ((condition expected-simple-var-but-found)
-     stream
-     (language acclimation:english))
-  (format stream
-          "Expected a simple variable but found~@
-           the following instead:~@
-           ~s"
-          (found condition)))
-
-(defmethod acclimation:report-condition
-    ((condition expected-type-spec-but-end)
-     stream
-     (language acclimation:english))
-  (declare (ignorable condition))
-  (format stream
-          "Expected a variable specification but reached~@
-           the end of the loop body."))
-
-(defmethod acclimation:report-condition
-    ((condition expected-type-spec-but-found)
-     stream
-     (language acclimation:english))
-  (format stream
-          "Expected a type specification but found~@
-           the following instead:~@
-           ~s"
-          (found condition)))
-
-(defmethod acclimation:report-condition
-    ((condition expected-compound-form-but-end)
-     stream
-     (language acclimation:english))
-  (declare (ignorable condition))
-     (format stream
-             "Expected a compound form but reached ~
-              the end of the loop body."))
-
-(defmethod acclimation:report-condition
-    ((condition expected-compound-form-but-found)
-     stream
-     (language acclimation:english))
-  (format stream
-          "Expected a compound form but found~@
-           the following instead:~@
-           ~s"
-          (found condition)))
-
-(defmethod acclimation:report-condition
-    ((condition expected-form-but-end)
-     stream
-     (language acclimation:english))
-  (declare (ignorable condition))
-  (format stream
-          "Expected a form but reached~@
-           the end of the loop body."))
-
-(defmethod acclimation:report-condition
-    ((condition expected-symbol-but-end)
-     stream
-     (language acclimation:english))
-  (declare (ignorable condition))
-  (format stream
-          "Expected a symbol but reached~@
-           the end of the loop body."))
-
-(defmethod acclimation:report-condition
-    ((condition expected-symbol-but-found)
-     stream
-     (language acclimation:english))
-  (format stream
-          "Expected a symbol but found~@
-           the following instead:~@
-           ~s"
-          (found condition)))
-
-(defmethod acclimation:report-condition
-    ((condition expected-keyword-but-found)
-     stream
-     (language acclimation:english))
-  (format stream
-          "Expected a loop keyword, but found~@
-           the following instead:~@
-           ~s"
-          (found condition)))
-
-(defmethod acclimation:report-condition
-    ((condition expected-for/as-subclause-but-end)
-     stream
-     (language acclimation:english))
-  (declare (ignorable condition))
-  (format stream
-          "Expected a loop keyword indicating a for/as~@
-           subclause, but reached the end of the loop body."))
-
-(defmethod acclimation:report-condition
-    ((condition expected-each/the-but-end)
-     stream
-     (language acclimation:english))
-  (declare (ignorable condition))
-  (format stream
-          "Expected the loop keyword each/the,~@
-           but reached the end of the loop body."))
-
-(defmethod acclimation:report-condition
-    ((condition expected-each/the-but-found)
-     stream
-     (language acclimation:english))
-  (format stream
-          "Expected the loop keyword each/the, but found~@
-           the following instead:~@
-           ~s"
-          (found condition)))
-
-(defmethod acclimation:report-condition
-    ((condition expected-hash-or-package-but-end)
-     stream
-     (language acclimation:english))
-  (declare (ignorable condition))
-  (format stream
-          "Expected a loop keyword indicating a for/as-hash,~@
-           but reached the end of the loop body."))
-
-(defmethod acclimation:report-condition
-    ((condition expected-hash-or-package-but-found)
-     stream
-     (language acclimation:english))
-  (format stream
-          "Expected a loop keyword indicating a for/as-hash~@
-           or a for/as-package subclause, but found~@
-           the following instead:~@
-           ~s"
-          (found condition)))
-
-(defmethod acclimation:report-condition
-    ((condition expected-in/of-but-end)
-     stream
-     (language acclimation:english))
-  (declare (ignorable condition))
-  (format stream
-          "Expected the loop keyword in/or,~@
-           but reached the end of the loop body."))
-
-(defmethod acclimation:report-condition
-    ((condition expected-in/of-but-found)
-     stream
-     (language acclimation:english))
-  (format stream
-          "Expected the loop keyword in/or, but found~@
-           the following instead:~@
-           ~s"
-          (found condition)))
-
-(defmethod acclimation:report-condition
-    ((condition expected-hash-key-but-end)
-     stream
-     (language acclimation:english))
-  (declare (ignorable condition))
-  (format stream
-          "Expected (hash-key other-var),~@
-           but reached the end of the loop body."))
-
-(defmethod acclimation:report-condition
-    ((condition expected-hash-value-but-end)
-     stream
-     (language acclimation:english))
-  (declare (ignorable condition))
-  (format stream
-          "Expected (hash-value other-var),~@
-           but reached the end of the loop body."))
-
-(defmethod acclimation:report-condition
-    ((condition expected-hash-key-but-found)
-     stream
-     (language acclimation:english))
-  (format stream
-          "Expected (hash-key other-var), but found~@
-           the following instead:~@
-           ~s"
-          (found condition)))
-
-(defmethod acclimation:report-condition
-    ((condition expected-hash-value-but-found)
-     stream
-     (language acclimation:english))
-  (format stream
-          "Expected (hash-value other-var), but found~@
-           the following instead:~@
-           ~s"
-          (found condition)))
-
-(defmethod acclimation:report-condition
-    ((condition expected-preposition-but-end)
-     stream
-     (language acclimation:english))
-  (declare (ignorable condition))
-  (format stream
-          "Expected a for/as preposition,~@
-           but reached the end of the loop body."))
 
 (defmethod acclimation:report-condition
     ((condition too-many-prepositions-from-one-group)

@@ -8,19 +8,17 @@
 ;;; Parsers.
 
 (define-parser while-clause (:body-clause)
-  (consecutive (lambda (while form)
-                 (declare (ignore while))
-                 (make-instance 'while-clause
-                   :form form))
-               (keyword 'while)
+  (consecutive (lambda (form)
+                 (make-instance 'while-clause :form form))
+               (keyword :while)
+               'terminal
                'anything))
 
 (define-parser until-clause (:body-clause)
-  (consecutive (lambda (until form)
-                 (declare (ignore until))
-                 (make-instance 'while-clause
-                   :form `(not ,form)))
-               (keyword 'until)
+  (consecutive (lambda (form)
+                 (make-instance 'while-clause :form `(not ,form)))
+               (keyword :until)
+               'terminal
                'anything))
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -18,53 +18,27 @@
 ;;;
 ;;; Parsers.
 
-(define-parser collect-it-into-clause ()
-  (consecutive (lambda (collect it into var)
-                 (declare (ignore collect into))
-                 (make-instance 'collect-it-into-clause
-                   :form it
-                   :into-var var))
-               (keyword 'collect 'collecting)
-               (keyword 'it)
-               (keyword 'into)
-               (singleton #'identity
-                          (lambda (x)
-                            (and (symbolp x) (not (constantp x)))))))
-
-(define-parser collect-it-clause ()
-  (consecutive (lambda (collect it)
-                 (declare (ignore collect))
-                 (make-instance 'collect-it-clause
-                   :form it))
-               (keyword 'collect 'collecting)
-               (keyword 'it)))
-
-(define-parser collect-form-into-clause ()
-  (consecutive (lambda (collect form into var)
-                 (declare (ignore collect into))
-                 (make-instance 'collect-form-into-clause
-                   :form form
-                   :into-var var))
-               (keyword 'collect 'collecting)
-               'anything
-               (keyword 'into)
-               (singleton #'identity
-                          (lambda (x)
-                            (and (symbolp x) (not (constantp x)))))))
-
-(define-parser collect-form-clause ()
-  (consecutive (lambda (collect form)
-                 (declare (ignore collect))
-                 (make-instance 'collect-form-clause
-                   :form form))
-               (keyword 'collect 'collecting)
-               'anything))
-
 (define-parser collect-clause (:body-clause :selectable-clause)
-  (alternative 'collect-it-into-clause
-               'collect-it-clause
-               'collect-form-into-clause
-               'collect-form-clause))
+  (consecutive (lambda (form var
+                        &aux (itp (it-keyword-p form)))
+                 (cond ((and itp var)
+                        (make-instance 'collect-it-into-clause
+                                       :form form
+                                       :into-var var))
+                       (itp
+                        (make-instance 'collect-it-clause
+                                       :form form))
+                       (var
+                        (make-instance 'collect-form-into-clause
+                                       :form form
+                                       :into-var var))
+                       (t
+                        (make-instance 'collect-form-clause
+                                       :form form))))
+               (keyword :collect :collecting)
+               'terminal
+               'anything
+               'optional-into-phrase))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

@@ -15,7 +15,8 @@
 ;;; other words if it is a tree of CONS cells where the leaves are
 ;;; symbols.
 (defun d-var-spec-p (object)
-  (or (and (symbolp object)
+  (or (null object)
+      (and (symbolp object)
            (not (constantp object)))
       (and (consp object)
            (d-var-spec-p (car object))

@@ -25,131 +25,59 @@
 ;;;
 ;;; Parsers
 
-(define-parser hash-key-parser ()
-  (keyword 'hash-key 'hash-keys))
-
-(define-parser hash-value-parser ()
-  (keyword 'hash-value 'hash-values))
-
 (define-parser hash-value-other-parser ()
-  (singleton #'second
-             (lambda (token)
-               (and (consp token)
-                    (consp (cdr token))
-                    (null (cddr token))
-                    (symbolp (car token))
-                    (equal (symbol-name (car token)) (string '#:hash-value))))))
+  (list (lambda (other-var)
+          other-var)
+        (keyword :hash-value)
+        'd-var-spec))
 
 (define-parser hash-key-other-parser ()
-  (singleton #'second
-             (lambda (token)
-               (and (consp token)
-                    (consp (cdr token))
-                    (null (cddr token))
-                    (symbolp (car token))
-                    (equal (symbol-name (car token)) (string '#:hash-key))))))
+  (list (lambda (other-var)
+          other-var)
+        (keyword :hash-key)
+        'd-var-spec))
 
-(define-parser hash-key-using-parser ()
-  (consecutive (lambda (var-spec
-                        type-spec
-                        being
-                        each
-                        hash-key
-                        of
-                        hash-table-form
-                        using
-                        other)
-                 (declare (ignore being each hash-key of using))
+(define-parser for-as-hash-key (:for-as-subclause)
+  (consecutive (lambda (var-spec type-spec hash-table-form other)
                  (make-instance 'for-as-hash-key
-                   :var-spec var-spec
-                   :type-spec type-spec
-                   :hash-table-form hash-table-form
-                   :other-var-spec other))
-               'anything
+                                :var-spec var-spec
+                                :type-spec type-spec
+                                :hash-table-form hash-table-form
+                                :other-var-spec other))
+               'd-var-spec
                'optional-type-spec
-               'being-parser
-               'each-the-parser
-               'hash-key-parser
-               'in-of-parser
+               (keyword :being)
+               (keyword :each :the)
+               (keyword :hash-key :hash-keys)
+               'terminal
+               (keyword :in :of)
                'anything
-               (keyword 'using)
-               'hash-value-other-parser))
+               (optional nil
+                         (consecutive #'identity
+                                      (keyword :using)
+                                      'terminal
+                                      'hash-value-other-parser))))
 
-(define-parser hash-key-no-using-parser ()
-  (consecutive (lambda (var-spec
-                        type-spec
-                        being
-                        each
-                        hash-key
-                        of
-                        hash-table-form)
-                 (declare (ignore being each hash-key of))
-                 (make-instance 'for-as-hash-key
-                   :var-spec var-spec
-                   :type-spec type-spec
-                   :hash-table-form hash-table-form
-                   :other-var-spec nil))
-               'anything
-               'optional-type-spec
-               'being-parser
-               'each-the-parser
-               'hash-key-parser
-               'in-of-parser
-               'anything))
-
-(define-parser hash-value-using-parser ()
-  (consecutive (lambda (var-spec
-                        type-spec
-                        being
-                        each
-                        hash-key
-                        of
-                        hash-table-form
-                        using
-                        other)
-                 (declare (ignore being each hash-key of using))
+(define-parser for-as-hash-value (:for-as-subclause)
+  (consecutive (lambda (var-spec type-spec hash-table-form other)
                  (make-instance 'for-as-hash-value
-                   :var-spec var-spec
-                   :type-spec type-spec
-                   :hash-table-form hash-table-form
-                   :other-var-spec other))
-               'anything
+                                :var-spec var-spec
+                                :type-spec type-spec
+                                :hash-table-form hash-table-form
+                                :other-var-spec other))
+               'd-var-spec
                'optional-type-spec
-               'being-parser
-               'each-the-parser
-               'hash-value-parser
-               'in-of-parser
+               (keyword :being)
+               (keyword :each :the)
+               (keyword :hash-value :hash-values)
+               'terminal
+               (keyword :in :of)
                'anything
-               (keyword 'using)
-               'hash-key-other-parser))
-
-(define-parser hash-value-no-using-parser ()
-  (consecutive (lambda (var-spec
-                        type-spec
-                        being
-                        each
-                        hash-key
-                        of
-                        hash-table-form)
-                 (declare (ignore being each hash-key of))
-                 (make-instance 'for-as-hash-value
-                   :var-spec var-spec
-                   :type-spec type-spec
-                   :hash-table-form hash-table-form
-                   :other-var-spec nil))
-               'anything
-               'optional-type-spec
-               'being-parser
-               'each-the-parser
-               'hash-value-parser
-               'in-of-parser
-               'anything))
-
-(define-parser for-as-hash-parser (:for-as-subclause)
-  (alternative 'hash-key-using-parser
-               'hash-key-no-using-parser
-               'hash-value-using-parser
-               'hash-value-no-using-parser))
+               (optional nil
+                         (consecutive #'identity
+                                      (keyword :using)
+                                      'terminal
+                                      'hash-key-other-parser))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

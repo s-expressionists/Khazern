@@ -12,7 +12,8 @@
     for-as-arithmetic-parser
     for-as-clause
     for-as-equals-then-parser
-    for-as-hash-parser
+    for-as-hash-key
+    for-as-hash-value
     for-as-in-list-parser
     for-as-on-list-parser
     for-as-package-parser

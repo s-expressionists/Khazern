@@ -26,11 +26,11 @@
 ;;; Parser
 
 (define-parser initial-clause (:body-clause)
-  (consecutive (lambda (initially compound-form+)
-                 (declare (ignore initially))
+  (consecutive (lambda (form)
                  (make-instance 'initial-clause
-                   :form compound-form+))
-               (keyword 'initially)
+                                :form form))
+               (keyword :initially)
+               'terminal 
                'compound-form+))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

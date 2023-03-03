@@ -18,53 +18,27 @@
 ;;;
 ;;; Parsers.
 
-(define-parser append-it-into-clause ()
-  (consecutive (lambda (append it into var)
-                 (declare (ignore append into))
-                 (make-instance 'append-it-into-clause
-                   :form it
-                   :into-var var))
-               (keyword 'append 'appending)
-               (keyword 'it)
-               (keyword 'into)
-               (singleton #'identity
-                          (lambda (x)
-                            (and (symbolp x) (not (constantp x)))))))
-
-(define-parser append-it-clause ()
-  (consecutive (lambda (append it)
-                 (declare (ignore append))
-                 (make-instance 'append-it-clause
-                   :form it))
-               (keyword 'append 'appending)
-               (keyword 'it)))
-
-(define-parser append-form-into-clause ()
-  (consecutive (lambda (append form into var)
-                 (declare (ignore append into))
-                 (make-instance 'append-form-into-clause
-                   :form form
-                   :into-var var))
-               (keyword 'append 'appending)
-               'anything
-               (keyword 'into)
-               (singleton #'identity
-                          (lambda (x)
-                            (and (symbolp x) (not (constantp x)))))))
-
-(define-parser append-form-clause ()
-  (consecutive (lambda (append form)
-                 (declare (ignore append))
-                 (make-instance 'append-form-clause
-                   :form form))
-               (keyword 'append 'appending)
-               'anything))
-
 (define-parser append-clause (:body-clause :selectable-clause)
-  (alternative 'append-it-into-clause
-               'append-it-clause
-               'append-form-into-clause
-               'append-form-clause))
+  (consecutive (lambda (form var
+                        &aux (itp (it-keyword-p form)))
+                 (cond ((and itp var)
+                        (make-instance 'append-it-into-clause
+                                       :form form
+                                       :into-var var))
+                       (itp
+                        (make-instance 'append-it-clause
+                                       :form form))
+                       (var
+                        (make-instance 'append-form-into-clause
+                                       :form form
+                                       :into-var var))
+                       (t
+                        (make-instance 'append-form-clause
+                                       :form form))))
+               (keyword :append :appending)
+               'terminal
+               'anything
+               'optional-into-phrase))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

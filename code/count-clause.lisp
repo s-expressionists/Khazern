@@ -18,61 +18,32 @@
 ;;;
 ;;; Parsers.
 
-(define-parser count-it-into-clause ()
-  (consecutive (lambda (count it into var type-spec)
-                 (declare (ignore count into))
-                 (make-instance 'count-it-into-clause
-                   :form it
-                   :into-var var
-                   :type-spec type-spec))
-               (keyword 'count 'counting)
-               (keyword 'it)
-               (keyword 'into)
-               (singleton #'identity
-                          (lambda (x)
-                            (and (symbolp x) (not (constantp x)))))
-               'optional-type-spec))
-
-(define-parser count-it-clause ()
-  (consecutive (lambda (count it type-spec)
-                 (declare (ignore count))
-                 (make-instance 'count-it-clause
-                   :form it
-                   :type-spec type-spec))
-               (keyword 'count 'counting)
-               (keyword 'it)
-               'optional-type-spec))
-
-(define-parser count-form-into-clause ()
-  (consecutive (lambda (count form into var type-spec)
-                 (declare (ignore count into))
-                 (make-instance 'count-form-into-clause
-                   :form form
-                   :into-var var
-                   :type-spec type-spec))
-               (keyword 'count 'counting)
-               'anything
-               (keyword 'into)
-               (singleton #'identity
-                          (lambda (x)
-                            (and (symbolp x) (not (constantp x)))))
-               'optional-type-spec))
-
-(define-parser count-form-clause ()
-  (consecutive (lambda (count form type-spec)
-                 (declare (ignore count))
-                 (make-instance 'count-form-clause
-                   :form form
-                   :type-spec type-spec))
-               (keyword 'count 'counting)
-               'anything
-               'optional-type-spec))
-
 (define-parser count-clause (:body-clause :selectable-clause)
-  (alternative 'count-it-into-clause
-               'count-it-clause
-               'count-form-into-clause
-               'count-form-clause))
+  (consecutive (lambda (form var type-spec
+                        &aux (itp (it-keyword-p form)))
+                 (cond ((and itp var)
+                        (make-instance 'count-it-into-clause
+                                       :form form
+                                       :into-var var
+                                       :type-spec type-spec))
+                       (itp
+                        (make-instance 'count-it-clause
+                                       :form form
+                                       :type-spec type-spec))
+                       (var
+                        (make-instance 'count-form-into-clause
+                                       :form form
+                                       :into-var var
+                                       :type-spec type-spec))
+                       (t
+                        (make-instance 'count-form-clause
+                                       :form form
+                                       :type-spec type-spec))))
+               (keyword :count :counting)
+               'terminal
+               'anything
+               'optional-into-phrase
+               'optional-type-spec))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

@@ -32,9 +32,8 @@
 ;;; Parser.
 
 (define-parser name-clause (:body-clause)
-  (consecutive (lambda (named name)
-                 (declare (ignore named))
-                 (make-instance 'name-clause
-                   :name name))
-               (keyword 'named)
-               (singleton #'identity #'symbolp)))
+  (consecutive (lambda (name)
+                 (make-instance 'name-clause :name name))
+               (keyword :named)
+               'terminal 
+               (typep 'symbol)))

@@ -10,11 +10,11 @@
 ;;; Parsers.
 
 (define-parser always-clause (:body-clause)
-  (consecutive (lambda (always form)
-                 (declare (ignore always))
+  (consecutive (lambda (form)
                  (make-instance 'always-clause
                    :form form))
-               (keyword 'always)
+               (keyword :always)
+               'terminal
                'anything))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

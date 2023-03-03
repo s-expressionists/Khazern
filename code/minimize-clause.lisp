@@ -18,61 +18,32 @@
 ;;;
 ;;; Parsers.
 
-(define-parser minimize-it-into-clause ()
-  (consecutive (lambda (minimize it into var type-spec)
-                 (declare (ignore minimize into))
-                 (make-instance 'minimize-it-into-clause
-                   :form it
-                   :into-var var
-                   :type-spec type-spec))
-               (keyword 'minimize 'minimizing)
-               (keyword 'it)
-               (keyword 'into)
-               (singleton #'identity
-                          (lambda (x)
-                            (and (symbolp x) (not (constantp x)))))
-               'optional-type-spec))
-
-(define-parser minimize-it-clause ()
-  (consecutive (lambda (minimize it type-spec)
-                 (declare (ignore minimize))
-                 (make-instance 'minimize-it-clause
-                   :form it
-                   :type-spec type-spec))
-               (keyword 'minimize 'minimizing)
-               (keyword 'it)
-               'optional-type-spec))
-
-(define-parser minimize-form-into-clause ()
-  (consecutive (lambda (minimize form into var type-spec)
-                 (declare (ignore minimize into))
-                 (make-instance 'minimize-form-into-clause
-                   :form form
-                   :into-var var
-                   :type-spec type-spec))
-               (keyword 'minimize 'minimizing)
-               'anything
-               (keyword 'into)
-               (singleton #'identity
-                          (lambda (x)
-                            (and (symbolp x) (not (constantp x)))))
-               'optional-type-spec))
-
-(define-parser minimize-form-clause ()
-  (consecutive (lambda (minimize form type-spec)
-                 (declare (ignore minimize))
-                 (make-instance 'minimize-form-clause
-                   :form form
-                   :type-spec type-spec))
-               (keyword 'minimize 'minimizing)
-               'anything
-               'optional-type-spec))
-
 (define-parser minimize-clause (:body-clause :selectable-clause)
-  (alternative 'minimize-it-into-clause
-               'minimize-it-clause
-               'minimize-form-into-clause
-               'minimize-form-clause))
+  (consecutive (lambda (form var type-spec
+                        &aux (itp (it-keyword-p form)))
+                 (cond ((and itp var)
+                        (make-instance 'minimize-it-into-clause
+                                       :form form
+                                       :into-var var
+                                       :type-spec type-spec))
+                       (itp
+                        (make-instance 'minimize-it-clause
+                                       :form form
+                                       :type-spec type-spec))
+                       (var
+                        (make-instance 'minimize-form-into-clause
+                                       :form form
+                                       :into-var var
+                                       :type-spec type-spec))
+                       (t
+                        (make-instance 'minimize-form-clause
+                                       :form form
+                                       :type-spec type-spec))))
+               (keyword :minimize :minimizing)
+               'terminal
+               'anything
+               'optional-into-phrase
+               'optional-type-spec))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

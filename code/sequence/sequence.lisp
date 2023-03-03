@@ -53,8 +53,7 @@
 ;;; Parser
 
 (khazern:define-parser for-as-over (:for-as-subclause)
-  (khazern:consecutive (lambda (var type-spec other-var across sequence-form)
-                         (declare (ignore across))
+  (khazern:consecutive (lambda (var type-spec other-var sequence-form)
                          (make-instance 'for-as-over
                                         :var-spec var
                                         :type-spec type-spec
@@ -63,12 +62,12 @@
                        'khazern:anything
                        'khazern:optional-type-spec
                        (khazern:optional nil
-                                         (khazern:consecutive (lambda (at other-var)
-                                                                (declare (ignore at))
+                                         (khazern:consecutive (lambda (other-var)
                                                                 other-var)
-                                                              (khazern:keyword 'at)
+                                                              (khazern:keyword :at)
                                                               'khazern:anything))
-                       (khazern:keyword 'over)
+                       (khazern:keyword :over)
+                       'khazern:terminal
                        'khazern:anything))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

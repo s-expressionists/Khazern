@@ -53,20 +53,14 @@
 ;;;
 ;;; Parse a FOR-AS clause.
 
+(define-parser for-as-subclause+ ()
+  (delimited-list-by-category :for-as-subclause nil 'and))
+  
 (define-parser for-as-clause (:body-clause)
-  (consecutive (lambda (for subclause more-subclauses)
-                 (declare (ignore for))
-                 (make-instance 'for-as-clause
-                   :subclauses (cons subclause more-subclauses)))
-               (alternative (keyword 'for)
-                            (keyword 'as))
-               (alternative-by-category :for-as-subclause)
-               (repeat* #'list
-                        (consecutive (lambda (and subclause)
-                                       (declare (ignore and))
-                                       subclause)
-                                     (keyword 'and)
-                                     (alternative-by-category :for-as-subclause)))))
+  (consecutive (lambda (subclauses)
+                 (make-instance 'for-as-clause :subclauses subclauses))
+               (keyword :for :as)
+               'for-as-subclause+))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

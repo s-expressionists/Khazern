@@ -2,48 +2,32 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Given a symbol S (no matter what package), return a singleton
-;;; parser Q that recognizes symbols with the same name as one of
-;;; symbols.  If Q succeeds, it returns the first token.
-
-(defun keyword (&rest symbols)
-  (singleton #'identity
-             (lambda (token)
-               (member token symbols :test #'symbol-equal))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; Parser for anything, i.e. a parser that succeeds whenever the list
 ;;; of tokens is not empty.  It returns the first token as a result of
 ;;; the parse, and the list of tokens with the first one removed as
 ;;; the list of remaining tokens.
 
 (define-parser anything ()
-  (singleton #'identity (constantly t)))
+  (typep t))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; A parser that recognizes one of the LOOP keywords EACH and THE.
-;;; It is used to parse FOR-AS-HASH and FOR-AS-PACKAGE subclauses.
-
-(define-parser each-the-parser ()
-  (keyword 'each 'the))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; A parser that recognizes one of the LOOP keywords IN and OF.
-;;; It is used to parse FOR-AS-HASH and FOR-AS-PACKAGE subclauses.
-
-(define-parser in-of-parser ()
-  (keyword 'in 'of))
+(define-parser optional-into-phrase ()
+  (optional nil
+            (consecutive (lambda (var)
+                           var)
+                         (keyword :into)
+                         'terminal
+                         'simple-var)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; A parser that recognizes one of the LOOP keyword BEING.
 ;;; It is used to parse FOR-AS-HASH and FOR-AS-PACKAGE subclauses.
 
-(define-parser being-parser ()
-  (keyword 'being))
+(define-parser simple-var ()
+  (typep '(and symbol (not (satisfies constantp)))))
+
+(define-parser d-var-spec ()
+  (typep '(satisfies d-var-spec-p)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -53,23 +37,34 @@
 (define-parser compound-form+ ()
   (repeat+ (lambda (&rest forms)
              (cons 'progn forms))
-           (singleton #'identity #'consp)))
-
+           (typep 'cons)))
+                  
 (define-parser body-parser ()
-  (consecutive (lambda (clauses none)
-                 (declare (ignore none))
-                 clauses)
-               (repeat* #'list
-                        (alternative-by-category :body-clause))
-               (none)))
+  (lambda (tokens
+           &aux results)
+    (block nil
+      (tagbody
+       repeat
+       (when tokens
+         (multiple-value-bind (successp keywordp result remaining-tokens)
+             (funcall (alternative-by-category :body-clause) tokens)
+           (unless successp
+             (return (values nil nil result tokens)))
+           (push result results)
+           (setf tokens remaining-tokens)
+           (go repeat))))
+      (values t nil (nreverse results) nil))))
 
 ;;; Create a list of clauses from the body of the LOOP form.
 (defun parse-loop-body (body parser-table)
-  (multiple-value-bind (success-p clauses tokens)
+  (multiple-value-bind (success-p keywordp result tokens)
       (let ((*parser-table* parser-table))
         (body-parser body))
-    (unless success-p
-      ;; FIXME: this is not the right error to signal.
-      (error 'expected-keyword-but-found
-             :found tokens))
-    clauses))
+    (cond (success-p
+           result)
+          (result
+           (setf (car (location result))
+                 (- (length tokens) (car (location result))))
+           (error result))
+          (t
+           (error "Unknown loop parse error")))))

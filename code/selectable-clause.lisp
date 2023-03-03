@@ -33,12 +33,4 @@
 ;;; Parsers.
 
 (define-parser selectable-clause+ ()
-  (consecutive #'cons
-               (alternative-by-category :selectable-clause)
-               (repeat* #'list
-                        (consecutive (lambda (and selectable-clause)
-                                       (declare (ignore and))
-                                       selectable-clause)
-                                     (keyword 'and)
-                                     (alternative-by-category :selectable-clause)))))
-         
+  (delimited-list-by-category :selectable-clause nil 'and))

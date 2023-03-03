@@ -26,11 +26,10 @@
 ;;; Parser
 
 (define-parser final-clause (:body-clause)
-  (consecutive (lambda (finally compound-form+)
-                 (declare (ignore finally))
-                 (make-instance 'final-clause
-                   :form compound-form+))
-               (keyword 'finally)
+  (consecutive (lambda (form)
+                 (make-instance 'final-clause :form form))
+               (keyword :finally)
+               'terminal
                'compound-form+))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

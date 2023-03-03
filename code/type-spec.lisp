@@ -8,16 +8,14 @@
   (lambda (tokens)
     (if (and (not (null tokens))
              (member (car tokens) '(fixnum float t nil)))
-        (values t
+        (values t nil
                 (car tokens)
                 (cdr tokens))
-        (values nil nil tokens))))
+        (values nil nil nil tokens))))
 
 (define-parser destructured-type-spec-parser ()
-  (consecutive (lambda (of-type tree)
-                 (declare (ignore of-type))
-                 tree)
-               (keyword 'of-type)
+  (consecutive #'identity
+               (keyword :of-type)
                'anything))
 
 (define-parser type-spec-parser ()

@@ -9,10 +9,10 @@
 ;;; Parsers.
 
 (define-parser repeat-clause (:body-clause)
-  (consecutive (lambda (repeat form)
-                 (declare (ignore repeat))
+  (consecutive (lambda (form)
                  (make-instance 'repeat-clause :form form))
-               (keyword 'repeat)
+               (keyword :repeat)
+               'terminal
                'anything))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

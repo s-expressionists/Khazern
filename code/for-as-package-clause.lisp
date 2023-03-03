@@ -19,90 +19,34 @@
 ;;;
 ;;; Parsers
 
-(define-parser symbol-parser ()
-  (keyword 'symbol 'symbols))
-
-(define-parser present-symbol-parser ()
-  (keyword 'present-symbol 'present-symbols))
-
-(define-parser external-symbol-parser ()
-  (keyword 'external-symbol 'external-symbols))
-
-;;; This parser recognizes IN/OF followed by any form, and returns
-;;; that form, or, if there is no IN/OF, returns the symbol *PACKAGE*.
-(define-parser package-form-parser ()
-  (optional '*package*
-            (consecutive (lambda (of form)
-                           (declare (ignore of))
-                           form)
-                         'in-of-parser
-                         'anything)))
-
-(define-parser package-symbol-parser ()
-  (consecutive (lambda (var-spec
-                        type-spec
-                        being
-                        each
-                        symbol
-                        package-form)
-                 (declare (ignore being each symbol))
-                 (make-instance 'for-as-package
-                   :var-spec var-spec
-                   :type-spec type-spec
-                   :package-form package-form
-                   :iterator-keywords '(:internal :external :inherited)))
-               'anything
-               'optional-type-spec
-               'being-parser
-               'each-the-parser
-               'symbol-parser
-               'package-form-parser))
-
-(define-parser package-present-symbol-parser ()
-  (consecutive (lambda (var-spec
-                        type-spec
-                        being
-                        each
-                        present-symbol
-                        package-form)
-                 (declare (ignore being each present-symbol))
-                 (make-instance 'for-as-package
-                   :var-spec var-spec
-                   :type-spec type-spec
-                   :package-form package-form
-                   :iterator-keywords '(:internal :external)))
-               'anything
-               'optional-type-spec
-               'being-parser
-               'each-the-parser
-               'present-symbol-parser
-               'package-form-parser))
-
-
-(define-parser package-external-symbol-parser ()
-  (consecutive (lambda (var-spec
-                        type-spec
-                        being
-                        each
-                        external-symbol
-                        package-form)
-                 (declare (ignore being each external-symbol))
-                 (make-instance 'for-as-package
-                   :var-spec var-spec
-                   :type-spec type-spec
-                   :package-form package-form
-                   :iterator-keywords '(:external)))
-               'anything
-               'optional-type-spec
-               'being-parser
-               'each-the-parser
-               'external-symbol-parser
-               'package-form-parser))
-
 (define-parser for-as-package-parser (:for-as-subclause)
-  (alternative 'package-symbol-parser
-               'package-present-symbol-parser
-               'package-external-symbol-parser))
+  (consecutive (lambda (var-spec
+                        type-spec
+                        iterator-keywords
+                        package-form)
+                 (make-instance 'for-as-package
+                                :var-spec var-spec
+                                :type-spec type-spec
+                                :package-form package-form
+                                :iterator-keywords iterator-keywords))
+               'anything
+               'optional-type-spec
+               (keyword :being)
+               (keyword :each :the)
+               (alternative (consecutive (lambda ()
+                                           '(:internal :external :inherited))
+                                         (keyword :symbol :symbols))
+                            (consecutive (lambda ()
+                                           '(:internal :external))
+                                         (keyword :present-symbol :present-symbols))
+                            (consecutive (lambda ()
+                                           '(:external))
+                                         (keyword :external-symbol :external-symbols)))
+               'terminal
+               (optional '*package*
+                         (consecutive #'identity
+                                      (keyword :in :of)
+                                      'anything))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

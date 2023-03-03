@@ -22,11 +22,10 @@
 ;;; Parser
 
 (define-parser do-clause (:body-clause :selectable-clause)
-  (consecutive (lambda (do compound-form+)
-                 (declare (ignore do))
-                 (make-instance 'do-clause
-                   :body compound-form+))
-               (keyword 'do 'doing)
+  (consecutive (lambda (form)
+                 (make-instance 'do-clause :body form))
+               (keyword :do :doing)
+               'terminal
                'compound-form+))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

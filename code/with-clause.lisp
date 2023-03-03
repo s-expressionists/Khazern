@@ -76,54 +76,34 @@
 ;;;
 ;;; Parsers.
 
-;;; Parser for var [type-spec] = form
-;;; We try this parser first.
-(define-parser with-subclause-type-1 ()
-  (consecutive (lambda (var-spec type-spec = form)
-                 (declare (ignore =))
-                 (make-instance 'with-subclause-with-form
-                   :var-spec var-spec
-                   :type-spec type-spec
-                   :form form))
-               ;; Accept anything for now.  Analyze later.
+(define-parser with-subclause ()
+  (consecutive (lambda (var-spec type-spec initargs)
+                 (apply #'make-instance (if initargs
+                                            'with-subclause-with-form
+                                            'with-subclause-no-form)
+                        :var-spec var-spec
+                        :type-spec type-spec
+                        initargs))
                'anything
                'optional-type-spec
-               (keyword '=)
-               'anything))
+               (optional nil
+                         (consecutive (lambda (form)
+                                        `(:form ,form))
+                                      (keyword :=)
+                                      'anything))))
 
-;;; Parser for var [type-spec]
-(define-parser with-subclause-type-2 ()
-  (consecutive (lambda (var-spec type-spec)
-                 (make-instance 'with-subclause-no-form
-                   :var-spec var-spec
-                   :type-spec type-spec))
-               ;; Accept anything for now.  Analyze later.
-               'anything
-               'optional-type-spec))
-
-;;; Parser for any type of with subclause without the leading keyword
-(define-parser with-subclause-no-keyword ()
-  (alternative 'with-subclause-type-1
-               'with-subclause-type-2))
-
-;;; Parser for the with subclause starting with the AND keyword.
-(define-parser with-subclause-and ()
-  (consecutive (lambda (and subclause)
-                 (declare (ignore and))
-                 subclause)
-               (keyword 'and)
-               'with-subclause-no-keyword))
-
-;;; Parser for a with clause
 (define-parser with-clause (:body-clause)
-  (consecutive (lambda (with first rest)
-                 (declare (ignore with))
+  (consecutive (lambda (first rest)
                  (make-instance 'with-clause
-                   :subclauses (cons first rest)))
-               (keyword 'with)
-               'with-subclause-no-keyword
-               (repeat* #'list
-                        'with-subclause-and)))
+                                :subclauses (cons first rest)))
+               (keyword :with)
+               'terminal
+               'with-subclause
+               (repeat* #'cl:list
+                        (consecutive #'identity
+                                     (keyword :and)
+                                     'terminal
+                                     'with-subclause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

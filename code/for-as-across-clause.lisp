@@ -37,15 +37,15 @@
 ;;; Parser
 
 (define-parser for-as-across (:for-as-subclause)
-  (consecutive (lambda (var type-spec across vector-form)
-                 (declare (ignore across))
+  (consecutive (lambda (var-spec type-spec vector-form)
                  (make-instance 'for-as-across
-                   :var-spec var
-                   :type-spec type-spec
-                   :vector-form vector-form))
-               'anything
+                                :var-spec var-spec
+                                :type-spec type-spec
+                                :vector-form vector-form))
+               'd-var-spec
                'optional-type-spec
-               (keyword 'across)
+               (keyword :across)
+               'terminal
                'anything))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

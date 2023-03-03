@@ -16,23 +16,30 @@
 (defmethod bound-variables ((subclause for-as-list))
   (extract-variables (var-spec subclause)))
 
+(define-parser for-as-list-by-parser ()
+  (optional '#'cdr
+            (consecutive #'identity
+                         (keyword :by)
+                         'anything)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parsers.
 
 (define-parser for-as-in-list-parser (:for-as-subclause)
-  (consecutive (lambda (var type-spec in list-form by-form)
-                 (declare (ignore in))
+  (consecutive (lambda (var type-spec list-form by-form)
                  (make-instance 'for-as-in-list
                    :var-spec var
                    :type-spec type-spec
                    :list-form list-form
                    :by-form by-form))
-               'anything
+               'd-var-spec
                'optional-type-spec
-               (keyword 'in)
+               (keyword :in)
+               'terminal
                'anything
-               (optional '#'cdr 'by-parser)))
+               'for-as-list-by-parser))
+                         
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -41,18 +48,18 @@
 (defclass for-as-on-list (for-as-list) ())
 
 (define-parser for-as-on-list-parser (:for-as-subclause)
-  (consecutive (lambda (var type-spec on list-form by-form)
-                 (declare (ignore on))
+  (consecutive (lambda (var type-spec list-form by-form)
                  (make-instance 'for-as-on-list
                    :var-spec var
                    :type-spec type-spec
                    :list-form list-form
                    :by-form by-form))
-               'anything
+               'd-var-spec
                'optional-type-spec
-               (keyword 'on)
+               (keyword :on)
+               'terminal
                'anything
-               (optional '#'cdr 'by-parser)))
+               'for-as-list-by-parser))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

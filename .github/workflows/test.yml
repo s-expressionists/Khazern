@@ -70,3 +70,10 @@ jobs:
     - name: Run ANSI Tests
       run: |
         $LISP $EVAL "(asdf:test-system :khazern-intrinsic)"
+
+    - name: Run Extension Tests
+      if: matrix.lisp == 'sbcl'
+      run: |
+        $LISP $EVAL "(ql:quickload :khazern-sequence-extrinsic/test)" $QUIT
+        $LISP $EVAL "(asdf:test-system :khazern-sequence-extrinsic)"
+

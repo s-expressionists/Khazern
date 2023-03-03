@@ -18,61 +18,32 @@
 ;;;
 ;;; Parsers.
 
-(define-parser sum-it-into-clause ()
-  (consecutive (lambda (sum it into var type-spec)
-                 (declare (ignore sum into))
-                 (make-instance 'sum-it-into-clause
-                   :form it
-                   :into-var var
-                   :type-spec type-spec))
-               (keyword 'sum 'summing)
-               (keyword 'it)
-               (keyword 'into)
-               (singleton #'identity
-                          (lambda (x)
-                            (and (symbolp x) (not (constantp x)))))
-               'optional-type-spec))
-
-(define-parser sum-it-clause ()
-  (consecutive (lambda (sum it type-spec)
-                 (declare (ignore sum))
-                 (make-instance 'sum-it-clause
-                   :form it
-                   :type-spec type-spec))
-               (keyword 'sum 'summing)
-               (keyword 'it)
-               'optional-type-spec))
-
-(define-parser sum-form-into-clause ()
-  (consecutive (lambda (sum form into var type-spec)
-                 (declare (ignore sum into))
-                 (make-instance 'sum-form-into-clause
-                   :form form
-                   :into-var var
-                   :type-spec type-spec))
-               (keyword 'sum 'summing)
-               'anything
-               (keyword 'into)
-               (singleton #'identity
-                          (lambda (x)
-                            (and (symbolp x) (not (constantp x)))))
-               'optional-type-spec))
-
-(define-parser sum-form-clause ()
-  (consecutive (lambda (sum form type-spec)
-                 (declare (ignore sum))
-                 (make-instance 'sum-form-clause
-                   :form form
-                   :type-spec type-spec))
-               (keyword 'sum 'summing)
-               'anything
-               'optional-type-spec))
-
 (define-parser sum-clause (:body-clause :selectable-clause)
-  (alternative 'sum-it-into-clause
-               'sum-it-clause
-               'sum-form-into-clause
-               'sum-form-clause))
+  (consecutive (lambda (form var type-spec
+                        &aux (itp (it-keyword-p form)))
+                 (cond ((and itp var)
+                        (make-instance 'sum-it-into-clause
+                                       :form form
+                                       :into-var var
+                                       :type-spec type-spec))
+                       (itp
+                        (make-instance 'sum-it-clause
+                                       :form form
+                                       :type-spec type-spec))
+                       (var
+                        (make-instance 'sum-form-into-clause
+                                       :form form
+                                       :into-var var
+                                       :type-spec type-spec))
+                       (t
+                        (make-instance 'sum-form-clause
+                                       :form form
+                                       :type-spec type-spec))))
+               (keyword :sum :summing)
+               'terminal
+               'anything
+               'optional-into-phrase
+               'optional-type-spec))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

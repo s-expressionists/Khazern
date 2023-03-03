@@ -4,11 +4,13 @@
   (:use #:common-lisp)
   (:shadow
    #:keyword
+   #:list
    ;; We use TYPE as an accessor for a TYPE-SPEC so we need to shadow
    ;; this name.
    #:type
    ;; We use CONDITION as an accessor for a conditional clause so we
    ;; need to shadow this name
+   #:typep
    #:condition)
   (:export #:accumulation-variables
            #:alternative
@@ -32,6 +34,7 @@
            #:initial-bindings
            #:initial-declarations
            #:keyword
+           #:list
            #:main-clause-p
            #:map-variable-types
            #:name-clause-p
@@ -46,5 +49,7 @@
            #:step-form
            #:step-form-bindings
            #:subclauses
+           #:typep
            #:termination-form
+           #:terminal
            #:variable-clause-p))
