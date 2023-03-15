@@ -19,6 +19,8 @@
 
 (defparameter *parse-trace-p* nil)
 
+(defparameter *empty-result* (cons nil nil))
+
 (defun parse-trace-output (format-control &rest arguments)
   (when *parse-trace-p*
     (format *trace-output*
@@ -28,12 +30,13 @@
 (defun trace-parser (name parser tokens)
   (let ((*indent-level* (1+ *indent-level*)))
     (parse-trace-output "trying ~s on ~s~%" name tokens)
-    (multiple-value-bind (successp result rest)
+    (multiple-value-bind (successp terminalp result rest)
         (funcall parser tokens)
-      (parse-trace-output "~asuccess~%" (if successp "" "no "))
-      (values successp result rest))))
+      (parse-trace-output "~:[no ~;~]success, ~:[no ~;~] terminal, ~a~%"
+                          successp terminalp result)
+      (values successp terminalp result rest))))
 
-(defmacro define-parser (name &body body)
+(defmacro define-parser (name categories &body body)
   `(progn
      ;; At compile time, we define a parser that generates an error
      ;; message if invoked.  The reason for doing that is to avoid
@@ -48,7 +51,14 @@
      (eval-when (:load-toplevel :execute)
        (setf (fdefinition ',name)
              (lambda (tokens)
-               (trace-parser ',name (progn ,@body) tokens))))))
+               (trace-parser ',name (progn ,@body) tokens))
+             (get ',name :khazern-categories) ',categories))))
+
+(defun none ()
+  (lambda (tokens)
+    (if tokens
+        (values nil nil nil tokens)
+        (values t nil nil nil))))
 
 ;;; Take a function designator (called the TRANSFORMER) and a
 ;;; predicate P and return a parser Q that invokes the predicate on
@@ -60,8 +70,26 @@
   (lambda (tokens)
     (if (and (not (null tokens))
              (funcall predicate (car tokens)))
-        (values t (funcall transformer (car tokens)) (cdr tokens))
-        (values nil nil tokens))))
+        (values t nil (funcall transformer (car tokens)) (cdr tokens))
+        (values nil nil nil tokens))))
+
+(defun typep (type)
+  (lambda (tokens)
+    (cond ((null tokens)
+           (values nil nil
+                   (make-condition 'expected-token-but-end
+                                   :location (cl:list (length tokens))
+                                   :expected-type type)
+                   nil))
+          ((cl:typep (car tokens) type)
+           (values t nil (car tokens) (cdr tokens)))
+          (t
+           (values nil nil
+                   (make-condition 'expected-token-but-found
+                                   :location (cl:list (length tokens))
+                                   :expected-type type
+                                   :found (car tokens))
+                   tokens)))))
 
 ;;; Take a list of parsers P1, P2, ..., Pn and return a parser Q that
 ;;; invokes Pi in order until one of them succeeds.  If some Pi
@@ -72,17 +100,20 @@
     ;; We promised not to use the LOOP macro, so we do this with
     ;; TAGBODY instead. 
     (block nil
-      (let ((remaining-parsers parsers))
+      (let ((remaining-parsers parsers)
+            error-result)
         (tagbody
          again
            (if (null remaining-parsers)
-               (return (values nil nil tokens))
-               (multiple-value-bind (successp result rest)
+               (return (values nil nil error-result tokens))
+               (multiple-value-bind (successp terminalp result rest)
                    (funcall (car remaining-parsers) tokens)
                  (pop remaining-parsers)
-                 (if successp
-                     (return (values t result rest))
-                     (go again)))))))))
+                 (when (or successp terminalp)
+                   (return (values successp terminalp result rest)))
+                 (setf error-result (combine-parse-errors error-result result))
+                 (go again))))
+        (values nil nil error-result tokens)))))
 
 ;;; Take a function designator (called the COMBINER) and a list of
 ;;; parsers P1, P2, ..., Pn and return a parser Q that invokes every
@@ -97,21 +128,64 @@
     (block nil
       (let ((remaining-tokens tokens)
             (remaining-parsers parsers)
-            (results '()))
+            (results '())
+            (found-terminal-p nil))
         (tagbody
          again
            (if (null remaining-parsers)
                (return (values t
-                               (apply combiner (reverse results))
+                               found-terminal-p
+                               (apply combiner (nreverse results))
                                remaining-tokens))
-               (multiple-value-bind (successp result rest)
+               (multiple-value-bind (successp terminalp result rest)
                    (funcall (car remaining-parsers) remaining-tokens)
                  (pop remaining-parsers)
-                 (if successp
-                     (progn (push result results)
-                            (setf remaining-tokens rest)
-                            (go again))
-                     (return (values nil nil tokens))))))))))
+                 (setf found-terminal-p (or found-terminal-p terminalp))  
+                 (when successp
+                   (unless (eq result *empty-result*)
+                     (push result results))
+                   (setf remaining-tokens rest)
+                   (go again))
+                 (return (values nil found-terminal-p result tokens)))))))))
+
+(defun list (combiner &rest parsers)
+  (lambda (tokens)
+    (cond ((null tokens)
+           (values nil nil
+                   (make-condition 'expected-token-but-end
+                                   :location (cl:list (length tokens))
+                                   :expected-type 'list)
+                   nil))
+          ((listp (car tokens))
+           (multiple-value-bind (successp terminalp result remaining-tokens)
+               (funcall (apply #'consecutive combiner parsers) (car tokens))
+             (cond ((and successp remaining-tokens)
+                    (values nil terminalp
+                            (make-condition 'unexpected-tokens-found
+                                            :location (list (length tokens)
+                                                            (- (length (car tokens))
+                                                               (length remaining-tokens)))
+                                            :found remaining-tokens)
+                            tokens))
+                   ((not successp)
+                    (when result
+                      (setf (location result)
+                          (list* (length tokens)
+                                 (- (length (car tokens))
+                                    (car (location result)))
+                                 (cdr (location result)))))
+                    (values nil terminalp result tokens))
+                   (t
+                    (values t terminalp
+                            result
+                            (cdr tokens))))))
+          (t
+           (values nil nil
+                   (make-condition 'expected-type-but-found
+                                   :location (cl:list (length tokens))
+                                   :expected-type 'list
+                                   :found (car tokens))
+                   tokens)))))
 
 ;;; Take a function designator (called the COMBINER) and a parser P
 ;;; and return a parser Q that invokes P repeatedly until it fails,
@@ -128,15 +202,17 @@
       (block nil
         (tagbody
          again
-           (multiple-value-bind (successp result rest)
+           (multiple-value-bind (successp terminalp result rest)
                (funcall parser remaining-tokens)
-             (if successp
-                 (progn (push result results)
-                        (setf remaining-tokens rest)
-                        (go again))
-                 (return (values t
-                                 (apply combiner (reverse results))
-                                 remaining-tokens)))))))))
+             (declare (ignore terminalp))
+             (unless successp
+               (return (values t nil
+                               (apply combiner (reverse results))
+                               remaining-tokens)))
+             (unless (eq *empty-result* result)
+               (push result results))
+             (setf remaining-tokens rest)
+             (go again)))))))
 
 ;;; Take a function designator (called the COMBINER) and a parser P
 ;;; and return a parser Q that invokes P repeatedly until it fails,
@@ -147,24 +223,27 @@
 (defun repeat+ (combiner parser)
   (lambda (tokens)
     (let ((results '()))
-      (multiple-value-bind (successp result rest)
+      (multiple-value-bind (successp terminalp result rest)
           (funcall parser tokens)
         (if (not successp)
-            (values nil nil tokens)
+            (values nil terminalp result tokens)
             (let ((remaining-tokens rest))
-              (push result results)
+              (unless (eq *empty-result* result)
+                (push result results))
               (block nil
                 (tagbody
                  again 
-                   (multiple-value-bind (successp result rest)
+                   (multiple-value-bind (successp terminalp result rest)
                        (funcall parser remaining-tokens)
-                     (if successp
-                         (progn (push result results)
-                                (setf remaining-tokens rest)
-                                (go again))
-                         (return (values t
-                                         (apply combiner (reverse results))
-                                         remaining-tokens))))))))))))
+                     (declare (ignore terminalp))
+                     (unless successp
+                       (return (values t nil
+                                       (apply combiner (reverse results))
+                                       remaining-tokens)))
+                     (unless (eq *empty-result* result)
+                       (push result results)
+                       (setf remaining-tokens rest)
+                       (go again)))))))))))
 
 ;;; Take a default value and a parser P and return a parser Q that
 ;;; always succeeds.  Q invokes P once.  If P succeeds, then Q
@@ -173,10 +252,70 @@
 ;;; and the original list of tokens.
 (defun optional (default parser)
   (lambda (tokens)
-    (multiple-value-bind (successp result rest)
+    (multiple-value-bind (successp terminalp result rest)
         (funcall parser tokens)
-      (if successp
-          (values t result rest)
-          (values t default tokens)))))
+      (cond (successp
+             (values t nil result rest))
+            (terminalp
+             (values nil t result tokens))
+            (t
+             (values t nil default tokens))))))
+
+(defun alternative-by-category (category)
+  (lambda (tokens
+           &aux error-result)
+    (block parse-category
+      (map nil (lambda (name)
+                 (when (member category (get name :khazern-categories))
+                   (multiple-value-bind (successp terminalp result rest)
+                       (funcall name tokens)
+                     (when (or successp terminalp)
+                       (return-from parse-category (values successp terminalp result rest)))
+                     (setf error-result (combine-parse-errors error-result result)))))
+           (parser-table-parsers *parser-table*))
+      (values nil nil error-result tokens))))
+
+(defun delimited-list-by-category (category &rest delimiters)
+  (consecutive #'cons
+               (alternative-by-category category)
+               (repeat* #'cl:list
+                        (consecutive #'identity
+                                     (apply #'keyword delimiters)
+                                     (alternative-by-category category)))))
+
+(defun terminal (tokens)
+  (values t t *empty-result* tokens))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Given a symbol S (no matter what package), return a singleton
+;;; parser Q that recognizes symbols with the same name as one of
+;;; symbols.  If Q succeeds, it returns the first token.
+
+(defun keyword (&rest symbols)
+  (lambda (tokens)
+    (cond ((null tokens)
+           (values nil nil
+                   (make-condition 'expected-token-but-end
+                                   :location (cl:list (length tokens))
+                                   :expected-keywords symbols)
+                   nil))
+          ((member (car tokens) symbols :test #'symbol-equal)
+           (values t nil *empty-result* (cdr tokens)))
+          (t
+           (values nil nil
+                   (make-condition 'expected-token-but-found
+                                   :location (cl:list (length tokens))
+                                   :expected-keywords symbols
+                                   :found (car tokens))
+                   tokens)))))
+
+(defun keyword? (&rest symbols)
+  (lambda (tokens)
+    (values t nil *empty-result*
+            (if (and tokens
+                     (member (car tokens) symbols :test #'symbol-equal))
+                (cdr tokens)
+                tokens))))
 
 ;;;  LocalWords:  parsers

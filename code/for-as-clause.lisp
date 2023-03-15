@@ -47,50 +47,20 @@
   ())
 
 (defmethod bound-variables ((clause for-as-clause))
-  (reduce #'append
-          (mapcar #'bound-variables (subclauses clause))
-          :from-end t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Manage a list of FOR-AS subclause parsers. 
-
-(defparameter *for-as-subclause-parsers* '())
-
-(defun add-for-as-subclause-parser (parser)
-  (pushnew parser *for-as-subclause-parsers*))
-
-;;; A parser that tries every parser in *FOR-AS-SUBCLAUSE-PARSERS* until one
-;;; succeeds.
-
-(defun for-as-subclause-parser (tokens)
-  (loop for parser in *for-as-subclause-parsers*
-        do (multiple-value-bind (successp result rest)
-               (funcall parser tokens)
-             (when successp
-               (return (values t result rest))))
-        finally (return (values nil nil tokens))))
+  (mapcan #'bound-variables (subclauses clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parse a FOR-AS clause.
 
-(define-parser for-as-clause-parser
-  (consecutive (lambda (for subclause more-subclauses)
-                 (declare (ignore for))
-                 (make-instance 'for-as-clause
-                   :subclauses (cons subclause more-subclauses)))
-               (alternative (keyword-parser 'for)
-                            (keyword-parser 'as))
-               'for-as-subclause-parser
-               (repeat* #'list
-                        (consecutive (lambda (and subclause)
-                                       (declare (ignore and))
-                                       subclause)
-                                     (keyword-parser 'and)
-                                     'for-as-subclause-parser))))
-
-(add-clause-parser 'for-as-clause-parser)
+(define-parser for-as-subclause+ ()
+  (delimited-list-by-category :for-as-subclause nil 'and))
+  
+(define-parser for-as-clause (:body-clause)
+  (consecutive (lambda (subclauses)
+                 (make-instance 'for-as-clause :subclauses subclauses))
+               (keyword :for :as)
+               'for-as-subclause+))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -104,16 +74,12 @@
   (reduce #'append (mapcar #'initial-bindings (subclauses clause))
           :from-end t))
 
-(defmethod final-bindings ((clause for-as-clause))
-  (reduce #'append (mapcar #'final-bindings (subclauses clause))
-          :from-end t))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the declarations.
 
-(defmethod declarations ((clause for-as-clause))
-  (reduce #'append (mapcar #'declarations (subclauses clause))
+(defmethod initial-declarations ((clause for-as-clause))
+  (reduce #'append (mapcar #'initial-declarations (subclauses clause))
           :from-end t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -18,67 +18,32 @@
 ;;;
 ;;; Parsers.
 
-(define-parser sum-it-into-clause-parser
-  (consecutive (lambda (sum it into var type-spec)
-                 (declare (ignore sum into))
-                 (make-instance 'sum-it-into-clause
-                   :form it
-                   :into-var var
-                   :type-spec type-spec))
-               (alternative (keyword-parser 'sum)
-                            (keyword-parser 'summing))
-               (keyword-parser 'it)
-               (keyword-parser 'into)
-               (singleton #'identity
-                          (lambda (x)
-                            (and (symbolp x) (not (constantp x)))))
-               'optional-type-spec-parser))
-
-(define-parser sum-it-clause-parser
-  (consecutive (lambda (sum it type-spec)
-                 (declare (ignore sum))
-                 (make-instance 'sum-it-clause
-                   :form it
-                   :type-spec type-spec))
-               (alternative (keyword-parser 'sum)
-                            (keyword-parser 'summing))
-               (keyword-parser 'it)
-               'optional-type-spec-parser))
-
-(define-parser sum-form-into-clause-parser
-  (consecutive (lambda (sum form into var type-spec)
-                 (declare (ignore sum into))
-                 (make-instance 'sum-form-into-clause
-                   :form form
-                   :into-var var
-                   :type-spec type-spec))
-               (alternative (keyword-parser 'sum)
-                            (keyword-parser 'summing))
-               'anything-parser
-               (keyword-parser 'into)
-               (singleton #'identity
-                          (lambda (x)
-                            (and (symbolp x) (not (constantp x)))))
-               'optional-type-spec-parser))
-
-(define-parser sum-form-clause-parser
-  (consecutive (lambda (sum form type-spec)
-                 (declare (ignore sum))
-                 (make-instance 'sum-form-clause
-                   :form form
-                   :type-spec type-spec))
-               (alternative (keyword-parser 'sum)
-                            (keyword-parser 'summing))
-               'anything-parser
-               'optional-type-spec-parser))
-
-(define-parser sum-clause-parser
-  (alternative 'sum-it-into-clause-parser
-               'sum-it-clause-parser
-               'sum-form-into-clause-parser
-               'sum-form-clause-parser))
-
-(add-clause-parser 'sum-clause-parser)
+(define-parser sum-clause (:body-clause :selectable-clause)
+  (consecutive (lambda (form var type-spec
+                        &aux (itp (it-keyword-p form)))
+                 (cond ((and itp var)
+                        (make-instance 'sum-it-into-clause
+                                       :form form
+                                       :into-var var
+                                       :type-spec type-spec))
+                       (itp
+                        (make-instance 'sum-it-clause
+                                       :form form
+                                       :type-spec type-spec))
+                       (var
+                        (make-instance 'sum-form-into-clause
+                                       :form form
+                                       :into-var var
+                                       :type-spec type-spec))
+                       (t
+                        (make-instance 'sum-form-clause
+                                       :form form
+                                       :type-spec type-spec))))
+               (keyword :sum :summing)
+               'terminal
+               'anything
+               'optional-into-phrase
+               'optional-type-spec))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

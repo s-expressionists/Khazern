@@ -9,15 +9,13 @@
 ;;;
 ;;; Parsers.
 
-(define-parser always-clause-parser
-  (consecutive (lambda (always form)
-                 (declare (ignore always))
+(define-parser always-clause (:body-clause)
+  (consecutive (lambda (form)
                  (make-instance 'always-clause
                    :form form))
-               (keyword-parser 'always)
-               'anything-parser))
-
-(add-clause-parser 'always-clause-parser)
+               (keyword :always)
+               'terminal
+               'anything))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

@@ -8,12 +8,14 @@
 ;;; and put them in a separate (language-specific) file.  
 
 (define-condition loop-parse-error (parse-error acclimation:condition)
-  ())
+  ((location :accessor location
+             :initarg :location
+             :initform nil
+             :type list)))
 
-;;; Root class for loop parse errors that report something that was
-;;; found, but should not be there.
-(define-condition loop-parse-error-found (parse-error acclimation:condition)
-  ((%found :initarg :found :reader found)))
+(define-condition loop-parse-error-found (loop-parse-error)
+  ((%found :reader found
+           :initarg :found)))
 
 (define-condition expected-var-spec-but-end (loop-parse-error)
   ())
@@ -21,73 +23,22 @@
 (define-condition expected-var-spec-but-found (loop-parse-error-found)
   ())
 
-(define-condition expected-simple-var-but-end (loop-parse-error)
+(define-condition expected-token (loop-parse-error)
+  ((%expected-type :accessor expected-type
+                   :initarg :expected-type
+                   :initform nil)
+   (%expected-keywords :accessor expected-keywords
+                       :initarg :expected-keywords
+                       :initform nil
+                       :type list)))
+
+(define-condition expected-token-but-found (expected-token loop-parse-error-found)
   ())
 
-(define-condition expected-simple-var-but-found (loop-parse-error-found)
+(define-condition expected-token-but-end (expected-token)
   ())
 
-(define-condition expected-type-spec-but-end (loop-parse-error)
-  ())
-
-(define-condition expected-type-spec-but-found (loop-parse-error-found)
-  ())
-
-(define-condition expected-compound-form-but-end (loop-parse-error)
-  ())
-
-(define-condition expected-compound-form-but-found (loop-parse-error-found)
-  ())
-
-(define-condition expected-form-but-end (loop-parse-error)
-  ())
-
-(define-condition expected-symbol-but-end (loop-parse-error)
-  ())
-
-(define-condition expected-symbol-but-found (loop-parse-error-found)
-  ())
-
-(define-condition expected-keyword-but-found (loop-parse-error-found)
-  ())
-
-(define-condition expected-for/as-subclause-but-end (loop-parse-error)
-  ())
-
-(define-condition expected-symbol-but-found (loop-parse-error-found)
-  ())
-
-(define-condition expected-each/the-but-end (loop-parse-error)
-  ())
-
-(define-condition expected-each/the-but-found (loop-parse-error-found)
-  ())
-
-(define-condition expected-hash-or-package-but-end (loop-parse-error)
-  ())
-
-(define-condition expected-hash-or-package-but-found (loop-parse-error-found)
-  ())
-
-(define-condition expected-in/of-but-end (loop-parse-error)
-  ())
-
-(define-condition expected-in/of-but-found (loop-parse-error-found)
-  ())
-
-(define-condition expected-hash-key-but-end (loop-parse-error)
-  ())
-
-(define-condition expected-hash-value-but-end (loop-parse-error)
-  ())
-
-(define-condition expected-hash-key-but-found (loop-parse-error-found)
-  ())
-
-(define-condition expected-hash-value-but-found (loop-parse-error-found)
-  ())
-
-(define-condition expected-preposition-but-end (loop-parse-error)
+(define-condition unexpected-tokens-found (loop-parse-error-found)
   ())
 
 (define-condition too-many-prepositions-from-one-group (loop-parse-error)
@@ -95,6 +46,32 @@
 
 (define-condition conflicting-stepping-directions (loop-parse-error)
   ())
+
+(defun combine-parse-errors (x y)
+  (cond ((and (null x) (null y))
+         nil)
+        ((null x)
+         y)
+        ((or (null y)
+             (< (car (location x)) (car (location y))))
+         x)
+        ((> (car (location x)) (car (location y)))
+         y)
+        ((and (cl:typep x 'expected-token)
+              (cl:typep y 'expected-token))
+         (setf (expected-keywords x) (append (expected-keywords x) (expected-keywords y)))
+         (cond ((and (null (expected-type x))
+                     (null (expected-type y))))
+               ((null (expected-type y)))
+               ((or (null (expected-type x))
+                    (subtypep (expected-type x) (expected-type y)))
+                (setf (expected-type x) (expected-type y)))
+               ((subtypep (expected-type y) (expected-type x)))
+               (t
+                (setf (expected-type x) `(or ,(expected-type x) ,(expected-type y)))))
+         x)
+        (t
+         nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

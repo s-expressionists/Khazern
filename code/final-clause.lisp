@@ -25,15 +25,12 @@
 ;;;
 ;;; Parser
 
-(define-parser final-clause-parser
-  (consecutive (lambda (finally compound+)
-                 (declare (ignore finally))
-                 (make-instance 'final-clause
-                   :form compound+))
-               (keyword-parser 'finally)
-               'compound+))
-
-(add-clause-parser 'final-clause-parser)
+(define-parser final-clause (:body-clause)
+  (consecutive (lambda (form)
+                 (make-instance 'final-clause :form form))
+               (keyword :finally)
+               'terminal
+               'compound-form+))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

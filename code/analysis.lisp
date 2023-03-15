@@ -8,8 +8,7 @@
 ;;; zero.
 (defun check-name-clause-position (clauses)
   (let ((name-clause-position
-          (position-if (lambda (clause) (typep clause 'name-clause)) clauses
-                       :from-end t)))
+          (position-if #'name-clause-p clauses :from-end t)))
     (when (and (not (null name-clause-position)) (plusp name-clause-position))
       (error 'name-clause-not-first))))
 
@@ -19,14 +18,9 @@
 ;;; clauses.
 (defun check-order-variable-clause-main-clause (clauses)
   (let ((last-variable-clause-position
-          (position-if (lambda (clause)
-                         (typep clause 'variable-clause))
-                       clauses
-                       :from-end t))
+          (position-if #'variable-clause-p clauses :from-end t))
         (first-main-clause-position
-          (position-if (lambda (clause)
-                         (typep clause 'main-clause))
-                       clauses)))
+          (position-if #'main-clause-p clauses)))
     (when (and (not (null last-variable-clause-position))
                (not (null first-main-clause-position))
                (> last-variable-clause-position first-main-clause-position))
@@ -37,8 +31,7 @@
   (check-order-variable-clause-main-clause clauses))
 
 (defun check-variable-uniqueness (clauses)
-  (let* ((variables (reduce #'append (mapcar #'bound-variables clauses)
-                            :from-end t))
+  (let* ((variables (mapcan #'bound-variables clauses))
          (unique-variables (remove-duplicates variables :test #'eq)))
     (unless (= (length variables)
                (length unique-variables))
@@ -71,9 +64,7 @@
 ;;; Check that there is no overlap between the bound variables and the
 ;;; accumulation variables.
 (defun check-no-variable-overlap (clauses)
-  (let ((bound-variables
-          (reduce #'append (mapcar #'bound-variables clauses)
-                  :from-end t))
+  (let ((bound-variables (mapcan #'bound-variables clauses))
         (accumulation-variables
           (mapcar #'first
                   (reduce #'append

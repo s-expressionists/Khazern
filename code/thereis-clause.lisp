@@ -9,15 +9,12 @@
 ;;;
 ;;; Parsers.
 
-(define-parser thereis-clause-parser
-  (consecutive (lambda (thereis form)
-                 (declare (ignore thereis))
-                 (make-instance 'thereis-clause
-                   :form form))
-               (keyword-parser 'thereis)
-               'anything-parser))
-
-(add-clause-parser 'thereis-clause-parser)
+(define-parser thereis-clause (:body-clause)
+  (consecutive (lambda (form)
+                 (make-instance 'thereis-clause :form form))
+               (keyword :thereis)
+               'terminal
+               'anything))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

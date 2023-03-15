@@ -30,26 +30,23 @@
 ;;; of the clause, so this method should return a list of all those
 ;;; variables.
 (defmethod bound-variables ((clause for-as-across))
-  (mapcar #'car
-          (extract-variables (var-spec clause) nil)))
+  (extract-variables (var-spec clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parser
 
-(define-parser for-as-across-parser
-  (consecutive (lambda (var type-spec across vector-form)
-                 (declare (ignore across))
+(define-parser for-as-across (:for-as-subclause)
+  (consecutive (lambda (var-spec type-spec vector-form)
                  (make-instance 'for-as-across
-                   :var-spec var
-                   :type-spec type-spec
-                   :vector-form vector-form))
-               'anything-parser
-               'optional-type-spec-parser
-               (keyword-parser 'across)
-               'anything-parser))
-
-(add-for-as-subclause-parser 'for-as-across-parser)
+                                :var-spec var-spec
+                                :type-spec type-spec
+                                :vector-form vector-form))
+               'd-var-spec
+               'optional-type-spec
+               (keyword :across)
+               'terminal
+               'anything))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -68,11 +65,8 @@
 ;;;
 ;;; Compute declarations.
 
-(defmethod declarations ((clause for-as-across))
-  (loop with d-var-spec = (var-spec clause)
-        with d-type-spec = (type-spec clause)
-        for (variable type) in (extract-variables d-var-spec d-type-spec)
-        collect `(cl:type (or null ,type) ,variable)))
+(defmethod final-declarations ((clause for-as-across))
+  (generate-variable-declarations (var-spec clause) (type-spec clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

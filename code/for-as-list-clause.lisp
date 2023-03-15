@@ -14,46 +14,32 @@
 (defclass for-as-in-list (for-as-list) ())
 
 (defmethod bound-variables ((subclause for-as-list))
-  (mapcar #'car
-          (extract-variables (var-spec subclause) nil)))
+  (extract-variables (var-spec subclause)))
+
+(define-parser for-as-list-by-parser ()
+  (optional '#'cdr
+            (consecutive #'identity
+                         (keyword :by)
+                         'anything)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parsers.
 
-(define-parser for-as-in-list-parser-1
-  (consecutive (lambda (var type-spec in list-form by-form)
-                 (declare (ignore in))
+(define-parser for-as-in-list-parser (:for-as-subclause)
+  (consecutive (lambda (var type-spec list-form by-form)
                  (make-instance 'for-as-in-list
                    :var-spec var
                    :type-spec type-spec
                    :list-form list-form
                    :by-form by-form))
-               'anything-parser
-               'optional-type-spec-parser
-               (keyword-parser 'in)
-               'anything-parser
-               'by-parser))
-
-(define-parser for-as-in-list-parser-2
-  (consecutive (lambda (var type-spec in list-form)
-                 (declare (ignore in))
-                 (make-instance 'for-as-in-list
-                   :var-spec var
-                   :type-spec type-spec
-                   :list-form list-form
-                   :by-form '#'cdr))
-               'anything-parser
-               'optional-type-spec-parser
-               (keyword-parser 'in)
-               'anything-parser))
-
-;;; Define a parser that tries the longer form first
-(define-parser for-as-in-list-parser
-  (alternative 'for-as-in-list-parser-1
-               'for-as-in-list-parser-2))
-
-(add-for-as-subclause-parser 'for-as-in-list-parser)
+               'd-var-spec
+               'optional-type-spec
+               (keyword :in)
+               'terminal
+               'anything
+               'for-as-list-by-parser))
+                         
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -61,39 +47,19 @@
 
 (defclass for-as-on-list (for-as-list) ())
 
-(define-parser for-as-on-list-parser-1
-  (consecutive (lambda (var type-spec on list-form by-form)
-                 (declare (ignore on))
+(define-parser for-as-on-list-parser (:for-as-subclause)
+  (consecutive (lambda (var type-spec list-form by-form)
                  (make-instance 'for-as-on-list
                    :var-spec var
                    :type-spec type-spec
                    :list-form list-form
                    :by-form by-form))
-               'anything-parser
-               'optional-type-spec-parser
-               (keyword-parser 'on)
-               'anything-parser
-               'by-parser))
-
-(define-parser for-as-on-list-parser-2
-  (consecutive (lambda (var type-spec on list-form)
-                 (declare (ignore on))
-                 (make-instance 'for-as-on-list
-                   :var-spec var
-                   :type-spec type-spec
-                   :list-form list-form
-                   :by-form '#'cdr))
-               'anything-parser
-               'optional-type-spec-parser
-               (keyword-parser 'on)
-               'anything-parser))
-
-;;; Define a parser that tries the longer form first
-(define-parser for-as-on-list-parser
-  (alternative 'for-as-on-list-parser-1
-               'for-as-on-list-parser-2))
-
-(add-for-as-subclause-parser 'for-as-on-list-parser)
+               'd-var-spec
+               'optional-type-spec
+               (keyword :on)
+               'terminal
+               'anything
+               'for-as-list-by-parser))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -107,20 +73,14 @@
 
 (defmethod final-bindings ((clause for-as-list))
   `((,(rest-var clause) ,(list-var clause))
-    ,@(loop with d-var-spec = (var-spec clause)
-            with d-type-spec = (type-spec clause)
-            for (variable) in (extract-variables d-var-spec d-type-spec)
-            collect `(,variable nil))))
+    ,.(generate-variable-bindings (var-spec clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the declarations.
 
-(defmethod declarations ((clause for-as-list))
-  (loop with d-var-spec = (var-spec clause)
-        with d-type-spec = (type-spec clause)
-        for (variable type) in (extract-variables d-var-spec d-type-spec)
-        collect `(cl:type (or null ,type) ,variable)))
+(defmethod final-declarations ((clause for-as-list))
+  (generate-variable-declarations (var-spec clause) (type-spec clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

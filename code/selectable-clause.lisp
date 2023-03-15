@@ -32,21 +32,5 @@
 ;;;
 ;;; Parsers.
 
-(define-parser selectable-clause-parser
-  (alternative 'do-clause-parser
-               'return-clause-parser
-               'collect-clause-parser
-               'append-clause-parser
-               'nconc-clause-parser
-               'count-clause-parser
-               'sum-clause-parser
-               'maximize-clause-parser
-               'minimize-clause-parser
-               'conditional-clause-parser))
-
-(define-parser and-selectable-clause-parser
-  (consecutive (lambda (and selectable-clause)
-                 (declare (ignore and))
-                 selectable-clause)
-               (keyword-parser 'and)
-               'selectable-clause-parser))
+(define-parser selectable-clause+ ()
+  (delimited-list-by-category :selectable-clause nil 'and))

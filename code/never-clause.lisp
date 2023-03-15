@@ -9,15 +9,12 @@
 ;;;
 ;;; Parsers.
 
-(define-parser never-clause-parser
-  (consecutive (lambda (never form)
-                 (declare (ignore never))
-                 (make-instance 'never-clause
-                   :form form))
-               (keyword-parser 'never)
-               'anything-parser))
-
-(add-clause-parser 'never-clause-parser)
+(define-parser never-clause (:body-clause)
+  (consecutive (lambda (form)
+                 (make-instance 'never-clause :form form))
+               (keyword :never)
+               'terminal
+               'anything))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
