@@ -51,12 +51,12 @@ jobs:
       if: matrix.os == 'ubuntu-22.04'
       run: |
         sudo apt-get update
-        sudo apt-get install -y sbcl
+        sudo apt-get install -y abcl sbcl
 
     - name: Install MacOS dependencies
       if: matrix.os == 'macos-latest'
       run: |
-        brew install sbcl clozure-cl
+        brew install abcl sbcl clozure-cl
 
     - uses: actions/checkout@v3
 
