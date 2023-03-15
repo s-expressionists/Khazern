@@ -21,6 +21,7 @@ jobs:
         - macos-latest
         - ubuntu-22.04
         lisp:
+        - abcl
         - ccl
         - sbcl
         exclude:
@@ -31,6 +32,11 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+    - name: ABCL environment variables
+      if: matrix.lisp == 'abcl'
+      run: |
+        echo -e "LISP=abcl\nLOAD=--load\nEVAL=--eval\nQUIT=--batch" >> $GITHUB_ENV
+
     - name: CCL environment variables
       if: matrix.lisp == 'ccl'
       run: |
@@ -72,7 +78,7 @@ jobs:
         $LISP $EVAL "(asdf:test-system :khazern-intrinsic)"
 
     - name: Run Extension Tests
-      if: matrix.lisp == 'sbcl'
+      if: matrix.lisp == 'abcl' || matrix.lisp == 'sbcl'
       run: |
         $LISP $EVAL "(ql:quickload :khazern-sequence-extrinsic/test)" $QUIT
         $LISP $EVAL "(asdf:test-system :khazern-sequence-extrinsic)"
