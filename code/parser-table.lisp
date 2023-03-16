@@ -24,7 +24,7 @@
 
 (defmethod copy-parser-table ((table parser-table))
   (make-instance 'parser-table
-                 :parsers (copy-seq (parser-table-parsers table))))
+                 :parsers (copy-list (parser-table-parsers table))))
 
 (defparameter *parser-table* nil)
 

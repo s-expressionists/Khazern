@@ -21,6 +21,8 @@
 
 (defparameter *empty-result* (cons nil nil))
 
+(defvar *categories* (make-hash-table))
+
 (defun parse-trace-output (format-control &rest arguments)
   (when *parse-trace-p*
     (format *trace-output*
@@ -52,7 +54,7 @@
        (setf (fdefinition ',name)
              (lambda (tokens)
                (trace-parser ',name (progn ,@body) tokens))
-             (get ',name :khazern-categories) ',categories))))
+             (gethash ',name *categories*) ',categories))))
 
 (defun none ()
   (lambda (tokens)
@@ -265,14 +267,14 @@
   (lambda (tokens
            &aux error-result)
     (block parse-category
-      (map nil (lambda (name)
-                 (when (member category (get name :khazern-categories))
-                   (multiple-value-bind (successp terminalp result rest)
-                       (funcall name tokens)
-                     (when (or successp terminalp)
-                       (return-from parse-category (values successp terminalp result rest)))
-                     (setf error-result (combine-parse-errors error-result result)))))
-           (parser-table-parsers *parser-table*))
+      (mapc (lambda (name)
+              (when (member category (gethash name *categories*))
+                (multiple-value-bind (successp terminalp result rest)
+                    (funcall name tokens)
+                  (when (or successp terminalp)
+                    (return-from parse-category (values successp terminalp result rest)))
+                  (setf error-result (combine-parse-errors error-result result)))))
+            (parser-table-parsers *parser-table*))
       (values nil nil error-result tokens))))
 
 (defun delimited-list-by-category (category &rest delimiters)

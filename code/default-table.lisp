@@ -33,4 +33,4 @@
 
 (defmethod copy-parser-table ((table (eql nil)))
   (make-instance 'parser-table
-                 :parsers (copy-seq *default-parsers*)))
+                 :parsers (copy-list *default-parsers*)))

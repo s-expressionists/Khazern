@@ -12,8 +12,7 @@
 
 (define-parser optional-into-phrase ()
   (optional nil
-            (consecutive (lambda (var)
-                           var)
+            (consecutive #'identity
                          (keyword :into)
                          'terminal
                          'simple-var)))
