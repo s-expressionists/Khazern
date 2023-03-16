@@ -21,7 +21,7 @@
 
 (defparameter *empty-result* (cons nil nil))
 
-(defvar *categories* (make-hash-table))
+(defvar *categories* (make-hash-table :test #'eq))
 
 (defun parse-trace-output (format-control &rest arguments)
   (when *parse-trace-p*
@@ -51,10 +51,11 @@
      ;; At load time, we set the FDEFINITION of the name to the
      ;; result of executing BODY.
      (eval-when (:load-toplevel :execute)
-       (setf (fdefinition ',name)
+       (setf (gethash ',name *categories*) ',categories
+             (fdefinition ',name)
              (lambda (tokens)
-               (trace-parser ',name (progn ,@body) tokens))
-             (gethash ',name *categories*) ',categories))))
+               (trace-parser ',name (progn ,@body) tokens)))
+                (finish-output))))
 
 (defun none ()
   (lambda (tokens)
@@ -106,15 +107,13 @@
             error-result)
         (tagbody
          again
-           (if (null remaining-parsers)
-               (return (values nil nil error-result tokens))
-               (multiple-value-bind (successp terminalp result rest)
-                   (funcall (car remaining-parsers) tokens)
-                 (pop remaining-parsers)
-                 (when (or successp terminalp)
-                   (return (values successp terminalp result rest)))
-                 (setf error-result (combine-parse-errors error-result result))
-                 (go again))))
+           (when remaining-parsers
+             (multiple-value-bind (successp terminalp result rest)
+                 (funcall (pop remaining-parsers) tokens)
+               (when (or successp terminalp)
+                 (return (values successp terminalp result rest)))
+               (setf error-result (combine-parse-errors error-result result))
+               (go again))))
         (values nil nil error-result tokens)))))
 
 ;;; Take a function designator (called the COMBINER) and a list of
