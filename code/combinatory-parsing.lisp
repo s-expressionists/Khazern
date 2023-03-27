@@ -182,7 +182,7 @@
                             (cdr tokens))))))
           (t
            (values nil nil
-                   (make-condition 'expected-type-but-found
+                   (make-condition 'expected-token-but-found
                                    :location (cl:list (length tokens))
                                    :expected-type 'list
                                    :found (car tokens))
