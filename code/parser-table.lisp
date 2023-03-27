@@ -4,7 +4,7 @@
   ((parsers :accessor parser-table-parsers
             :initarg :parsers
             :initform nil
-            :type list)))
+            :type cl:list)))
 
 (defgeneric copy-parser-table (table))
 
