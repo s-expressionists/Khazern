@@ -24,15 +24,10 @@
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
-  :depends-on (:khazern-intrinsic)
+  :depends-on ("alexandria"
+               "khazern-intrinsic")
   :perform (asdf:test-op (op c)
-             (handler-case (uiop:symbol-call :khazern-intrinsic/test :test)
-               (error (condition)
-                 (format *error-output* "~%~%~a~%" condition)
-                 (uiop:quit 100))
-               (:no-error (result)
-                 (declare (ignore result))
-                 (uiop:quit))))
+             (uiop:symbol-call :khazern-intrinsic/test :test))
   :components ((:module code
                 :pathname "code/intrinsic/test/"
                 :serial t
