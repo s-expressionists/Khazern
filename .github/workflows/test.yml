@@ -8,72 +8,33 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.os }} / ${{ matrix.lisp }}
-
+    name: ${{ matrix.lisp }}
     defaults:
       run:
         shell: bash -l {0}
-
     strategy:
       fail-fast: false
       matrix:
-        os:
-        - macos-latest
-        - ubuntu-22.04
         lisp:
         - ccl
         - sbcl
-        exclude:
-        - os: ubuntu-22.04
-          lisp: ccl
-
-    # run the job on every combination of "os" above
-    runs-on: ${{ matrix.os }}
-
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/yitzchak/archlinux-cl:latest
     steps:
-    - name: CCL environment variables
-      if: matrix.lisp == 'ccl'
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+    - name: Setup Lisp Environment
       run: |
-        echo -e "LISP=ccl64\nLOAD=--load\nEVAL=--eval\nQUIT=--eval \"(quit)\"" >> $GITHUB_ENV
-
-    - name: SBCL environment variables
-      if: matrix.lisp == 'sbcl'
-      run: |
-        echo -e "LISP=sbcl\nLOAD=--load\nEVAL=--eval\nQUIT=--quit" >> $GITHUB_ENV
-
-    - name: Install Ubuntu dependencies
-      if: matrix.os == 'ubuntu-22.04'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y sbcl
-
-    - name: Install MacOS dependencies
-      if: matrix.os == 'macos-latest'
-      run: |
-        brew install sbcl clozure-cl
-
-    - uses: actions/checkout@v3
-
-    - name: Install Quicklisp
-      run: |
-        mkdir -p $HOME/.config/common-lisp/source-registry.conf.d
-        echo "(:TREE #P\"${{ github.workspace }}/\")" > $HOME/.config/common-lisp/source-registry.conf.d/khazern.conf
-        curl -kLO https://beta.quicklisp.org/quicklisp.lisp
-        $LISP $LOAD quicklisp.lisp $EVAL "(quicklisp-quickstart:install)" $EVAL "(ql-util:without-prompting (ql:add-to-init-file))" $QUIT
-        git clone https://github.com/yitzchak/trivial-package-locks.git $HOME/quicklisp/local-projects/trivial-package-locks
-        $LISP $EVAL "(ql:quickload '(:khazern-extrinsic/test :khazern-intrinsic/test))" $QUIT
-        
+        make-rc
+        asdf-add
     - name: Run Regression Tests
       run: |
-        $LISP $EVAL "(asdf:test-system :khazern-extrinsic)"
-
+        lisp -i ${{ matrix.lisp }} -e "(ql:quickload :khazern-extrinsic/test)" -e "(asdf:test-system :khazern-extrinsic)"
     - name: Run ANSI Tests
       run: |
-        $LISP $EVAL "(asdf:test-system :khazern-intrinsic)"
-
+        lisp -i ${{ matrix.lisp }} -e "(ql:quickload :khazern-intrinsic/test)" -e "(asdf:test-system :khazern-intrinsic)"
     - name: Run Extension Tests
       if: matrix.lisp == 'sbcl'
       run: |
-        $LISP $EVAL "(ql:quickload :khazern-sequence-extrinsic/test)" $QUIT
-        $LISP $EVAL "(asdf:test-system :khazern-sequence-extrinsic)"
-
+        lisp -i ${{ matrix.lisp }} -e "(ql:quickload :khazern-sequence-extrinsic/test)" -e "(asdf:test-system :khazern-sequence-extrinsic)"
