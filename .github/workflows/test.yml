@@ -16,7 +16,9 @@ jobs:
       fail-fast: false
       matrix:
         lisp:
+        - abcl
         - ccl
+        - cmucl
         - sbcl
     runs-on: ubuntu-latest
     container:
@@ -35,6 +37,6 @@ jobs:
       run: |
         lisp -i ${{ matrix.lisp }} -e "(ql:quickload :khazern-intrinsic/test)" -e "(asdf:test-system :khazern-intrinsic)"
     - name: Run Extension Tests
-      if: matrix.lisp == 'sbcl'
+      if: ${{ matrix.lisp == 'abcl' || matrix.lisp == 'sbcl' }}
       run: |
         lisp -i ${{ matrix.lisp }} -e "(ql:quickload :khazern-sequence-extrinsic/test)" -e "(asdf:test-system :khazern-sequence-extrinsic)"
