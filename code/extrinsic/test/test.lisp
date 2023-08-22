@@ -46,3 +46,35 @@
         (loop for i from 1 to 5 and
                   j = i then (+ j i)
               collect j))))
+
+(define-test loop-wth-init.01
+  (is equal
+      (khazern-extrinsic:loop with x t
+                              finally (return x)
+                              until t
+                              return 1)
+      nil))
+
+(define-test loop-wth-init.02
+  (is equal
+      (khazern-extrinsic:loop with x fixnum
+                              finally (return x)
+                              until t
+                              return 1)
+      0))
+
+(define-test loop-wth-init.03
+  (is equal
+      (khazern-extrinsic:loop with x float
+                              finally (return x)
+                              until t
+                              return 1.0)
+      0.0))
+
+(define-test loop-wth-init.04
+  (is equal
+      (khazern-extrinsic:loop with x of-type (unsigned-byte 8)
+                              finally (return x)
+                              until t
+                              return 1)
+      0))

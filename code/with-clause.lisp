@@ -125,10 +125,9 @@
 
 (defmethod wrap-subclause ((subclause with-subclause-no-form) inner-form)
   `(let ,(map-variable-types (lambda (var type)
-                               `(,var ,(case type
-                                         (fixnum 0)
-                                         (float 0.0)
-                                         (t nil))))
+                               `(,var ,(if (subtypep type 'number)
+                                           (coerce 0 type)
+                                           nil)))
                              (var-spec subclause) (type-spec subclause))
      ,inner-form))
 
