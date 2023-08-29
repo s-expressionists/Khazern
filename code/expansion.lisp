@@ -216,23 +216,17 @@
 ;;; wraps each subclause individually, and then wraps the result in
 ;;; the initial bindings for the entire clause.
 (defmethod wrap-clause (clause inner-form)
-  (let ((result inner-form))
-    (mapc (lambda (subclause)
-            (setf result (wrap-subclause subclause result)))
-          (reverse (subclauses clause)))
-    `(let ,(initial-bindings clause)
-       (declare ,@(initial-declarations clause))
-       ,result)))
+  `(let ,(initial-bindings clause)
+     (declare ,@(initial-declarations clause))
+     ,(reduce #'wrap-subclause (subclauses clause)
+              :from-end t :initial-value inner-form)))
 
 ;;; Process all clauses by first computing the prologue, the body, and
 ;;; the epilogue, and then applying the clause-specific wrapper for
 ;;; each clause to the result.
 (defun do-clauses (all-clauses end-tag)
-  (let ((result (prologue-body-epilogue all-clauses end-tag)))
-    (mapc (lambda (clause)
-            (setf result (wrap-clause clause result)))
-          (reverse all-clauses))
-    result))
+  (reduce #'wrap-clause all-clauses :from-end t
+          :initial-value (prologue-body-epilogue all-clauses end-tag)))
 
 (defun expand-clauses (all-clauses end-tag)
   (let ((acc (accumulation-bindings all-clauses)))
