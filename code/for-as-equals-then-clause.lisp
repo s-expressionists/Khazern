@@ -61,33 +61,33 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the prologue-form-bindings.
+;;; Compute the prologue-bindings.
 
-(defmethod prologue-form-bindings ((clause for-as-equals-then))
+(defmethod prologue-bindings ((clause for-as-equals-then))
   (destructure-variables (temp-tree clause) (initial-form clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the prologue-form.
 
-(defmethod prologue-form ((clause for-as-equals-then) end-tag)
+(defmethod prologue-forms ((clause for-as-equals-then) end-tag)
   (declare (ignore end-tag))
-  `(setq ,@(loop for (original . temp) in (%directory clause)
-                 collect original
-                 collect temp)))
+  `((setq ,@(loop for (original . temp) in (%directory clause)
+                  collect original
+                  collect temp))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the step-form-bindings.
+;;; Compute the step-bindings.
 
-(defmethod step-form-bindings ((clause for-as-equals-then))
+(defmethod step-bindings ((clause for-as-equals-then))
   (destructure-variables (temp-tree clause) (subsequent-form clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the step-form.
+;;; Compute the step-forms.
 
-(defmethod step-form ((clause for-as-equals-then))
-  `(setq ,@(loop for (original . temp) in (%directory clause)
-                 collect original
-                 collect temp)))
+(defmethod step-forms ((clause for-as-equals-then))
+  `((setq ,@(loop for (original . temp) in (%directory clause)
+                  collect original
+                  collect temp))))

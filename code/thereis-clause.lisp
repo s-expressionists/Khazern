@@ -18,10 +18,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the body-form
+;;; Compute the body-forms
 
-(defmethod body-form ((clause thereis-clause) end-tag)
+(defmethod body-forms ((clause thereis-clause) end-tag)
   (declare (ignore end-tag))
-  `(let ((temp ,(form clause)))
-     (when temp
-       (return-from ,*loop-name* temp))))
+  `((let ((temp ,(form clause)))
+      (when temp
+        (return-from ,*loop-name* temp)))))

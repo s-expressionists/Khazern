@@ -30,8 +30,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the body-form.
+;;; Compute the body-forms.
 
-(defmethod body-form ((clause do-clause) end-tag)
+(defmethod body-forms ((clause do-clause) end-tag)
   (declare (ignore end-tag))
   (body clause))

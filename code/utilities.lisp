@@ -62,9 +62,10 @@
 (defun generate-assignments (d-var-spec form)
   (multiple-value-bind (temp-d-var-spec dictionary)
       (fresh-variables d-var-spec)
-    `(let* ,(destructure-variables temp-d-var-spec form)
-       (setq ,@(loop for (orig-var . temp-var) in dictionary
-                     append `(,orig-var ,temp-var))))))
+    (when dictionary
+      `((let* ,(destructure-variables temp-d-var-spec form)
+          (setq ,@(loop for (orig-var . temp-var) in dictionary
+                        append `(,orig-var ,temp-var))))))))
 
 (defun map-variable-types (function var-spec &optional type-spec)
   (let ((result '()))
@@ -166,3 +167,33 @@
 
 (defun fourth-result (&rest rest)
   (fourth rest))
+
+(defun wrap-let (bindings declarations forms)
+  (cond ((and bindings declarations)
+         `((let ,bindings
+             (declare ,@declarations)
+             ,@forms)))
+        (bindings
+         `((let ,bindings
+             ,@forms)))
+        (declarations
+         `((locally
+               (declare ,@declarations)
+             ,@forms)))
+        (t
+         forms)))
+
+(defun wrap-let* (bindings declarations forms)
+  (cond ((and bindings declarations)
+         `((let* ,bindings
+             (declare ,@declarations)
+             ,@forms)))
+        (bindings
+         `((let* ,bindings
+             ,@forms)))
+        (declarations
+         `((locally
+               (declare ,@declarations)
+             ,@forms)))
+        (t
+         forms)))

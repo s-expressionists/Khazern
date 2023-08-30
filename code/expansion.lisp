@@ -41,7 +41,7 @@
 
 ;;; This generic function returns a binding for CLAUSE that should go in
 ;;; the LOOP prologue.
-(defgeneric prologue-form-bindings (clause)
+(defgeneric prologue-bindings (clause)
   (:method (clause)
     (declare (ignore clause))
     nil))
@@ -53,7 +53,7 @@
 ;;; whether any iterations at all should be executed.  END-TAG is the
 ;;; tag to GO to when the initial termination test says that no
 ;;; iterations should be executed.
-(defgeneric prologue-form (clause end-tag)
+(defgeneric prologue-forms(clause end-tag)
   (:method (clause end-tag)
     (declare (ignore clause end-tag))
     nil))
@@ -63,7 +63,7 @@
 ;;; expanded code.  Some of the FOR-AS clauses and also the REPEAT
 ;;; clause generate code here.  END-TAG is the tag to GO to when
 ;;; iteration should terminate.
-(defgeneric termination-form (clause end-tag)
+(defgeneric termination-forms (clause end-tag)
   (:method (clause end-tag)
     (declare (ignore clause end-tag))
     nil))
@@ -76,7 +76,7 @@
 ;;; FIXME: Currently, END-TAG is used only in the WHILE clause as a
 ;;; termination test.  Investigate whether the WHILE clause should use
 ;;; TERMINATION-TEST instead, so that we can eliminate this parameter.
-(defgeneric body-form (clause end-tag)
+(defgeneric body-forms (clause end-tag)
   (:method (clause end-tag)
     (declare (ignore clause end-tag))
     nil))
@@ -84,7 +84,7 @@
 ;;; This generic function returns the bindings for CLAUSE that go
 ;;; after the main body code and the termination tests in the body of
 ;;; the expanded code.
-(defgeneric step-form-bindings (clause)
+(defgeneric step-bindings (clause)
   (:method (clause)
     (declare (ignore clause))
     nil))
@@ -93,7 +93,7 @@
 ;;; after the main body code and the termination tests in the body of
 ;;; the expanded code.  The FOR-AS clauses and also the REPEAT clause
 ;;; generate code here.
-(defgeneric step-form (clause)
+(defgeneric step-forms (clause)
   (:method (clause)
     (declare (ignore clause))
     nil))
@@ -102,7 +102,7 @@
 ;;; the LOOP epilogue.  Of the clause types defined by the Common Lisp
 ;;; standard, only the method specialized to the FINALLY clause
 ;;; returns a value other than NIL.
-(defgeneric epilogue-form (clause)
+(defgeneric epilogue-forms (clause)
   (:method (clause)
     (declare (ignore clause))
     nil))
@@ -167,27 +167,29 @@
 
 (defun prologue-body-epilogue (clauses end-tag)
   (let ((start-tag (gensym)))
-    `(tagbody
-        (let* ,(reduce #'append (mapcar #'prologue-form-bindings clauses)
-                       :from-end t)
-          ,@(mapcar (lambda (clause)
-                      (prologue-form clause end-tag))
-                    clauses))
-        ,start-tag
-        (progn ,@(mapcar (lambda (clause)
-                           (body-form clause end-tag))
-                         clauses))
-        (progn ,@(mapcar (lambda (clause)
-                           (termination-form clause end-tag))
-                         clauses))
-        (let* ,(reduce #'append (mapcar #'step-form-bindings clauses)
-                        :from-end t)
-          ,@(mapcar #'step-form clauses))
-        (go ,start-tag)
-        ,end-tag
-        (progn ,@(mapcar #'epilogue-form clauses)
-               (return-from ,*loop-name*
-                 ,*accumulation-variable*)))))
+    `((tagbody
+         ,@(wrap-let* (reduce #'append (mapcar #'prologue-bindings clauses)
+                              :from-end t)
+                      '()
+                      (mapcan (lambda (clause)
+                                (prologue-forms clause end-tag))
+                              clauses))
+       ,start-tag
+         ,@(mapcan (lambda (clause)
+                            (body-forms clause end-tag))
+                          clauses)
+         ,@(mapcan (lambda (clause)
+                            (termination-forms clause end-tag))
+                          clauses)
+         ,@(wrap-let* (reduce #'append (mapcar #'step-bindings clauses)
+                              :from-end t)
+                      '()
+                      (mapcan #'step-forms clauses))
+         (go ,start-tag)
+       ,end-tag
+         ,@(mapcan #'epilogue-forms clauses)
+         (return-from ,*loop-name*
+           ,*accumulation-variable*)))))
 
 ;;; Once the LOOP prologue, the LOOP body, and the LOOP epilogue have
 ;;; all been constructed, a bunch of successive WRAPPERS are applied
@@ -207,19 +209,19 @@
 ;;; each subclause contains only the final bindings, leaving the
 ;;; initial bindings to a single binding form of the entire clause.
 (defmethod wrap-subclause (subclause inner-form)
-  `(let ,(final-bindings subclause)
-     (declare ,@(final-declarations subclause))
-     ,inner-form))
+  (wrap-let (final-bindings subclause)
+            (final-declarations subclause)
+            inner-form))
 
 ;;; Default method for WRAP-CLAUSE.  This method is applicable only if
 ;;; the clause type does not admit any subclauses.  It
 ;;; wraps each subclause individually, and then wraps the result in
 ;;; the initial bindings for the entire clause.
 (defmethod wrap-clause (clause inner-form)
-  `(let ,(initial-bindings clause)
-     (declare ,@(initial-declarations clause))
-     ,(reduce #'wrap-subclause (subclauses clause)
-              :from-end t :initial-value inner-form)))
+  (wrap-let (initial-bindings clause)
+            (initial-declarations clause)
+            (reduce #'wrap-subclause (subclauses clause)
+                    :from-end t :initial-value inner-form)))
 
 ;;; Process all clauses by first computing the prologue, the body, and
 ;;; the epilogue, and then applying the clause-specific wrapper for
@@ -230,11 +232,12 @@
 
 (defun expand-clauses (all-clauses end-tag)
   (let ((acc (accumulation-bindings all-clauses)))
-    `(let (,@(if (member *accumulation-variable* acc :key #'car)
-                 '()
-                 `((,*accumulation-variable* nil)))
-           ,@acc)
-       ,(do-clauses all-clauses end-tag))))
+    (wrap-let (if (member *accumulation-variable* acc :key #'car)
+                  acc
+                  (list* `(,*accumulation-variable* nil)
+                         acc))
+              nil
+              (do-clauses all-clauses end-tag))))
 
 (defun expand-body (loop-body end-tag parser-table)
   (cond ((notevery #'listp loop-body)
@@ -248,7 +251,7 @@
                   (*list-tail-accumulation-variable* (gensym))
                   (*tail-variables* (make-hash-table :test #'eq)))
              `(block ,name
-                ,(expand-clauses clauses end-tag)))))
+                ,@(expand-clauses clauses end-tag)))))
         ((some #'null loop-body)
          (error 'non-compound-form))
         (t

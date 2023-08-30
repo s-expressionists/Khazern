@@ -15,14 +15,14 @@
   (:export #:accumulation-variables
            #:alternative
            #:anything
-           #:body-form
+           #:body-forms
            #:bound-variables
            #:consecutive
            #:copy-cons-cells
            #:copy-parser-table
            #:define-parser
            #:destructure-variables
-           #:epilogue-form
+           #:epilogue-forms
            #:expand-body
            #:extract-variables
            #:final-bindings
@@ -41,15 +41,15 @@
            #:optional
            #:optional-type-spec
            #:parser-enabled-p
-           #:prologue-form
-           #:prologue-form-bindings
+           #:prologue-bindings
+           #:prologue-forms
            #:repeat*
            #:repeat+
            #:singleton
-           #:step-form
-           #:step-form-bindings
+           #:step-bindings
+           #:step-forms
            #:subclauses
-           #:typep
-           #:termination-form
            #:terminal
+           #:termination-forms
+           #:typep
            #:variable-clause-p))

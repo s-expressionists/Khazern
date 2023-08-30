@@ -72,27 +72,27 @@
 ;;;
 ;;; Compute prologue-form.
 
-(defmethod prologue-form ((clause for-as-across) end-tag)
-  `(progn ,(termination-form clause end-tag)
-          ,(generate-assignments (var-spec clause)
-                                 `(aref ,(form-var clause)
-                                        ,(index-var clause)))
-          (incf ,(index-var clause))))
+(defmethod prologue-forms ((clause for-as-across) end-tag)
+  `(,@(termination-forms clause end-tag)
+    ,@(generate-assignments (var-spec clause)
+                            `(aref ,(form-var clause)
+                                   ,(index-var clause)))
+    (incf ,(index-var clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute termination-form
+;;; Compute termination-forms
 
-(defmethod termination-form ((clause for-as-across) end-tag)
-  `(when (>= ,(index-var clause) ,(length-var clause))
-     (go ,end-tag)))
+(defmethod termination-forms ((clause for-as-across) end-tag)
+  `((when (>= ,(index-var clause) ,(length-var clause))
+      (go ,end-tag))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute step-form.
+;;; Compute step-forms.
 
-(defmethod step-form ((clause for-as-across))
-  `(progn ,(generate-assignments (var-spec clause)
-                                 `(aref ,(form-var clause)
-                                        ,(index-var clause)))
-          (incf ,(index-var clause))))
+(defmethod step-forms ((clause for-as-across))
+  `(,@(generate-assignments (var-spec clause)
+                            `(aref ,(form-var clause)
+                                   ,(index-var clause)))
+    (incf ,(index-var clause))))

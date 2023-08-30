@@ -91,86 +91,80 @@
 ;;; Compute the subclause wrapper.
 
 (defmethod wrap-subclause ((subclause for-as-hash) inner-form)
-  `(let ((,(temp-entry-p-var subclause) nil)
-         (,(temp-key-var subclause) nil)
-         (,(temp-value-var subclause) nil)
-         ,.(generate-variable-bindings (var-spec subclause))
-         ,.(generate-variable-bindings (other-var-spec subclause)))
-     (declare ,@(generate-variable-declarations (var-spec subclause) (type-spec subclause)))
-     (with-hash-table-iterator
-         (,(iterator-var subclause) ,(hash-table-var subclause))
-       ,inner-form)))
+  (wrap-let `((,(temp-entry-p-var subclause) nil)
+              (,(temp-key-var subclause) nil)
+              (,(temp-value-var subclause) nil)
+              ,.(generate-variable-bindings (var-spec subclause))
+              ,.(generate-variable-bindings (other-var-spec subclause)))
+            (generate-variable-declarations (var-spec subclause) (type-spec subclause))
+            `((with-hash-table-iterator
+                  (,(iterator-var subclause) ,(hash-table-var subclause))
+                ,@inner-form))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the prologue form.
 
-(defmethod prologue-form ((subclause for-as-hash-key) end-tag)
-  `(progn (multiple-value-bind (entry-p key value)
-              (,(iterator-var subclause))
-            (setq ,(temp-entry-p-var subclause) entry-p
-                  ,(temp-key-var subclause) key
-                  ,(temp-value-var subclause) value))
-          (unless ,(temp-entry-p-var subclause)
-            (go ,end-tag))
-          ,(generate-assignments (var-spec subclause)
-                                 (temp-key-var subclause))
-          ,(generate-assignments (other-var-spec subclause)
-                                 (temp-value-var subclause))
-          (multiple-value-bind (entry-p key value)
-              (,(iterator-var subclause))
-            (setq ,(temp-entry-p-var subclause) entry-p
-                  ,(temp-key-var subclause) key
-                  ,(temp-value-var subclause) value))))
+(defmethod prologue-forms ((subclause for-as-hash-key) end-tag)
+  `((multiple-value-setq (,(temp-entry-p-var subclause)
+                          ,(temp-key-var subclause)
+                          ,(temp-value-var subclause))
+      (,(iterator-var subclause)))
+    (unless ,(temp-entry-p-var subclause)
+      (go ,end-tag))
+    ,@(generate-assignments (var-spec subclause)
+                            (temp-key-var subclause))
+    ,@(generate-assignments (other-var-spec subclause)
+                            (temp-value-var subclause))
+    (multiple-value-setq (,(temp-entry-p-var subclause)
+                          ,(temp-key-var subclause)
+                          ,(temp-value-var subclause))
+      (,(iterator-var subclause)))))
 
-(defmethod prologue-form ((subclause for-as-hash-value) end-tag)
-  `(progn (multiple-value-bind (entry-p key value)
-              (,(iterator-var subclause))
-            (setq ,(temp-entry-p-var subclause) entry-p
-                  ,(temp-key-var subclause) key
-                  ,(temp-value-var subclause) value))
-          (unless ,(temp-entry-p-var subclause)
-            (go ,end-tag))
-          ,(generate-assignments (var-spec subclause)
-                                 (temp-value-var subclause))
-          ,(generate-assignments (other-var-spec subclause)
-                                 (temp-key-var subclause))
-          (multiple-value-bind (entry-p key value)
-              (,(iterator-var subclause))
-            (setq ,(temp-entry-p-var subclause) entry-p
-                  ,(temp-key-var subclause) key
-                  ,(temp-value-var subclause) value))))
+(defmethod prologue-forms ((subclause for-as-hash-value) end-tag)
+  `((multiple-value-setq (,(temp-entry-p-var subclause)
+                          ,(temp-key-var subclause)
+                          ,(temp-value-var subclause))
+      (,(iterator-var subclause)))
+    (unless ,(temp-entry-p-var subclause)
+      (go ,end-tag))
+    ,@(generate-assignments (var-spec subclause)
+                            (temp-value-var subclause))
+    ,@(generate-assignments (other-var-spec subclause)
+                            (temp-key-var subclause))
+    (multiple-value-setq (,(temp-entry-p-var subclause)
+                          ,(temp-key-var subclause)
+                          ,(temp-value-var subclause))
+      (,(iterator-var subclause)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the termination form.
 
-(defmethod termination-form ((subclause for-as-hash) end-tag)
-  `(unless ,(temp-entry-p-var subclause)
-     (go ,end-tag)))
+(defmethod termination-forms ((subclause for-as-hash) end-tag)
+  `((unless ,(temp-entry-p-var subclause)
+      (go ,end-tag))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the step form.
 
-(defmethod step-form ((subclause for-as-hash-key))
-  `(progn ,(generate-assignments (var-spec subclause)
-                                 (temp-key-var subclause))
-          ,(generate-assignments (other-var-spec subclause)
-                                 (temp-value-var subclause))
-          (multiple-value-bind (entry-p key value)
-              (,(iterator-var subclause))
-            (setq ,(temp-entry-p-var subclause) entry-p
-                  ,(temp-key-var subclause) key
-                  ,(temp-value-var subclause) value))))
+(defmethod step-forms ((subclause for-as-hash-key))
+  `(,@(generate-assignments (var-spec subclause)
+                            (temp-key-var subclause))
+    ,@(generate-assignments (other-var-spec subclause)
+                            (temp-value-var subclause))
+    (multiple-value-setq (,(temp-entry-p-var subclause)
+                          ,(temp-key-var subclause)
+                          ,(temp-value-var subclause))
+      (,(iterator-var subclause)))))
 
-(defmethod step-form ((subclause for-as-hash-value))
-  `(progn ,(generate-assignments (var-spec subclause)
-                                 (temp-value-var subclause))
-          ,(generate-assignments (other-var-spec subclause)
-                                 (temp-key-var subclause))
-          (multiple-value-bind (entry-p key value)
-              (,(iterator-var subclause))
-            (setq ,(temp-entry-p-var subclause) entry-p
-                  ,(temp-key-var subclause) key
-                  ,(temp-value-var subclause) value))))
+(defmethod step-forms ((subclause for-as-hash-value))
+  `(,@(generate-assignments (var-spec subclause)
+                            (temp-value-var subclause))
+    ,@(generate-assignments (other-var-spec subclause)
+                            (temp-key-var subclause))
+    (multiple-value-setq (,(temp-entry-p-var subclause)
+                          ,(temp-key-var subclause)
+                          ,(temp-value-var subclause))
+      (,(iterator-var subclause)))))

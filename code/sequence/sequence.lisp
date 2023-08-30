@@ -104,47 +104,45 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute prologue-form.
+;;; Compute prologue-forms.
 
-(defmethod khazern:prologue-form ((clause for-as-over) end-tag)
-  `(progn
-     (multiple-value-setq (,(state-var clause) ,(limit-var clause) ,(from-end-var clause)
-                           ,(step-var clause) ,(endp-var clause) ,(read-var clause)
-                           ,(write-var clause) ,(index-var clause))
-                          (sequence:make-sequence-iterator ,(form-var clause)))
-     ,(khazern:termination-form clause end-tag)
-     ,(khazern:generate-assignments (var-spec clause)
-                                    `(funcall ,(read-var clause) ,(form-var clause)
-                                              ,(state-var clause)))
-     ,.(when (other-var clause)
-         (list (khazern:generate-assignments (other-var clause)
-                                             `(funcall ,(index-var clause) ,(form-var clause)
-                                                       ,(state-var clause)))))
-     (setf ,(state-var clause)
-           (funcall ,(step-var clause) ,(form-var clause) ,(state-var clause) ,(from-end-var clause)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute termination-form
-
-(defmethod khazern:termination-form ((clause for-as-over) end-tag)
-  `(when (funcall ,(endp-var clause) ,(form-var clause) ,(state-var clause)
-                  ,(limit-var clause) ,(from-end-var clause))
-     (go ,end-tag)))
+(defmethod khazern:prologue-forms ((clause for-as-over) end-tag)
+  `((multiple-value-setq (,(state-var clause) ,(limit-var clause) ,(from-end-var clause)
+                          ,(step-var clause) ,(endp-var clause) ,(read-var clause)
+                          ,(write-var clause) ,(index-var clause))
+      (sequence:make-sequence-iterator ,(form-var clause)))
+    ,@(khazern:termination-forms clause end-tag)
+    ,@(khazern:generate-assignments (var-spec clause)
+                                   `(funcall ,(read-var clause) ,(form-var clause)
+                                             ,(state-var clause)))
+    ,.(when (other-var clause)
+        khazern:generate-assignments (other-var clause)
+                                            `(funcall ,(index-var clause) ,(form-var clause)
+                                                      ,(state-var clause))))
+    (setf ,(state-var clause)
+          (funcall ,(step-var clause) ,(form-var clause) ,(state-var clause) ,(from-end-var clause)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute step-form.
+;;; Compute termination-forms
 
-(defmethod khazern:step-form ((clause for-as-over))
-  `(progn
-     ,(khazern:generate-assignments (var-spec clause)
-                                    `(funcall ,(read-var clause) ,(form-var clause)
-                                              ,(state-var clause)))
-     ,.(when (other-var clause)
-         (list (khazern:generate-assignments (other-var clause)
-                                             `(funcall ,(index-var clause) ,(form-var clause)
-                                                       ,(state-var clause)))))
-     (setf ,(state-var clause)
-           (funcall ,(step-var clause) ,(form-var clause)
-                    ,(state-var clause) ,(from-end-var clause)))))
+(defmethod khazern:termination-forms ((clause for-as-over) end-tag)
+  `((when (funcall ,(endp-var clause) ,(form-var clause) ,(state-var clause)
+                   ,(limit-var clause) ,(from-end-var clause))
+      (go ,end-tag))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Compute step-forms.
+
+(defmethod khazern:step-forms ((clause for-as-over))
+  `(,@(khazern:generate-assignments (var-spec clause)
+                                   `(funcall ,(read-var clause) ,(form-var clause)
+                                             ,(state-var clause)))
+    ,.(when (other-var clause)
+        (khazern:generate-assignments (other-var clause)
+                                            `(funcall ,(index-var clause) ,(form-var clause)
+                                                      ,(state-var clause))))
+    (setf ,(state-var clause)
+          (funcall ,(step-var clause) ,(form-var clause)
+                   ,(state-var clause) ,(from-end-var clause)))))

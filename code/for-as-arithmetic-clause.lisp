@@ -359,67 +359,68 @@
 
 (defmethod wrap-subclause ((subclause for-as-arithmetic) inner-form)
   (if (null (var-spec subclause))
-      `(let ((,(temp-var subclause) ,(start-var subclause)))
-         ,inner-form)
-      `(let ((,(temp-var subclause) ,(start-var subclause))
-             (,(var-spec subclause) ,(start-var subclause)))
-         (declare (cl:type ,(type-spec subclause) ,(var-spec subclause)))
-         ,inner-form)))
+      (wrap-let `((,(temp-var subclause) ,(start-var subclause)))
+                '()
+                inner-form)
+      (wrap-let `((,(temp-var subclause) ,(start-var subclause))
+                  (,(var-spec subclause) ,(start-var subclause)))
+                `((cl:type ,(type-spec subclause) ,(var-spec subclause)))
+                inner-form)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the prologue-form.
 
-(defmethod prologue-form ((clause for-as-arithmetic-up) end-tag)
+(defmethod prologue-forms ((clause for-as-arithmetic-up) end-tag)
   (if (null (termination-test clause))
-      `(incf ,(temp-var clause) ,(by-var clause))
-      `(if (,(termination-test clause)
+      `((incf ,(temp-var clause) ,(by-var clause)))
+      `((if (,(termination-test clause)
             ,(temp-var clause)
             ,(end-var clause))
            (incf ,(temp-var clause) ,(by-var clause))
-           (go ,end-tag))))
+           (go ,end-tag)))))
 
-(defmethod prologue-form ((clause for-as-arithmetic-down) end-tag)
+(defmethod prologue-forms ((clause for-as-arithmetic-down) end-tag)
   (if (null (termination-test clause))
-      `(decf ,(temp-var clause) ,(by-var clause))
-      `(if (,(termination-test clause)
+      `((decf ,(temp-var clause) ,(by-var clause)))
+      `((if (,(termination-test clause)
             ,(end-var clause)
             ,(temp-var clause))
            (decf ,(temp-var clause) ,(by-var clause))
-           (go ,end-tag))))
+           (go ,end-tag)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the termination-form.
+;;; Compute the termination-forms.
 
-(defmethod termination-form ((clause for-as-arithmetic-up) end-tag)
+(defmethod termination-forms ((clause for-as-arithmetic-up) end-tag)
   (if (null (termination-test clause))
       nil
-      `(unless (,(termination-test clause)
-                ,(temp-var clause)
-                ,(end-var clause))
-         (go ,end-tag))))
+      `((unless (,(termination-test clause)
+                 ,(temp-var clause)
+                 ,(end-var clause))
+          (go ,end-tag)))))
 
-(defmethod termination-form ((clause for-as-arithmetic-down) end-tag)
+(defmethod termination-forms ((clause for-as-arithmetic-down) end-tag)
   (if (null (termination-test clause))
       nil
-      `(unless (,(termination-test clause)
-                ,(end-var clause)
-                ,(temp-var clause))
-         (go ,end-tag))))
+      `((unless (,(termination-test clause)
+                 ,(end-var clause)
+                 ,(temp-var clause))
+          (go ,end-tag)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the step-form.
+;;; Compute the step-forms.
 
-(defmethod step-form ((clause for-as-arithmetic-up))
+(defmethod step-forms ((clause for-as-arithmetic-up))
   (if (null (var-spec clause))
-      `(incf ,(temp-var clause) ,(by-var clause))
-      `(progn (setq ,(var-spec clause) ,(temp-var clause))
-              (incf ,(temp-var clause) ,(by-var clause)))))
+      `((incf ,(temp-var clause) ,(by-var clause)))
+      `((setq ,(var-spec clause) ,(temp-var clause))
+        (incf ,(temp-var clause) ,(by-var clause)))))
 
-(defmethod step-form ((clause for-as-arithmetic-down))
+(defmethod step-forms ((clause for-as-arithmetic-down))
   (if (null (var-spec clause))
-      `(decf ,(temp-var clause) ,(by-var clause))
-      `(progn (setq ,(var-spec clause) ,(temp-var clause))
-              (decf ,(temp-var clause) ,(by-var clause)))))
+      `((decf ,(temp-var clause) ,(by-var clause)))
+      `((setq ,(var-spec clause) ,(temp-var clause))
+        (decf ,(temp-var clause) ,(by-var clause)))))

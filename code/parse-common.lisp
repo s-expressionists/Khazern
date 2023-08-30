@@ -35,7 +35,7 @@
 
 (define-parser compound-form+ ()
   (repeat+ (lambda (&rest forms)
-             (cons 'progn forms))
+             forms)
            (typep 'cons)))
                   
 (define-parser body-parser ()

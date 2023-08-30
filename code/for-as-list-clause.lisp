@@ -29,17 +29,17 @@
 (define-parser for-as-in-list-parser (:for-as-subclause)
   (consecutive (lambda (var type-spec list-form by-form)
                  (make-instance 'for-as-in-list
-                   :var-spec var
-                   :type-spec type-spec
-                   :list-form list-form
-                   :by-form by-form))
+                                :var-spec var
+                                :type-spec type-spec
+                                :list-form list-form
+                                :by-form by-form))
                'd-var-spec
                'optional-type-spec
                (keyword :in)
                'terminal
                'anything
                'for-as-list-by-parser))
-                         
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -50,10 +50,10 @@
 (define-parser for-as-on-list-parser (:for-as-subclause)
   (consecutive (lambda (var type-spec list-form by-form)
                  (make-instance 'for-as-on-list
-                   :var-spec var
-                   :type-spec type-spec
-                   :list-form list-form
-                   :by-form by-form))
+                                :var-spec var
+                                :type-spec type-spec
+                                :list-form list-form
+                                :by-form by-form))
                'd-var-spec
                'optional-type-spec
                (keyword :on)
@@ -86,52 +86,52 @@
 ;;;
 ;;; Compute the prologue.
 
-(defmethod prologue-form ((clause for-as-in-list) end-tag)
-  `(progn ,(termination-form clause end-tag)
-          ,(generate-assignments (var-spec clause) `(car ,(rest-var clause)))
-          ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
-               `(setq ,(rest-var clause)
-                      (,(cadr (by-form clause)) ,(rest-var clause)))
-               `(setq ,(rest-var clause)
-                      (funcall ,(by-var clause) ,(rest-var clause))))))
+(defmethod prologue-forms ((clause for-as-in-list) end-tag)
+  `(,@(termination-forms clause end-tag)
+    ,@(generate-assignments (var-spec clause) `(car ,(rest-var clause)))
+    ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
+         `(setq ,(rest-var clause)
+                (,(cadr (by-form clause)) ,(rest-var clause)))
+         `(setq ,(rest-var clause)
+                (funcall ,(by-var clause) ,(rest-var clause))))))
 
-(defmethod prologue-form ((clause for-as-on-list) end-tag)
-  `(progn ,(termination-form clause end-tag)
-          ,(generate-assignments (var-spec clause) (rest-var clause))
-          ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
-               `(setq ,(rest-var clause)
-                      (,(cadr (by-form clause)) ,(rest-var clause)))
-               `(setq ,(rest-var clause)
-                      (funcall ,(by-var clause) ,(rest-var clause))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the termination-form.
-
-(defmethod termination-form ((clause for-as-in-list) end-tag)
-  `(when (endp ,(rest-var clause))
-     (go ,end-tag)))
-
-(defmethod termination-form ((clause for-as-on-list) end-tag)
-  `(when (atom ,(rest-var clause))
-     (go ,end-tag)))
+(defmethod prologue-forms ((clause for-as-on-list) end-tag)
+  `(,@(termination-forms clause end-tag)
+    ,@(generate-assignments (var-spec clause) (rest-var clause))
+    ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
+         `(setq ,(rest-var clause)
+                (,(cadr (by-form clause)) ,(rest-var clause)))
+         `(setq ,(rest-var clause)
+                (funcall ,(by-var clause) ,(rest-var clause))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the step-form.
+;;; Compute the termination-forms.
 
-(defmethod step-form ((clause for-as-in-list))
-  `(progn ,(generate-assignments (var-spec clause) `(car ,(rest-var clause)))
-          ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
-               `(setq ,(rest-var clause)
-                      (,(cadr (by-form clause)) ,(rest-var clause)))
-               `(setq ,(rest-var clause)
-                      (funcall ,(by-var clause) ,(rest-var clause))))))
+(defmethod termination-forms ((clause for-as-in-list) end-tag)
+  `((when (endp ,(rest-var clause))
+      (go ,end-tag))))
 
-(defmethod step-form ((clause for-as-on-list))
-  `(progn ,(generate-assignments (var-spec clause) (rest-var clause))
-          ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
-               `(setq ,(rest-var clause)
-                      (,(cadr (by-form clause)) ,(rest-var clause)))
-               `(setq ,(rest-var clause)
-                      (funcall ,(by-var clause) ,(rest-var clause))))))
+(defmethod termination-forms ((clause for-as-on-list) end-tag)
+  `((when (atom ,(rest-var clause))
+      (go ,end-tag))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Compute the step-forms.
+
+(defmethod step-forms ((clause for-as-in-list))
+  `(,@(generate-assignments (var-spec clause) `(car ,(rest-var clause)))
+    ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
+         `(setq ,(rest-var clause)
+                (,(cadr (by-form clause)) ,(rest-var clause)))
+         `(setq ,(rest-var clause)
+                (funcall ,(by-var clause) ,(rest-var clause))))))
+
+(defmethod step-forms ((clause for-as-on-list))
+  `(,@(generate-assignments (var-spec clause) (rest-var clause))
+    ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
+         `(setq ,(rest-var clause)
+                (,(cadr (by-form clause)) ,(rest-var clause)))
+         `(setq ,(rest-var clause)
+                (funcall ,(by-var clause) ,(rest-var clause))))))

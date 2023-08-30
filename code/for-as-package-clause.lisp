@@ -60,50 +60,50 @@
 ;;; Compute the subclause wrapper.
 
 (defmethod wrap-subclause ((subclause for-as-package) inner-form)
-  `(let ((,(temp-entry-p-var subclause) nil)
-         (,(temp-symbol-var subclause) nil)
-         ,.(generate-variable-bindings (var-spec subclause)))
-     (declare ,.(generate-variable-declarations (var-spec subclause) (type-spec subclause)))
-     (with-package-iterator
-         (,(iterator-var subclause)
-          ,(package-var subclause)
-          ,@(iterator-keywords subclause))
-       ,inner-form)))
+  (wrap-let `((,(temp-entry-p-var subclause) nil)
+              (,(temp-symbol-var subclause) nil)
+              ,.(generate-variable-bindings (var-spec subclause)))
+            (generate-variable-declarations (var-spec subclause) (type-spec subclause))
+            `((with-package-iterator
+                  (,(iterator-var subclause)
+                   ,(package-var subclause)
+                   ,@(iterator-keywords subclause))
+                ,@inner-form))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the prologue form.
 
-(defmethod prologue-form ((subclause for-as-package) end-tag)
-  `(progn (multiple-value-bind (entry-p symbol)
-              (,(iterator-var subclause))
-            (setq ,(temp-entry-p-var subclause) entry-p
-                  ,(temp-symbol-var subclause) symbol))
-          (unless ,(temp-entry-p-var subclause)
-            (go ,end-tag))
-          ,(generate-assignments (var-spec subclause)
-                                 (temp-symbol-var subclause))
-          (multiple-value-bind (entry-p symbol)
-              (,(iterator-var subclause))
-            (setq ,(temp-entry-p-var subclause) entry-p
-                  ,(temp-symbol-var subclause) symbol))))
+(defmethod prologue-forms ((subclause for-as-package) end-tag)
+  `((multiple-value-bind (entry-p symbol)
+        (,(iterator-var subclause))
+      (setq ,(temp-entry-p-var subclause) entry-p
+            ,(temp-symbol-var subclause) symbol))
+    (unless ,(temp-entry-p-var subclause)
+      (go ,end-tag))
+    ,@(generate-assignments (var-spec subclause)
+                            (temp-symbol-var subclause))
+    (multiple-value-bind (entry-p symbol)
+        (,(iterator-var subclause))
+      (setq ,(temp-entry-p-var subclause) entry-p
+            ,(temp-symbol-var subclause) symbol))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the termination form.
 
-(defmethod termination-form ((subclause for-as-package) end-tag)
-  `(unless ,(temp-entry-p-var subclause)
-     (go ,end-tag)))
+(defmethod termination-forms ((subclause for-as-package) end-tag)
+  `((unless ,(temp-entry-p-var subclause)
+      (go ,end-tag))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the step form.
 
-(defmethod step-form ((subclause for-as-package))
-  `(progn ,(generate-assignments (var-spec subclause)
-                                 (temp-symbol-var subclause))
-          (multiple-value-bind (entry-p symbol)
-              (,(iterator-var subclause))
-            (setq ,(temp-entry-p-var subclause) entry-p
-                  ,(temp-symbol-var subclause) symbol))))
+(defmethod step-forms ((subclause for-as-package))
+  `(,@(generate-assignments (var-spec subclause)
+                            (temp-symbol-var subclause))
+    (multiple-value-bind (entry-p symbol)
+        (,(iterator-var subclause))
+      (setq ,(temp-entry-p-var subclause) entry-p
+            ,(temp-symbol-var subclause) symbol))))

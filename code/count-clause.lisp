@@ -49,32 +49,30 @@
 ;;;
 ;;; Compute the BODY-FORM.
 
-(defmethod body-form ((clause count-form-clause) end-tag)
+(defmethod body-forms ((clause count-form-clause) end-tag)
   (declare (ignore end-tag))
-  `(when ,(form clause)
-     (setq ,*accumulation-variable*
-           (1+ ,*accumulation-variable*))))
+  `((when ,(form clause)
+      (setq ,*accumulation-variable*
+            (1+ ,*accumulation-variable*)))))
 
-(defmethod body-form ((clause count-form-into-clause) end-tag)
+(defmethod body-forms ((clause count-form-into-clause) end-tag)
   (declare (ignore end-tag))
-  `(when ,(form clause)
-     (setq ,(into-var clause)
-           (1+ ,(into-var clause)))))
+  `((when ,(form clause)
+      (setq ,(into-var clause)
+            (1+ ,(into-var clause))))))
 
-(defmethod body-form ((clause count-it-clause) end-tag)
+(defmethod body-forms ((clause count-it-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
-      `(when ,*it-var*
-         (setq ,*accumulation-variable*
-               (1+ ,*accumulation-variable*)))
+      `((when ,*it-var*
+          (setq ,*accumulation-variable*
+                (1+ ,*accumulation-variable*))))
       (call-next-method)))
 
-(defmethod body-form ((clause count-it-into-clause) end-tag)
+(defmethod body-forms ((clause count-it-into-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
-      `(when ,*it-var*
-         (setq ,(into-var clause)
-               (1+ ,(into-var clause))))
+      `((when ,*it-var*
+          (setq ,(into-var clause)
+                (1+ ,(into-var clause)))))
       (call-next-method)))
- 
-  

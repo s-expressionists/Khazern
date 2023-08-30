@@ -39,14 +39,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute body-form.
+;;; Compute body-forms.
 
-(defmethod body-form ((clause return-form-clause) end-tag)
+(defmethod body-forms ((clause return-form-clause) end-tag)
   (declare (ignore end-tag))
-  `(return-from ,*loop-name* ,(form clause)))
+  `((return-from ,*loop-name* ,(form clause))))
 
-(defmethod body-form ((clause return-it-clause) end-tag)
+(defmethod body-forms ((clause return-it-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
-      `(return-from ,*loop-name* ,*it-var*)
+      `((return-from ,*loop-name* ,*it-var*))
       (call-next-method)))

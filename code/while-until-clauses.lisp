@@ -23,8 +23,8 @@
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the body-form
+;;; Compute the body-forms
 
-(defmethod body-form ((clause while-clause) end-tag)
-  `(unless ,(form clause)
-     (go ,end-tag)))
+(defmethod body-forms ((clause while-clause) end-tag)
+  `((unless ,(form clause)
+      (go ,end-tag))))

@@ -120,16 +120,18 @@
 ;;; Compute the subclause wrapper.
 
 (defmethod wrap-subclause ((subclause with-subclause-with-form) inner-form)
-  `(let* ,(destructure-variables (var-spec subclause) (form-var subclause))
-     ,inner-form))
+  (wrap-let* (destructure-variables (var-spec subclause) (form-var subclause))
+             '()
+             inner-form))
 
 (defmethod wrap-subclause ((subclause with-subclause-no-form) inner-form)
-  `(let ,(map-variable-types (lambda (var type)
-                               `(,var ,(if (subtypep type 'number)
-                                           (coerce 0 type)
-                                           nil)))
-                             (var-spec subclause) (type-spec subclause))
-     ,inner-form))
+  (wrap-let (map-variable-types (lambda (var type)
+                                  `(,var ,(if (subtypep type 'number)
+                                              (coerce 0 type)
+                                              nil)))
+                                (var-spec subclause) (type-spec subclause))
+            '()
+            inner-form))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

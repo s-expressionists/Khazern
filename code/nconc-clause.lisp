@@ -42,52 +42,52 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute body-form.
+;;; Compute body-forms.
 
 (defun nconc-clause-expander
     (form accumulation-variable list-tail-accumulation-variable)
-  `(if (null ,accumulation-variable)
-       ;; If the accumulation variable is NIL, then so is the tail
-       ;; variable.  We first set the accumulation variable to the
-       ;; value of the form.  Then we make the tail variable point to
-       ;; the last cell of the list.
-       (progn (setq ,accumulation-variable ,form)
-              (setq ,list-tail-accumulation-variable
-                    (last ,accumulation-variable)))
-       ;; If the accumulation variable is not NIL, then the tail
-       ;; variable may or may not be NIL.
-       (progn
-         ,(copy-cons-cells
-           accumulation-variable list-tail-accumulation-variable)
-         ;; When we come here, every CONS cell after the one that the
-         ;; tail variable points to has been copied, and the tail
-         ;; variable points to the last CONS cell in the list.  It
-         ;; remains to attach the new list to the end, and to set the
-         ;; tail variable to point to the last cell of the newly
-         ;; attached list.
-         (setf (cdr ,list-tail-accumulation-variable)
-               ,form)
-         (setf ,list-tail-accumulation-variable
-               (last ,list-tail-accumulation-variable)))))
+  `((if (null ,accumulation-variable)
+        ;; If the accumulation variable is NIL, then so is the tail
+        ;; variable.  We first set the accumulation variable to the
+        ;; value of the form.  Then we make the tail variable point to
+        ;; the last cell of the list.
+        (progn (setq ,accumulation-variable ,form)
+               (setq ,list-tail-accumulation-variable
+                     (last ,accumulation-variable)))
+        ;; If the accumulation variable is not NIL, then the tail
+        ;; variable may or may not be NIL.
+        (progn
+          ,(copy-cons-cells
+            accumulation-variable list-tail-accumulation-variable)
+          ;; When we come here, every CONS cell after the one that the
+          ;; tail variable points to has been copied, and the tail
+          ;; variable points to the last CONS cell in the list.  It
+          ;; remains to attach the new list to the end, and to set the
+          ;; tail variable to point to the last cell of the newly
+          ;; attached list.
+          (setf (cdr ,list-tail-accumulation-variable)
+                ,form)
+          (setf ,list-tail-accumulation-variable
+                (last ,list-tail-accumulation-variable))))))
 
-(defmethod body-form ((clause nconc-form-clause) end-tag)
+(defmethod body-forms ((clause nconc-form-clause) end-tag)
   (declare (ignore end-tag))
   (nconc-clause-expander
    (form clause) *accumulation-variable* *list-tail-accumulation-variable*))
 
-(defmethod body-form ((clause nconc-form-into-clause) end-tag)
+(defmethod body-forms ((clause nconc-form-into-clause) end-tag)
   (declare (ignore end-tag))
   (nconc-clause-expander
    (form clause) (into-var clause) (tail-variable (into-var clause))))
 
-(defmethod body-form ((clause nconc-it-clause) end-tag)
+(defmethod body-forms ((clause nconc-it-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
       (nconc-clause-expander
        *it-var*  *accumulation-variable* *list-tail-accumulation-variable*)
       (call-next-method)))
 
-(defmethod body-form ((clause nconc-it-into-clause) end-tag)
+(defmethod body-forms ((clause nconc-it-into-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
       (nconc-clause-expander

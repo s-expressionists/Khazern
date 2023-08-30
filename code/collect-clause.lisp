@@ -42,57 +42,57 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute body-form.
+;;; Compute body-forms.
 
 (defun collect-clause-expander
     (form accumulation-variable list-tail-accumulation-variable)
-  `(if (null ,accumulation-variable)
-       ;; If the accumulation variable is NIL, then so is the tail
-       ;; variable.  Then just allocate a new CONS cell containing the
-       ;; value of the form, and set bot the accumulation variable and
-       ;; the tail variable to point to it.
-       (progn (setq ,list-tail-accumulation-variable
-                    (cons ,form nil))
-              (setq ,accumulation-variable
-                    ,list-tail-accumulation-variable))
-       ;; If the accumulation variable is not NIL, then the tail
-       ;; variable may or may not be NIL.
-       (progn
-         ,(copy-cons-cells
-           accumulation-variable list-tail-accumulation-variable)
-         ;; When we come here, every CONS cell after the one that the
-         ;; tail variable points to has been copied, and the tail
-         ;; variable points to the last CONS cell in the list.  It
-         ;; remains to attach a new CONS cell containing the value of
-         ;; the form and to advance the tail variable to point to that
-         ;; new CONS cell.
-         (if (null (cdr ,list-tail-accumulation-variable))
-             (progn (setf (cdr ,list-tail-accumulation-variable)
-                          (cons ,form nil))
-                    (setf ,list-tail-accumulation-variable
-                          (cdr ,list-tail-accumulation-variable)))
-             (error 'type-error
-                    :datum (cdr ,list-tail-accumulation-variable)
-                    :expected-type 'null)))))
+  `((if (null ,accumulation-variable)
+        ;; If the accumulation variable is NIL, then so is the tail
+        ;; variable.  Then just allocate a new CONS cell containing the
+        ;; value of the form, and set bot the accumulation variable and
+        ;; the tail variable to point to it.
+        (progn (setq ,list-tail-accumulation-variable
+                     (cons ,form nil))
+               (setq ,accumulation-variable
+                     ,list-tail-accumulation-variable))
+        ;; If the accumulation variable is not NIL, then the tail
+        ;; variable may or may not be NIL.
+        (progn
+          ,(copy-cons-cells
+            accumulation-variable list-tail-accumulation-variable)
+          ;; When we come here, every CONS cell after the one that the
+          ;; tail variable points to has been copied, and the tail
+          ;; variable points to the last CONS cell in the list.  It
+          ;; remains to attach a new CONS cell containing the value of
+          ;; the form and to advance the tail variable to point to that
+          ;; new CONS cell.
+          (if (null (cdr ,list-tail-accumulation-variable))
+              (progn (setf (cdr ,list-tail-accumulation-variable)
+                           (cons ,form nil))
+                     (setf ,list-tail-accumulation-variable
+                           (cdr ,list-tail-accumulation-variable)))
+              (error 'type-error
+                     :datum (cdr ,list-tail-accumulation-variable)
+                     :expected-type 'null))))))
 
-(defmethod body-form ((clause collect-form-clause) end-tag)
+(defmethod body-forms ((clause collect-form-clause) end-tag)
   (declare (ignore end-tag))
   (collect-clause-expander
    (form clause) *accumulation-variable* *list-tail-accumulation-variable*))
 
-(defmethod body-form ((clause collect-form-into-clause) end-tag)
+(defmethod body-forms ((clause collect-form-into-clause) end-tag)
   (declare (ignore end-tag))
   (collect-clause-expander
    (form clause) (into-var clause) (tail-variable (into-var clause))))
 
-(defmethod body-form ((clause collect-it-clause) end-tag)
+(defmethod body-forms ((clause collect-it-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
       (collect-clause-expander
        *it-var*  *accumulation-variable* *list-tail-accumulation-variable*)
       (call-next-method)))
     
-(defmethod body-form ((clause collect-it-into-clause) end-tag)
+(defmethod body-forms ((clause collect-it-into-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
       (collect-clause-expander

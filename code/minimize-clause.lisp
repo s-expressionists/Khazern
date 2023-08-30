@@ -49,38 +49,38 @@
 ;;;
 ;;; Compute the BODY-FORM.
 
-(defmethod body-form ((clause minimize-form-clause) end-tag)
+(defmethod body-forms ((clause minimize-form-clause) end-tag)
   (declare (ignore end-tag))
-  `(if (null ,*accumulation-variable*)
-       (setq ,*accumulation-variable*
-             (ensure-real ,(form clause) 'min-argument-must-be-real))
-       (setq ,*accumulation-variable*
-             (minimize ,*accumulation-variable* ,(form clause)))))
+  `((if (null ,*accumulation-variable*)
+        (setq ,*accumulation-variable*
+              (ensure-real ,(form clause) 'min-argument-must-be-real))
+        (setq ,*accumulation-variable*
+              (minimize ,*accumulation-variable* ,(form clause))))))
 
-(defmethod body-form ((clause minimize-form-into-clause) end-tag)
+(defmethod body-forms ((clause minimize-form-into-clause) end-tag)
   (declare (ignore end-tag))
-  `(if (null ,(into-var clause))
-       (setq ,(into-var clause)
-             (ensure-real ,(form clause) 'min-argument-must-be-real))
-       (setq ,(into-var clause)
-             (minimize ,(into-var clause) ,(form clause)))))
+  `((if (null ,(into-var clause))
+        (setq ,(into-var clause)
+              (ensure-real ,(form clause) 'min-argument-must-be-real))
+        (setq ,(into-var clause)
+              (minimize ,(into-var clause) ,(form clause))))))
 
-(defmethod body-form ((clause minimize-it-clause) end-tag)
+(defmethod body-forms ((clause minimize-it-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
-      `(if (null ,*accumulation-variable*)
-           (setq ,*accumulation-variable*
-                 (ensure-real ,*it-var* 'min-argument-must-be-real))
-           (setq ,*accumulation-variable*
-                 (minimize ,*accumulation-variable* ,*it-var*)))
+      `((if (null ,*accumulation-variable*)
+            (setq ,*accumulation-variable*
+                  (ensure-real ,*it-var* 'min-argument-must-be-real))
+            (setq ,*accumulation-variable*
+                  (minimize ,*accumulation-variable* ,*it-var*))))
       (call-next-method)))
 
-(defmethod body-form ((clause minimize-it-into-clause) end-tag)
+(defmethod body-forms ((clause minimize-it-into-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
-      `(if (null ,(into-var clause))
-           (setq ,(into-var clause)
-                 (ensure-real ,*it-var* 'min-argument-must-be-real))
-           (setq ,(into-var clause)
-                 (minimize ,(into-var clause) ,*it-var*)))
+      `((if (null ,(into-var clause))
+            (setq ,(into-var clause)
+                  (ensure-real ,*it-var* 'min-argument-must-be-real))
+            (setq ,(into-var clause)
+                  (minimize ,(into-var clause) ,*it-var*))))
       (call-next-method)))

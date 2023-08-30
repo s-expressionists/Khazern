@@ -36,5 +36,5 @@
 ;;;
 ;;; Compute epilogue.
 
-(defmethod epilogue-form ((clause final-clause))
+(defmethod epilogue-forms ((clause final-clause))
   (form clause))

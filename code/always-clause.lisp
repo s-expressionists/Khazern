@@ -19,9 +19,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the body-form
+;;; Compute the body-forms
 
-(defmethod body-form ((clause always-clause) end-tag)
+(defmethod body-forms ((clause always-clause) end-tag)
   (declare (ignore end-tag))
-  `(unless ,(form clause)
-     (return-from ,*loop-name* nil)))
+  `((unless ,(form clause)
+      (return-from ,*loop-name* nil))))

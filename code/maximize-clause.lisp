@@ -49,38 +49,38 @@
 ;;;
 ;;; Compute the BODY-FORM.
 
-(defmethod body-form ((clause maximize-form-clause) end-tag)
+(defmethod body-forms ((clause maximize-form-clause) end-tag)
   (declare (ignore end-tag))
-  `(if (null ,*accumulation-variable*)
-       (setq ,*accumulation-variable*
-             (ensure-real ,(form clause) 'max-argument-must-be-real))
-       (setq ,*accumulation-variable*
-             (maximize ,*accumulation-variable* ,(form clause)))))
+  `((if (null ,*accumulation-variable*)
+        (setq ,*accumulation-variable*
+              (ensure-real ,(form clause) 'max-argument-must-be-real))
+        (setq ,*accumulation-variable*
+              (maximize ,*accumulation-variable* ,(form clause))))))
 
-(defmethod body-form ((clause maximize-form-into-clause) end-tag)
+(defmethod body-forms ((clause maximize-form-into-clause) end-tag)
   (declare (ignore end-tag))
-  `(if (null ,(into-var clause))
-       (setq ,(into-var clause)
-             (ensure-real ,(form clause) 'max-argument-must-be-real))
-       (setq ,(into-var clause)
-             (maximize ,(into-var clause) ,(form clause)))))
+  `((if (null ,(into-var clause))
+        (setq ,(into-var clause)
+              (ensure-real ,(form clause) 'max-argument-must-be-real))
+        (setq ,(into-var clause)
+              (maximize ,(into-var clause) ,(form clause))))))
 
-(defmethod body-form ((clause maximize-it-clause) end-tag)
+(defmethod body-forms ((clause maximize-it-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
-      `(if (null ,*accumulation-variable*)
-           (setq ,*accumulation-variable*
-                 (ensure-real ,*it-var* 'max-argument-must-be-real))
-           (setq ,*accumulation-variable*
-                 (maximize ,*accumulation-variable* ,*it-var*)))
+      `((if (null ,*accumulation-variable*)
+            (setq ,*accumulation-variable*
+                  (ensure-real ,*it-var* 'max-argument-must-be-real))
+            (setq ,*accumulation-variable*
+                  (maximize ,*accumulation-variable* ,*it-var*))))
       (call-next-method)))
 
-(defmethod body-form ((clause maximize-it-into-clause) end-tag)
+(defmethod body-forms ((clause maximize-it-into-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
-      `(if (null ,(into-var clause))
-           (setq ,(into-var clause)
-                 (ensure-real ,*it-var* 'max-argument-must-be-real))
-           (setq ,(into-var clause)
-                 (maximize ,(into-var clause) ,*it-var*)))
+      `((if (null ,(into-var clause))
+            (setq ,(into-var clause)
+                  (ensure-real ,*it-var* 'max-argument-must-be-real))
+            (setq ,(into-var clause)
+                  (maximize ,(into-var clause) ,*it-var*))))
       (call-next-method)))

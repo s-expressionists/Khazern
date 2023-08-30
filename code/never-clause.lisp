@@ -18,9 +18,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the body-form
+;;; Compute the body-forms
 
-(defmethod body-form ((clause never-clause) end-tag)
+(defmethod body-forms ((clause never-clause) end-tag)
   (declare (ignore end-tag))
-  `(when ,(form clause)
-     (return-from ,*loop-name* nil)))
+  `((when ,(form clause)
+     (return-from ,*loop-name* nil))))
