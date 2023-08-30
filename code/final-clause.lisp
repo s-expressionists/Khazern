@@ -12,7 +12,7 @@
 ;;;    final-clause ::= finally compound-form+
 
 (defclass final-clause (clause)
-  ((%form :initarg :form :reader form)))
+  ((%forms :initarg :forms :reader forms)))
 
 ;;; The final clause does not bind any variables.
 (defmethod bound-variables ((clause final-clause))
@@ -26,8 +26,8 @@
 ;;; Parser
 
 (define-parser final-clause (:body-clause)
-  (consecutive (lambda (form)
-                 (make-instance 'final-clause :form form))
+  (consecutive (lambda (forms)
+                 (make-instance 'final-clause :forms forms))
                (keyword :finally)
                'terminal
                'compound-form+))
@@ -37,4 +37,4 @@
 ;;; Compute epilogue.
 
 (defmethod epilogue-forms ((clause final-clause))
-  (form clause))
+  (forms clause))

@@ -75,18 +75,16 @@
 ;;; Compute the prologue form.
 
 (defmethod prologue-forms ((subclause for-as-package) end-tag)
-  `((multiple-value-bind (entry-p symbol)
-        (,(iterator-var subclause))
-      (setq ,(temp-entry-p-var subclause) entry-p
-            ,(temp-symbol-var subclause) symbol))
+  `((multiple-value-setq (,(temp-entry-p-var subclause)
+                          ,(temp-symbol-var subclause))
+      (,(iterator-var subclause)))
     (unless ,(temp-entry-p-var subclause)
       (go ,end-tag))
     ,@(generate-assignments (var-spec subclause)
                             (temp-symbol-var subclause))
-    (multiple-value-bind (entry-p symbol)
-        (,(iterator-var subclause))
-      (setq ,(temp-entry-p-var subclause) entry-p
-            ,(temp-symbol-var subclause) symbol))))
+    (multiple-value-setq (,(temp-entry-p-var subclause)
+                          ,(temp-symbol-var subclause))
+      (,(iterator-var subclause)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -103,7 +101,6 @@
 (defmethod step-forms ((subclause for-as-package))
   `(,@(generate-assignments (var-spec subclause)
                             (temp-symbol-var subclause))
-    (multiple-value-bind (entry-p symbol)
-        (,(iterator-var subclause))
-      (setq ,(temp-entry-p-var subclause) entry-p
-            ,(temp-symbol-var subclause) symbol))))
+    (multiple-value-setq (,(temp-entry-p-var subclause)
+                          ,(temp-symbol-var subclause))
+      (,(iterator-var subclause)))))

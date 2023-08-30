@@ -12,7 +12,7 @@
 ;;;    initial-clause ::= initially compound-form+
 
 (defclass initial-clause (clause)
-  ((%form :initarg :form :reader form)))
+  ((%forms :initarg :forms :reader forms)))
 
 ;;; The initial clause does not bind any variables.
 (defmethod bound-variables ((clause initial-clause))
@@ -26,9 +26,9 @@
 ;;; Parser
 
 (define-parser initial-clause (:body-clause)
-  (consecutive (lambda (form)
+  (consecutive (lambda (forms)
                  (make-instance 'initial-clause
-                                :form form))
+                                :forms forms))
                (keyword :initially)
                'terminal 
                'compound-form+))
@@ -39,4 +39,4 @@
 
 (defmethod prologue-forms ((clause initial-clause) end-tag)
   (declare (ignore end-tag))
-  (form clause))
+  (forms clause))
