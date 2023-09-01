@@ -133,8 +133,8 @@
       (when (null ,list-tail-accumulation-variable)
         (setf ,accumulation-variable
               (cons (car ,accumulation-variable)
-                    (cdr ,accumulation-variable)))
-        (setf ,list-tail-accumulation-variable
+                    (cdr ,accumulation-variable))
+              ,list-tail-accumulation-variable
               ,accumulation-variable))
       ;; At this point, whether the tail variable was initially NIL or
       ;; not, now it no longer is.  And every CONS cell after the one
@@ -148,9 +148,9 @@
         (setf (cdr ,list-tail-accumulation-variable)
               (cons (cadr ,list-tail-accumulation-variable)
                     (cddr ,list-tail-accumulation-variable)))
-        (setf ,list-tail-accumulation-variable
+              ,list-tail-accumulation-variable
               (cdr ,list-tail-accumulation-variable))
-        (go again))))
+        (go again)))
 
 (defun first-result (&rest rest)
   (first rest))
