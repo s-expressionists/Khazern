@@ -149,8 +149,8 @@
               (cons (cadr ,list-tail-accumulation-variable)
                     (cddr ,list-tail-accumulation-variable)))
               ,list-tail-accumulation-variable
-              (cdr ,list-tail-accumulation-variable))
-        (go again)))
+              (cdr ,list-tail-accumulation-variable)
+        (go again))))
 
 (defun first-result (&rest rest)
   (first rest))
