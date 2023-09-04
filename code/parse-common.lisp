@@ -59,6 +59,7 @@
   (multiple-value-bind (success-p keywordp result tokens)
       (let ((*parser-table* parser-table))
         (body-parser body))
+    (declare (ignore keywordp))
     (cond (success-p
            result)
           (result
