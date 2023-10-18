@@ -47,6 +47,7 @@
        (when tokens
          (multiple-value-bind (successp keywordp result remaining-tokens)
              (funcall (alternative-by-category :body-clause) tokens)
+           (declare (ignore keywordp))
            (unless successp
              (return (values nil nil result tokens)))
            (push result results)
