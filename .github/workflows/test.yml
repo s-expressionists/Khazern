@@ -30,12 +30,9 @@ jobs:
       run: |
         make-rc
         asdf-add
-    - name: Run Regression Tests
+    - name: Run ANSI and Regression Tests
       run: |
         lisp -i ${{ matrix.lisp }} -e "(ql:quickload :khazern-extrinsic/test)" -e "(asdf:test-system :khazern-extrinsic)"
-    - name: Run ANSI Tests
-      run: |
-        lisp -i ${{ matrix.lisp }} -e "(ql:quickload :khazern-intrinsic/test)" -e "(asdf:test-system :khazern-intrinsic)"
     - name: Run Extension Tests
       if: ${{ matrix.lisp == 'abcl' || matrix.lisp == 'sbcl' }}
       run: |
