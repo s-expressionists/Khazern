@@ -51,36 +51,48 @@
 
 (defmethod body-forms ((clause maximize-form-clause) end-tag)
   (declare (ignore end-tag))
-  `((if (null ,*accumulation-variable*)
-        (setq ,*accumulation-variable*
-              (ensure-real ,(form clause) 'max-argument-must-be-real))
-        (setq ,*accumulation-variable*
-              (maximize ,*accumulation-variable* ,(form clause))))))
+  `((cond ((null ,*accumulation-variable*)
+           (setq ,*accumulation-variable* ,(form clause))
+           (unless (realp ,*accumulation-variable*)
+             (error 'type-error :datum ,*accumulation-variable*
+                                :expected-type 'real)))
+          (t
+           (setq ,*accumulation-variable*
+                 (max ,*accumulation-variable* ,(form clause)))))))
 
 (defmethod body-forms ((clause maximize-form-into-clause) end-tag)
   (declare (ignore end-tag))
-  `((if (null ,(into-var clause))
-        (setq ,(into-var clause)
-              (ensure-real ,(form clause) 'max-argument-must-be-real))
-        (setq ,(into-var clause)
-              (maximize ,(into-var clause) ,(form clause))))))
+  `((cond ((null ,(into-var clause))
+           (setq ,(into-var clause) ,(form clause))
+           (unless (realp ,(into-var clause))
+             (error 'type-error :datum ,(into-var clause)
+                                :expected-type 'real)))
+          (t
+           (setq ,(into-var clause)
+                 (max ,(into-var clause) ,(form clause)))))))
 
 (defmethod body-forms ((clause maximize-it-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
-      `((if (null ,*accumulation-variable*)
-            (setq ,*accumulation-variable*
-                  (ensure-real ,*it-var* 'max-argument-must-be-real))
-            (setq ,*accumulation-variable*
-                  (maximize ,*accumulation-variable* ,*it-var*))))
+      `((cond ((null ,*accumulation-variable*)
+               (setq ,*accumulation-variable* ,*it-var*)
+               (unless (realp ,*accumulation-variable*)
+                 (error 'type-error :datum ,*accumulation-variable*
+                                    :expected-type 'real)))
+              (t
+               (setq ,*accumulation-variable*
+                     (max ,*accumulation-variable* ,*it-var*)))))
       (call-next-method)))
 
 (defmethod body-forms ((clause maximize-it-into-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
-      `((if (null ,(into-var clause))
-            (setq ,(into-var clause)
-                  (ensure-real ,*it-var* 'max-argument-must-be-real))
-            (setq ,(into-var clause)
-                  (maximize ,(into-var clause) ,*it-var*))))
+      `((cond ((null ,(into-var clause))
+               (setq ,(into-var clause) ,*it-var*)
+               (unless (realp ,(into-var clause))
+                 (error 'type-error :datum ,(into-var clause)
+                                    :expected-type 'real)))
+              (t
+               (setq ,(into-var clause)
+                     (max ,(into-var clause) ,*it-var*)))))
       (call-next-method)))
