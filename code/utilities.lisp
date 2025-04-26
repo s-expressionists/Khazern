@@ -41,31 +41,30 @@
 ;;; Given a D-VAR-SPEC, compute a D-VAR-SPEC with the same structure
 ;;; as the one given as argument, except that the non-NIL leaves
 ;;; (i.e., the variables names) have been replaced by fresh symbols.
-;;; Return two values: the new D-VAR-SPEC and a dictionary in the form
-;;; of an association list that gives the correspondence between the
-;;; original and the new variables.
+;;; Return two values: the new D-VAR-SPEC and a list of assignments
+;;; in the form of list (var temp-var ...)
 (defun fresh-variables (d-var-spec)
-  (let* ((dictionary '()))
+  (let* ((assignments '()))
     (labels ((traverse (d-var-spec)
                (cond ((null d-var-spec)
                       nil)
                      ((symbolp d-var-spec)
                       (let ((temp (gensym)))
-                        (push (cons d-var-spec temp) dictionary)
+                        (push d-var-spec assignments)
+                        (push temp assignments)
                         temp))
                      (t
                       (cons (traverse (car d-var-spec))
                             (traverse (cdr d-var-spec)))))))
       (values (traverse d-var-spec)
-              (reverse dictionary)))))
+              (nreverse assignments)))))
 
 (defun generate-assignments (d-var-spec form)
-  (multiple-value-bind (temp-d-var-spec dictionary)
+  (multiple-value-bind (temp-d-var-spec assignments)
       (fresh-variables d-var-spec)
-    (when dictionary
+    (when assignments
       `((let* ,(destructure-variables temp-d-var-spec form)
-          (setq ,@(loop for (orig-var . temp-var) in dictionary
-                        append `(,orig-var ,temp-var))))))))
+          (setq ,@assignments))))))
 
 (defun map-variable-types (function var-spec &optional type-spec)
   (let ((result '()))

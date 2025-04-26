@@ -8,16 +8,16 @@
   ((%initial-form :initarg :initial-form :reader initial-form)
    (%subsequent-form :initarg :subsequent-form :reader subsequent-form)
    (%temp-tree :initarg :temp-tree :accessor temp-tree)
-   (%directory :initarg :dictionary :accessor %directory)))
+   (%assignments :initarg :assignments :accessor assignments)))
 
 (defmethod initialize-instance :after
     ((clause for-as-equals-then) &rest initargs &key &allow-other-keys)
   (declare (ignore initargs))
-  (multiple-value-bind (temp-tree dictionary)
+  (multiple-value-bind (temp-tree assignments)
       (fresh-variables (var-spec clause))
     (reinitialize-instance clause
                            :temp-tree temp-tree
-                           :dictionary dictionary)))
+                           :assignments assignments)))
                          
 (defmethod bound-variables ((subclause for-as-equals-then))
   (extract-variables (var-spec subclause)))
@@ -72,9 +72,7 @@
 
 (defmethod prologue-forms ((clause for-as-equals-then) end-tag)
   (declare (ignore end-tag))
-  `((setq ,@(loop for (original . temp) in (%directory clause)
-                  collect original
-                  collect temp))))
+  `((setq ,@(assignments clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -88,6 +86,4 @@
 ;;; Compute the step-forms.
 
 (defmethod step-forms ((clause for-as-equals-then))
-  `((setq ,@(loop for (original . temp) in (%directory clause)
-                  collect original
-                  collect temp))))
+  `((setq ,@(assignments clause))))

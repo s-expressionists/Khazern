@@ -10,12 +10,7 @@
    ;; This slot contains a copy of the tree contained in the VAR-SPEC
    ;; slot except that the non-NIL leaves have been replaced by
    ;; GENSYMs.
-   (%temp-vars :initarg :temp-vars :reader temp-vars)
-   ;; This slot contains a list of pairs.  Each pair is a CONS cell
-   ;; where the CAR is a variable in VAR-SPEC and the CDR is the
-   ;; corresponding variable in TEMP-VARS.
    (%other-var :initarg :other-var :reader other-var)
-   (%dictionary :initarg :dictionary :reader dictionary)
    (%sequence-form :initarg :sequence-form :reader sequence-form)
    (%form-var :initform (gensym) :reader form-var)
    (%length-var :initform (gensym) :reader length-var)
@@ -27,14 +22,6 @@
    (%read-var :initform (gensym) :reader read-var)
    (%write-var :initform (gensym) :reader write-var)
    (%index-var :initform (gensym) :reader index-var)))
-
-(defmethod initialize-instance :after
-    ((clause for-as-over) &key &allow-other-keys)
-  (multiple-value-bind (temp-vars dictionary)
-      (khazern:fresh-variables (var-spec clause))
-    (reinitialize-instance clause
-                           :temp-vars temp-vars
-                           :dictionary dictionary)))
 
 (defmethod khazern:main-clause-p ((clause for-as-over))
   t)
@@ -88,9 +75,7 @@
 (defmethod khazern:final-bindings ((clause for-as-over))
   `(,@(when (other-var clause)
         `(,(other-var clause)))
-    ,@(mapcar (lambda (entry)
-                `(,(car entry) nil))
-              (dictionary clause))))
+    ,.(khazern:generate-variable-bindings (var-spec clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
