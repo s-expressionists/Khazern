@@ -31,15 +31,16 @@
   (check-order-variable-clause-main-clause clauses))
 
 (defun check-variable-uniqueness (clauses)
-  (let* ((variables (mapcan #'bound-variables clauses))
-         (unique-variables (remove-duplicates variables :test #'eq)))
-    (unless (= (length variables)
-               (length unique-variables))
-      (loop for var in unique-variables
-            when (> (count var variables :test #'eq) 1)
-              do (error 'multiple-variable-occurrences
-                        :bound-variable var)))))
-
+  (let ((variables '()))
+    (mapc (lambda (clause)
+            (mapc (lambda (var)
+                    (if (member var variables)
+                        (error 'multiple-variable-occurrences
+                               :bound-variable var)
+                        (push var variables)))
+                  (bound-variables clause)))
+            clauses)))
+                  
 ;;; Check that for a given accumulation variable, there is only one
 ;;; category.  Recall that the accumlation categores are represented
 ;;; by the symbols LIST, COUNT/SUM, and MAX/MIN.
