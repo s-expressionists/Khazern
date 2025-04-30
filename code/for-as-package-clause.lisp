@@ -12,8 +12,8 @@
    (%iterator-var :initform (gensym) :reader iterator-var)
    (%iterator-keywords :initarg :iterator-keywords :reader iterator-keywords)))
 
-(defmethod bound-variables ((subclause for-as-package))
-  (extract-variables (var-spec subclause)))
+(defmethod map-variables (function (clause for-as-package))
+  (%map-variables function (var-spec clause) nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

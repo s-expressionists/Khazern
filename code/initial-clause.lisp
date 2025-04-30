@@ -14,13 +14,6 @@
 (defclass initial-clause (clause)
   ((%forms :initarg :forms :reader forms)))
 
-;;; The initial clause does not bind any variables.
-(defmethod bound-variables ((clause initial-clause))
-  '())
-
-(defmethod accumulation-variables ((clause initial-clause))
-  '())
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parser

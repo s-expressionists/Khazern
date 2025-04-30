@@ -2,8 +2,8 @@
 
 (defclass thereis-clause (termination-test-clause form-mixin) ())
 
-(defmethod accumulation-variables ((clause thereis-clause))
-  `((nil thereis t)))
+(defmethod map-variables (function (clause thereis-clause))
+  (funcall function nil t 'thereis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

@@ -10,11 +10,8 @@
    (%length-var :initform (gensym) :reader length-var)
    (%index-var :initform (gensym) :reader index-var)))
 
-;;; The FOR-AS-ACROSS clasue binds all the variables in the VAR-SPEC
-;;; of the clause, so this method should return a list of all those
-;;; variables.
-(defmethod bound-variables ((clause for-as-across))
-  (extract-variables (var-spec clause)))
+(defmethod map-variables (function (clause for-as-across))
+  (%map-variables function (var-spec clause) nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

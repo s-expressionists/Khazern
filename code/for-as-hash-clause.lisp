@@ -17,9 +17,9 @@
 
 (defclass for-as-hash-value (for-as-hash) ())
 
-(defmethod bound-variables ((subclause for-as-hash))
-  (nconc (extract-variables (var-spec subclause))
-         (extract-variables (other-var-spec subclause))))
+(defmethod map-variables (function (clause for-as-hash))
+  (%map-variables function (var-spec clause) nil)
+  (%map-variables function (other-var-spec clause) nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

@@ -146,8 +146,8 @@
      stream
      (language acclimation:english))
   (format stream
-          "the accumulation variable ~s is used both~@
-           for ~s accumulation and ~s accumulation."
+          "the accumulation variable~@[ ~s~] is used both~@
+           for ~a accumulation and ~a accumulation."
           (bound-variable condition)
           (first-clause condition)
           (second-clause condition)))

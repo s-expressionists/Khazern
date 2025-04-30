@@ -18,12 +18,6 @@
 (defclass name-clause (clause)
   ((%name :initarg :name :reader name)))
 
-(defmethod bound-variables ((clause name-clause))
-  '())
-
-(defmethod accumulation-variables ((clause name-clause))
-  '())
-
 (defmethod name-clause-p ((clause name-clause))
   t)
 

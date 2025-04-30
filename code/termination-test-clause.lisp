@@ -12,10 +12,3 @@
 ;;;                        thereis form
 
 (defclass termination-test-clause (main-clause) ())
-
-;;; The termination-test clauses do not bind any variables.
-(defmethod bound-variables ((clause termination-test-clause))
-  '())
-
-(defmethod accumulation-variables ((clause termination-test-clause))
-  '())

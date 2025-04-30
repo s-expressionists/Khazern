@@ -5,16 +5,9 @@
    (%then-clauses :initarg :then-clauses :reader then-clauses)
    (%else-clauses :initarg :else-clauses :reader else-clauses)))
 
-;;; A conditional clause does not introduce any bindings for any
-;;; variables, so this method should return the empty list.
-(defmethod bound-variables ((clause conditional-clause))
-  '())
-
-(defmethod accumulation-variables ((clause conditional-clause))
-  (append (reduce #'append
-                  (mapcar #'accumulation-variables (then-clauses clause)))
-          (reduce #'append
-                  (mapcar #'accumulation-variables (else-clauses clause)))))
+(defmethod map-variables (function (clause conditional-clause))
+  (map-variables function (then-clauses clause))
+  (map-variables function (else-clauses clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

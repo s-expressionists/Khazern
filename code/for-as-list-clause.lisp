@@ -13,8 +13,8 @@
 
 (defclass for-as-in-list (for-as-list) ())
 
-(defmethod bound-variables ((subclause for-as-list))
-  (extract-variables (var-spec subclause)))
+(defmethod map-variables (function (clause for-as-list))
+  (%map-variables function (var-spec clause) nil))
 
 (define-parser for-as-list-by-parser ()
   (optional '#'cdr

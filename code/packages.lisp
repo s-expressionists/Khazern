@@ -12,11 +12,9 @@
    ;; need to shadow this name
    #:typep
    #:condition)
-  (:export #:accumulation-variables
-           #:alternative
+  (:export #:alternative
            #:anything
            #:body-forms
-           #:bound-variables
            #:consecutive
            #:copy-cons-cells
            #:copy-parser-table
@@ -24,7 +22,6 @@
            #:destructure-variables
            #:epilogue-forms
            #:expand-body
-           #:extract-variables
            #:final-bindings
            #:final-declarations
            #:fresh-variables
@@ -37,6 +34,8 @@
            #:list
            #:main-clause-p
            #:map-variable-types
+           #:map-variables
+           #:%map-variables
            #:name-clause-p
            #:optional
            #:optional-type-spec

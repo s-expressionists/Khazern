@@ -1,19 +1,14 @@
 (cl:in-package #:khazern)
 
-;;; The purpose of this generic function is to generate a list of all
-;;; bound variables in a clause.  The same variable occurs as many
-;;; times in the list as the number of times it is bound in the
-;;; clause.
-(defgeneric bound-variables (clause))
-
-;;; The purpose of this generic function is to generate a list of all
-;;; the accumulation variables in a clause.  Each element of the list
-;;; is itself a list of three elements.  The first element is the name
-;;; of a variable used in an INTO clause, or NIL if the clause has no
-;;; INTO.  The second element determines the kind of accumulation, and
-;;; can be one of the symbols LIST, COUNT/SUM, or MAX/MIN.  The third
-;;; element is a type specifier which can be T.
-(defgeneric accumulation-variables (clause))
+(defgeneric map-variables (function clause)
+  (:method (function clause)
+    (declare (ignore function clause))
+    nil)
+  (:method (function (clause cl:list))
+    (mapc (lambda (subclause)
+            (map-variables function subclause))
+          clause)
+    nil))
 
 ;;; The purpose of this generic function is to extract a list of
 ;;; declaration specifiers from the clause.  Notice that it is a list
@@ -134,34 +129,32 @@
 (defvar *tail-variables*)
 
 (defun tail-variable (head-variable)
-  (let ((result (gethash head-variable *tail-variables*)))
-    (when (null result)
-      (setf result (gensym))
-      (setf (gethash head-variable *tail-variables*) result))
-    result))
+  (if head-variable
+      (let ((result (gethash head-variable *tail-variables*)))
+        (when (null result)
+          (setf result (gensym))
+          (setf (gethash head-variable *tail-variables*) result))
+        result)
+      *list-tail-accumulation-variable*))
 
 (defun accumulation-bindings (clauses)
-  (let* ((descriptors
-           (reduce #'append
-                   (mapcar #'accumulation-variables clauses)))
-         (equal-fun (lambda (d1 d2)
-                      (and (eq (first d1) (first d2))
-                           (eq (second d1) (second d2)))))
-         (unique (remove-duplicates descriptors :test equal-fun)))
-    (loop for (name category type) in unique
-          for initial-value = (cond  ((eq category 'count/sum)
+  (let ((bindings nil))
+    (map-variables (lambda (name type category)
+                     (unless (eq category t)
+                       (pushnew `(,(or name *accumulation-variable*)
+                                  ,(case category
+                                     (count/sum
                                       (coerce 0 type))
-                                     ((eq category 'always/never)
+                                     (always/never
                                       t)
-                                     (t
-                                      nil))
-          collect (if (null name)
-                      `(,*accumulation-variable* ,initial-value)
-                      `(,name ,initial-value))
-          when (eq category 'list)
-            collect (if (null name)
-                        `(,*list-tail-accumulation-variable* nil)
-                        `(,(tail-variable name) nil)))))
+                                     (otherwise
+                                      nil)))
+                                bindings :key #'car)
+                       (when (eq category 'list)
+                         (pushnew `(,(tail-variable name) nil)
+                                  bindings :key #'car))))
+                   clauses)
+    (nreverse bindings)))
 
 (defvar *loop-name*)
 

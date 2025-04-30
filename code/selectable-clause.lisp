@@ -25,9 +25,6 @@
 
 (defclass selectable-clause (main-clause) ())
 
-(defmethod bound-variables ((clause selectable-clause))
-  '())
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parsers.

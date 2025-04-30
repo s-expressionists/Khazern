@@ -14,9 +14,6 @@
 (defclass return-clause (unconditional-clause)
   ())
 
-(defmethod accumulation-variables ((clause return-clause))
-  '())
-
 (defclass return-form-clause (return-clause)
   ((%form :initarg :form :reader form)))
 

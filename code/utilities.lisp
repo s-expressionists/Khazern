@@ -66,30 +66,34 @@
       `((let* ,(destructure-variables temp-d-var-spec form)
           (setq ,@assignments))))))
 
+(defun %map-variables (function var-spec type-spec)
+  (cond ((null var-spec))
+        ((symbolp var-spec)
+         (funcall function var-spec (or type-spec t) t))
+        ((symbolp type-spec)
+         (unless (consp var-spec)
+           (error 'expected-var-spec-but-found
+                  :found var-spec))
+         (%map-variables function (car var-spec) type-spec)
+         (%map-variables function (cdr var-spec) type-spec))
+        ((not (consp var-spec))
+         (error 'expected-var-spec-but-found
+                :found var-spec))
+        ((not (consp type-spec))
+         (error 'expected-type-spec-but-found
+                :found type-spec))
+        (t
+         (%map-variables function (car var-spec) (car type-spec))
+         (%map-variables function (cdr var-spec) (cdr type-spec))))
+  nil)
+ 
 (defun map-variable-types (function var-spec &optional type-spec)
   (let ((result '()))
-    (labels ((extract-aux (var-spec type-spec)
-               (cond ((null var-spec)
-                      nil)
-                     ((symbolp var-spec)
-                      (push (funcall function var-spec (or type-spec t)) result))
-                     ((symbolp type-spec)
-                      (unless (consp var-spec)
-                        (error 'expected-var-spec-but-found
-                               :found var-spec))
-                      (extract-aux (car var-spec) type-spec)
-                      (extract-aux (cdr var-spec) type-spec))
-                     ((not (consp var-spec))
-                      (error 'expected-var-spec-but-found
-                             :found var-spec))
-                     ((not (consp type-spec))
-                      (error 'expected-type-spec-but-found
-                             :found type-spec))
-                     (t
-                      (extract-aux (car var-spec) (car type-spec))
-                      (extract-aux (cdr var-spec) (cdr type-spec))))))
-      (extract-aux var-spec type-spec)
-      result)))
+    (%map-variables (lambda (name type category)
+                      (declare (ignore category))
+                      (push (funcall function name type) result))
+                    var-spec type-spec)
+    (nreverse result)))
 
 (defun generate-variable-declarations (var-spec type-spec)
   (map-variable-types (lambda (var type)
@@ -100,12 +104,6 @@
   (map-variable-types (lambda (var type)
                         (declare (ignore type))
                         `(,var nil))
-                      var-spec))
-
-(defun extract-variables (var-spec)
-  (map-variable-types (lambda (var type)
-                        (declare (ignore type))
-                        var)
                       var-spec))
 
 ;;; This function is used in the list accumulation clauses COLLECT,

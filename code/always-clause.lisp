@@ -2,8 +2,8 @@
 
 (defclass always-clause (termination-test-clause form-mixin) ())
 
-(defmethod accumulation-variables ((clause always-clause))
-  `((nil always/never t)))
+(defmethod map-variables (function (clause always-clause))
+  (funcall function nil t 'always/never))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

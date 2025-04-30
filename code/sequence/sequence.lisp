@@ -29,11 +29,8 @@
 (defmethod khazern:variable-clause-p ((clause for-as-over))
   t)
 
-;;; The FOR-AS-OVER clasue binds all the variables in the VAR-SPEC
-;;; of the clause, so this method should return a list of all those
-;;; variables.
-(defmethod khazern:bound-variables ((clause for-as-over))
-  (khazern:extract-variables (var-spec clause)))
+(defmethod khazern:map-variables (function (clause for-as-over))
+  (khazern:%map-variables function (var-spec clause) (type-spec clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

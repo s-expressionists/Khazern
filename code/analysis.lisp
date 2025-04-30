@@ -30,56 +30,29 @@
   (check-name-clause-position clauses)
   (check-order-variable-clause-main-clause clauses))
 
-(defun check-variable-uniqueness (clauses)
-  (let ((variables '()))
-    (mapc (lambda (clause)
-            (mapc (lambda (var)
-                    (if (member var variables)
-                        (error 'multiple-variable-occurrences
-                               :bound-variable var)
-                        (push var variables)))
-                  (bound-variables clause)))
-            clauses)))
-                  
-;;; Check that for a given accumulation variable, there is only one
-;;; category.  Recall that the accumlation categores are represented
-;;; by the symbols LIST, COUNT/SUM, and MAX/MIN.
-(defun check-accumulation-categories (clauses)
-  (let* ((descriptors (reduce #'append
-                              (mapcar #'accumulation-variables clauses)))
-         (equal-fun (lambda (d1 d2)
-                      (and (eq (first d1) (first d2))
-                           (eq (second d1) (second d2)))))
-         (unique (remove-duplicates descriptors :test equal-fun)))
-    (loop for remaining on unique
-          do (let ((entry (member (first (first remaining))
-                                  (rest remaining)
-                                  :test #'eq
-                                  :key #'first)))
-               (unless (null entry)
-                 (error 'multiple-accumulation-occurrences
-                        :bound-variable (first (first remaining))
-                        :first-clause (second (first remaining))
-                        :second-clause (second (first entry))))))))
-
-;;; Check that there is no overlap between the bound variables and the
-;;; accumulation variables.
-(defun check-no-variable-overlap (clauses)
-  (let ((bound-variables (mapcan #'bound-variables clauses))
-        (accumulation-variables
-          (mapcar #'first
-                  (reduce #'append
-                          (mapcar #'accumulation-variables clauses)))))
-    (let ((intersection
-            (intersection bound-variables accumulation-variables
-                          :test #'eq)))
-      (unless (null intersection)
-        (error 'iteration-accumulation-overlap
-               :bound-variable (car intersection))))))
+(defun check-variables (clauses)
+  (let ((variables nil))
+    (map-variables (lambda (name type category)
+                     (declare (ignore type))
+                     (let ((current-category (getf variables name)))
+                       (cond ((null current-category)
+                              (setf (getf variables name) category))
+                             ((and (eq category t)
+                                   (eq current-category t))
+                              (error 'multiple-variable-occurrences
+                                     :bound-variable name))
+                             ((or (eq category t)
+                                  (eq current-category t))
+                              (error 'iteration-accumulation-overlap
+                                     :bound-variable name))
+                             ((not (eq category current-category))
+                              (error 'multiple-accumulation-occurrences
+                                     :bound-variable name
+                                     :first-clause category
+                                     :second-clause current-category)))))
+                   clauses)))
 
 ;;; FIXME: Add more analyses.
 (defun analyze-clauses (clauses)
   (verify-clause-order clauses)
-  (check-variable-uniqueness clauses)
-  (check-accumulation-categories clauses)
-  (check-no-variable-overlap clauses))
+  (check-variables clauses))

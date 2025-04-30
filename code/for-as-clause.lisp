@@ -46,8 +46,8 @@
 (defclass for-as-subclause (var-and-type-spec-mixin)
   ())
 
-(defmethod bound-variables ((clause for-as-clause))
-  (mapcan #'bound-variables (subclauses clause)))
+(defmethod map-variables (function (clause for-as-clause))
+  (map-variables function (subclauses clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

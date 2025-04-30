@@ -50,11 +50,11 @@
 (defmethod form ((subclause with-subclause))
   nil)
 
-(defmethod bound-variables ((clause with-clause))
-  (mapcan #'bound-variables (subclauses clause)))
+(defmethod map-variables (function (clause with-clause))
+  (map-variables function (subclauses clause)))
 
-(defmethod bound-variables ((subclause with-subclause))
-  (extract-variables (var-spec subclause)))
+(defmethod map-variables (function (clause with-subclause))
+  (%map-variables function (var-spec clause) nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

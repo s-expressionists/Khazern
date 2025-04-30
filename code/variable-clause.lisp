@@ -22,9 +22,5 @@
 
 (defclass variable-clause (clause) ())
 
-;;; No variable clause defines any accumulation variables
-(defmethod accumulation-variables ((clause variable-clause))
-  '())
-
 (defmethod variable-clause-p ((clause variable-clause))
   t)

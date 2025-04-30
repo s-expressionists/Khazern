@@ -14,9 +14,6 @@
 (defclass do-clause (unconditional-clause)
   ((%forms :initarg :forms :reader forms)))
 
-(defmethod accumulation-variables ((clause do-clause))
-  '())
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parser

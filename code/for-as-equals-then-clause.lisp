@@ -18,9 +18,9 @@
     (reinitialize-instance clause
                            :temp-tree temp-tree
                            :assignments assignments)))
-                         
-(defmethod bound-variables ((subclause for-as-equals-then))
-  (extract-variables (var-spec subclause)))
+
+(defmethod map-variables (function (clause for-as-equals-then))
+  (%map-variables function (var-spec clause) nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

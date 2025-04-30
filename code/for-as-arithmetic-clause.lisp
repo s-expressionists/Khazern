@@ -40,8 +40,8 @@
 
 (defclass for-as-arithmetic-down (for-as-arithmetic) ())
 
-(defmethod bound-variables ((subclause for-as-arithmetic))
-  (extract-variables (var-spec subclause)))
+(defmethod map-variables (function (clause for-as-arithmetic))
+  (%map-variables function (var-spec clause) nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

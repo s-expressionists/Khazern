@@ -74,7 +74,7 @@
 ;;; Method on ACCUMULATION-VARIABLES, valid for all accumulation
 ;;; clauses.
 
-(defmethod accumulation-variables ((clause accumulation-clause))
-  `((,(into-var clause)
-     ,(accumulation-category clause)
-     ,(type-spec clause))))
+(defmethod map-variables (function (clause accumulation-clause))
+  (funcall function
+           (into-var clause) (type-spec clause)
+           (accumulation-category clause)))

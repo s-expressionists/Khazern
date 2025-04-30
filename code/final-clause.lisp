@@ -14,13 +14,6 @@
 (defclass final-clause (clause)
   ((%forms :initarg :forms :reader forms)))
 
-;;; The final clause does not bind any variables.
-(defmethod bound-variables ((clause final-clause))
-  '())
-
-(defmethod accumulation-variables ((clause final-clause))
-  '())
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parser
