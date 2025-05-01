@@ -1,17 +1,9 @@
 (cl:in-package #:khazern)
 
-(defclass minimize-clause (max/min-accumulation-clause) ())
-
-(defclass minimize-form-clause (minimize-clause form-mixin)
+(defclass minimize-clause (max/min-accumulation-clause form-mixin)
   ())
 
-(defclass minimize-it-clause (minimize-form-clause it-mixin)
-  ())
-
-(defclass minimize-form-into-clause (into-mixin minimize-clause form-mixin)
-  ())
-
-(defclass minimize-it-into-clause (minimize-form-into-clause it-mixin)
+(defclass minimize-it-clause (minimize-clause it-mixin)
   ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -22,7 +14,7 @@
   (consecutive (lambda (form var type-spec
                         &aux (itp (it-keyword-p form)))
                  (cond ((and itp var)
-                        (make-instance 'minimize-it-into-clause
+                        (make-instance 'minimize-it-clause
                                        :form form
                                        :into-var var
                                        :type-spec type-spec))
@@ -31,12 +23,12 @@
                                        :form form
                                        :type-spec type-spec))
                        (var
-                        (make-instance 'minimize-form-into-clause
+                        (make-instance 'minimize-clause
                                        :form form
                                        :into-var var
                                        :type-spec type-spec))
                        (t
-                        (make-instance 'minimize-form-clause
+                        (make-instance 'minimize-clause
                                        :form form
                                        :type-spec type-spec))))
                (keyword :minimize :minimizing)
@@ -49,18 +41,7 @@
 ;;;
 ;;; Compute the BODY-FORM.
 
-(defmethod body-forms ((clause minimize-form-clause) end-tag)
-  (declare (ignore end-tag))
-  `((cond ((null ,*accumulation-variable*)
-           (setq ,*accumulation-variable* ,(form clause))
-           (unless (realp ,*accumulation-variable*)
-             (error 'type-error :datum ,*accumulation-variable*
-                                :expected-type 'real)))
-          (t
-           (setq ,*accumulation-variable*
-                 (min ,*accumulation-variable* ,(form clause)))))))
-
-(defmethod body-forms ((clause minimize-form-into-clause) end-tag)
+(defmethod body-forms ((clause minimize-clause) end-tag)
   (declare (ignore end-tag))
   `((cond ((null ,(into-var clause))
            (setq ,(into-var clause) ,(form clause))
@@ -72,19 +53,6 @@
                  (min ,(into-var clause) ,(form clause)))))))
 
 (defmethod body-forms ((clause minimize-it-clause) end-tag)
-  (declare (ignore end-tag))
-  (if *it-var*
-      `((cond ((null ,*accumulation-variable*)
-               (setq ,*accumulation-variable* ,*it-var*)
-               (unless (realp ,*accumulation-variable*)
-                 (error 'type-error :datum ,*accumulation-variable*
-                                    :expected-type 'real)))
-              (t
-               (setq ,*accumulation-variable*
-                     (min ,*accumulation-variable* ,*it-var*)))))
-      (call-next-method)))
-
-(defmethod body-forms ((clause minimize-it-into-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
       `((cond ((null ,(into-var clause))

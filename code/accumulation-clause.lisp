@@ -5,7 +5,9 @@
 ;;; Accumulation clauses
 
 (defclass accumulation-clause (selectable-clause)
-  ())
+  ((%into-var :accessor into-var
+              :initarg :into-var
+              :initform (default-accumulation-variable))))
 
 ;;; We define three different accumulation CATEGORIES, each identified
 ;;; by a symbol: LIST, COUNT/SUM, and MAX/MIN.  Accumulation clauses
@@ -13,16 +15,6 @@
 ;;; when they accumulate into the same variable.  This generic
 ;;; function takes an accumulation clause and returns the category.
 (defgeneric accumulation-category (clause))
-
-
-;;; The methods on ACCUMULATION-VARIABLES call the function INTO-VAR
-;;; on the clause in order to obtain the first element of each
-;;; accumulation variable descriptor.  For clauses that have
-;;; INTO-MIXIN as a superclass, the variable is stored in a slot.
-;;; This method defines the default method to be used for all other
-;;; accumulation clauses.
-(defmethod into-var ((clause accumulation-clause))
-  'nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -61,13 +53,6 @@
 
 (defmethod accumulation-category ((clause max/min-accumulation-clause))
   'max/min)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Mixin class for INTO clause variants.
-
-(defclass into-mixin ()
-  ((%into-var :initform nil :initarg :into-var :accessor into-var)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

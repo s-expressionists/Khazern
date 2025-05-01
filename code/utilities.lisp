@@ -70,15 +70,12 @@
   (cond ((null var-spec))
         ((symbolp var-spec)
          (funcall function var-spec (or type-spec t) t))
-        ((symbolp type-spec)
-         (unless (consp var-spec)
-           (error 'expected-var-spec-but-found
-                  :found var-spec))
-         (%map-variables function (car var-spec) type-spec)
-         (%map-variables function (cdr var-spec) type-spec))
         ((not (consp var-spec))
          (error 'expected-var-spec-but-found
                 :found var-spec))
+        ((symbolp type-spec)
+         (%map-variables function (car var-spec) type-spec)
+         (%map-variables function (cdr var-spec) type-spec))
         ((not (consp type-spec))
          (error 'expected-type-spec-but-found
                 :found type-spec))

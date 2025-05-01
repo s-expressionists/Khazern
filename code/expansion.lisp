@@ -124,24 +124,24 @@
 
 (defvar *accumulation-variable*)
 
-(defvar *list-tail-accumulation-variable*)
-
 (defvar *tail-variables*)
 
+(defun default-accumulation-variable ()
+  (or *accumulation-variable*
+      (setf *accumulation-variable* (gensym))))
+
 (defun tail-variable (head-variable)
-  (if head-variable
-      (let ((result (gethash head-variable *tail-variables*)))
-        (when (null result)
-          (setf result (gensym))
-          (setf (gethash head-variable *tail-variables*) result))
-        result)
-      *list-tail-accumulation-variable*))
+  (let ((result (gethash head-variable *tail-variables*)))
+    (when (null result)
+      (setf result (gensym))
+      (setf (gethash head-variable *tail-variables*) result))
+    result))
 
 (defun accumulation-bindings (clauses)
   (let ((bindings nil))
     (map-variables (lambda (name type category)
                      (unless (eq category t)
-                       (pushnew `(,(or name *accumulation-variable*)
+                       (pushnew `(,name
                                   ,(case category
                                      (count/sum
                                       (coerce 0 type))
@@ -224,24 +224,19 @@
           :initial-value (prologue-body-epilogue all-clauses end-tag)))
 
 (defun expand-clauses (all-clauses end-tag)
-  (let ((acc (accumulation-bindings all-clauses)))
-    (wrap-let (if (member *accumulation-variable* acc :key #'car)
-                  acc
-                  (list* `(,*accumulation-variable* nil)
-                         acc))
-              nil
-              (do-clauses all-clauses end-tag))))
+  (wrap-let (accumulation-bindings all-clauses)
+            nil
+            (do-clauses all-clauses end-tag)))
 
 (defun expand-body (loop-body end-tag parser-table)
   (cond ((notevery #'listp loop-body)
-         (let ((clauses (parse-loop-body loop-body parser-table)))
+         (let* ((*accumulation-variable* nil)
+                (clauses (parse-loop-body loop-body parser-table)))
            (analyze-clauses clauses)
            (let* ((name (if (name-clause-p (car clauses))
                             (name (car clauses))
                             nil))
                   (*loop-name* name)
-                  (*accumulation-variable* (gensym))
-                  (*list-tail-accumulation-variable* (gensym))
                   (*tail-variables* (make-hash-table :test #'eq)))
              `(block ,name
                 ,@(expand-clauses clauses end-tag)))))

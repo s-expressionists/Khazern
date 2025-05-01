@@ -1,17 +1,9 @@
 (cl:in-package #:khazern)
 
-(defclass collect-clause (list-accumulation-clause) ())
-
-(defclass collect-form-clause (collect-clause form-mixin)
+(defclass collect-clause (list-accumulation-clause form-mixin)
   ())
 
-(defclass collect-it-clause (collect-form-clause it-mixin)
-  ())
-
-(defclass collect-form-into-clause (into-mixin collect-clause form-mixin)
-  ())
-
-(defclass collect-it-into-clause (collect-form-into-clause it-mixin)
+(defclass collect-it-clause (collect-clause it-mixin)
   ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -22,18 +14,18 @@
   (consecutive (lambda (form var
                         &aux (itp (it-keyword-p form)))
                  (cond ((and itp var)
-                        (make-instance 'collect-it-into-clause
+                        (make-instance 'collect-it-clause
                                        :form form
                                        :into-var var))
                        (itp
                         (make-instance 'collect-it-clause
                                        :form form))
                        (var
-                        (make-instance 'collect-form-into-clause
+                        (make-instance 'collect-clause
                                        :form form
                                        :into-var var))
                        (t
-                        (make-instance 'collect-form-clause
+                        (make-instance 'collect-clause
                                        :form form))))
                (keyword :collect :collecting)
                'terminal
@@ -75,26 +67,15 @@
                  ,list-tail-accumulation-variable
                  (cdr ,list-tail-accumulation-variable))))))
 
-(defmethod body-forms ((clause collect-form-clause) end-tag)
+(defmethod body-forms ((clause collect-clause) end-tag)
   (declare (ignore end-tag))
-  (collect-clause-expander
-   (form clause) *accumulation-variable* *list-tail-accumulation-variable*))
-
-(defmethod body-forms ((clause collect-form-into-clause) end-tag)
-  (declare (ignore end-tag))
-  (collect-clause-expander
-   (form clause) (into-var clause) (tail-variable (into-var clause))))
+  (collect-clause-expander (form clause) (into-var clause)
+                           (tail-variable (into-var clause))))
 
 (defmethod body-forms ((clause collect-it-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
-      (collect-clause-expander
-       *it-var*  *accumulation-variable* *list-tail-accumulation-variable*)
+      (collect-clause-expander *it-var* (into-var clause)
+                               (tail-variable (into-var clause)))
       (call-next-method)))
     
-(defmethod body-forms ((clause collect-it-into-clause) end-tag)
-  (declare (ignore end-tag))
-  (if *it-var*
-      (collect-clause-expander
-       *it-var* (into-var clause) (tail-variable (into-var clause)))
-      (call-next-method)))

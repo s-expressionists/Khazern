@@ -1,17 +1,9 @@
 (cl:in-package #:khazern)
 
-(defclass append-clause (list-accumulation-clause) ())
-
-(defclass append-form-clause (append-clause form-mixin)
+(defclass append-clause (list-accumulation-clause form-mixin)
   ())
 
-(defclass append-it-clause (append-form-clause it-mixin)
-  ())
-
-(defclass append-form-into-clause (into-mixin append-clause form-mixin)
-  ())
-
-(defclass append-it-into-clause (append-form-into-clause it-mixin)
+(defclass append-it-clause (append-clause it-mixin)
   ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -22,18 +14,18 @@
   (consecutive (lambda (form var
                         &aux (itp (it-keyword-p form)))
                  (cond ((and itp var)
-                        (make-instance 'append-it-into-clause
+                        (make-instance 'append-it-clause
                                        :form form
                                        :into-var var))
                        (itp
                         (make-instance 'append-it-clause
                                        :form form))
                        (var
-                        (make-instance 'append-form-into-clause
+                        (make-instance 'append-clause
                                        :form form
                                        :into-var var))
                        (t
-                        (make-instance 'append-form-clause
+                        (make-instance 'append-clause
                                        :form form))))
                (keyword :append :appending)
                'terminal
@@ -72,26 +64,14 @@
            (setf (cdr ,list-tail-accumulation-variable)
                  ,form)))))
 
-(defmethod body-forms ((clause append-form-clause) end-tag)
+(defmethod body-forms ((clause append-clause) end-tag)
   (declare (ignore end-tag))
-  (append-clause-expander
-   (form clause) *accumulation-variable* *list-tail-accumulation-variable*))
-
-(defmethod body-forms ((clause append-form-into-clause) end-tag)
-  (declare (ignore end-tag))
-  (append-clause-expander
-   (form clause) (into-var clause) (tail-variable (into-var clause))))
+  (append-clause-expander (form clause) (into-var clause)
+                          (tail-variable (into-var clause))))
 
 (defmethod body-forms ((clause append-it-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
-      (append-clause-expander
-       *it-var*  *accumulation-variable* *list-tail-accumulation-variable*)
-      (call-next-method)))
-
-(defmethod body-forms ((clause append-it-into-clause) end-tag)
-  (declare (ignore end-tag))
-  (if *it-var*
-      (append-clause-expander
-       *it-var* (into-var clause) (tail-variable (into-var clause)))
+      (append-clause-expander  *it-var* (into-var clause)
+                               (tail-variable (into-var clause)))
       (call-next-method)))

@@ -1,17 +1,8 @@
 (cl:in-package #:khazern)
 
-(defclass nconc-clause (list-accumulation-clause) ())
-
-(defclass nconc-form-clause (nconc-clause form-mixin)
-  ())
+(defclass nconc-clause (list-accumulation-clause form-mixin) ())
 
 (defclass nconc-it-clause (nconc-form-clause it-mixin)
-  ())
-
-(defclass nconc-form-into-clause (into-mixin nconc-clause form-mixin)
-  ())
-
-(defclass nconc-it-into-clause (nconc-form-into-clause it-mixin)
   ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -22,18 +13,18 @@
   (consecutive (lambda (form var
                         &aux (itp (it-keyword-p form)))
                  (cond ((and itp var)
-                        (make-instance 'nconc-it-into-clause
+                        (make-instance 'nconc-it-clause
                                        :form form
                                        :into-var var))
                        (itp
                         (make-instance 'nconc-it-clause
                                        :form form))
                        (var
-                        (make-instance 'nconc-form-into-clause
+                        (make-instance 'nconc-clause
                                        :form form
                                        :into-var var))
                        (t
-                        (make-instance 'nconc-form-clause
+                        (make-instance 'nconc-clause
                                        :form form))))
                (keyword :nconc :nconcing)
                'terminal
@@ -70,24 +61,12 @@
                  ,list-tail-accumulation-variable
                  (last ,list-tail-accumulation-variable))))))
 
-(defmethod body-forms ((clause nconc-form-clause) end-tag)
-  (declare (ignore end-tag))
-  (nconc-clause-expander
-   (form clause) *accumulation-variable* *list-tail-accumulation-variable*))
-
-(defmethod body-forms ((clause nconc-form-into-clause) end-tag)
+(defmethod body-forms ((clause nconc-clause) end-tag)
   (declare (ignore end-tag))
   (nconc-clause-expander
    (form clause) (into-var clause) (tail-variable (into-var clause))))
 
 (defmethod body-forms ((clause nconc-it-clause) end-tag)
-  (declare (ignore end-tag))
-  (if *it-var*
-      (nconc-clause-expander
-       *it-var*  *accumulation-variable* *list-tail-accumulation-variable*)
-      (call-next-method)))
-
-(defmethod body-forms ((clause nconc-it-into-clause) end-tag)
   (declare (ignore end-tag))
   (if *it-var*
       (nconc-clause-expander
