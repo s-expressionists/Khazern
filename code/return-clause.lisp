@@ -11,14 +11,8 @@
 ;;;
 ;;;    return-clause ::= return {form | it}
 
-(defclass return-clause (unconditional-clause)
-  ())
-
-(defclass return-form-clause (return-clause)
+(defclass return-clause (unconditional-clause form-mixin)
   ((%form :initarg :form :reader form)))
-
-(defclass return-it-clause (return-form-clause)
-  ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -26,9 +20,7 @@
 
 (define-parser return-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form)
-                 (make-instance (if (it-keyword-p form)
-                                    'return-it-clause
-                                    'return-form-clause)
+                 (make-instance 'return-clause
                                 :form form))
                (keyword :return)
                'terminal
@@ -38,12 +30,10 @@
 ;;;
 ;;; Compute body-forms.
 
-(defmethod body-forms ((clause return-form-clause) end-tag)
+(defmethod body-forms ((clause return-clause) end-tag)
   (declare (ignore end-tag))
-  `((return-from ,*loop-name* ,(form clause))))
-
-(defmethod body-forms ((clause return-it-clause) end-tag)
-  (declare (ignore end-tag))
-  (if *it-var*
-      `((return-from ,*loop-name* ,*it-var*))
-      (call-next-method)))
+  (let ((form (form clause)))
+    `((return-from ,*loop-name*
+        ,(if (and *it-var* (it-keyword-p form))
+             *it-var*
+             form)))))
