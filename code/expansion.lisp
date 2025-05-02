@@ -156,6 +156,15 @@
                    clauses)
     (nreverse bindings)))
 
+(defun accumulation-declarations (clauses)
+ (let ((declarations nil))
+   (map-variables (lambda (name type category)
+                    (unless (eq category t)
+                      (pushnew `(cl:type ,type ,name)
+                               declarations :key #'third)))
+                   clauses)
+    (nreverse declarations)))
+
 (defvar *loop-name*)
 
 (defun prologue-body-epilogue (clauses end-tag)
@@ -225,7 +234,7 @@
 
 (defun expand-clauses (all-clauses end-tag)
   (wrap-let (accumulation-bindings all-clauses)
-            nil
+            (accumulation-declarations all-clauses)
             (do-clauses all-clauses end-tag)))
 
 (defun expand-body (loop-body end-tag parser-table)

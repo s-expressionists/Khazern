@@ -17,20 +17,20 @@
                         (make-instance 'minimize-it-clause
                                        :form form
                                        :into-var var
-                                       :type-spec type-spec))
+                                       :type-spec (type-or-null type-spec)))
                        (itp
                         (make-instance 'minimize-it-clause
                                        :form form
-                                       :type-spec type-spec))
+                                       :type-spec (type-or-null type-spec)))
                        (var
                         (make-instance 'minimize-clause
                                        :form form
                                        :into-var var
-                                       :type-spec type-spec))
+                                       :type-spec (type-or-null type-spec)))
                        (t
                         (make-instance 'minimize-clause
                                        :form form
-                                       :type-spec type-spec))))
+                                       :type-spec (type-or-null type-spec)))))
                (keyword :minimize :minimizing)
                'terminal
                'anything

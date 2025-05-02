@@ -1,9 +1,9 @@
 (cl:in-package #:khazern)
 
-(defclass thereis-clause (termination-test-clause form-mixin) ())
+(defclass thereis-clause (boolean-termination-test-clause) ())
 
-(defmethod map-variables (function (clause thereis-clause))
-  (funcall function (default-accumulation-variable) t 'thereis))
+(defmethod accumulation-category ((clause thereis-clause))
+  'thereis)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

@@ -1,9 +1,9 @@
 (cl:in-package #:khazern)
 
-(defclass never-clause (termination-test-clause form-mixin) ())
+(defclass never-clause (boolean-termination-test-clause) ())
 
-(defmethod map-variables (function (clause never-clause))
-  (funcall function (default-accumulation-variable) t 'always/never))
+(defmethod accumulation-category ((clause never-clause))
+  'always/never)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

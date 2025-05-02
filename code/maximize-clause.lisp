@@ -17,20 +17,20 @@
                         (make-instance 'maximize-it-clause
                                        :form form
                                        :into-var var
-                                       :type-spec type-spec))
+                                       :type-spec (type-or-null type-spec)))
                        (itp
                         (make-instance 'maximize-it-clause
                                        :form form
-                                       :type-spec type-spec))
+                                       :type-spec (type-or-null type-spec)))
                        (var
                         (make-instance 'maximize-clause
                                        :form form
                                        :into-var var
-                                       :type-spec type-spec))
+                                       :type-spec (type-or-null type-spec)))
                        (t
                         (make-instance 'maximize-clause
                                        :form form
-                                       :type-spec type-spec))))
+                                       :type-spec (type-or-null type-spec)))))
                (keyword :maximize :maximizing)
                'terminal
                'anything

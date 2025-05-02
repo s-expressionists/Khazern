@@ -1,9 +1,9 @@
 (cl:in-package #:khazern)
 
-(defclass always-clause (termination-test-clause form-mixin) ())
+(defclass always-clause (boolean-termination-test-clause) ())
 
-(defmethod map-variables (function (clause always-clause))
-  (funcall function (default-accumulation-variable) t 'always/never))
+(defmethod accumulation-category ((clause always-clause))
+  'always/never)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

@@ -1,5 +1,10 @@
 (cl:in-package #:khazern)
 
+(defun type-or-null (type)
+  (if (cl:typep nil type)
+      type
+      `(or null ,type)))
+
 ;;; Loop keywords are symbols, but they are not recognized by symbol
 ;;; identity as is usually the case, but instead by their names.  The
 ;;; HyperSpec doesn't say what function to use for comparing the
@@ -94,7 +99,7 @@
 
 (defun generate-variable-declarations (var-spec type-spec)
   (map-variable-types (lambda (var type)
-                        `(cl:type (or null ,type) ,var))
+                        `(cl:type ,(type-or-null type) ,var))
                       var-spec type-spec))
 
 (defun generate-variable-bindings (var-spec)

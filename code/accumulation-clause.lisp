@@ -35,7 +35,7 @@
 ;;; clauses, the type is stored in a slot.  For the list accumulation
 ;;; clauses, we always want to return the type LIST.
 (defmethod type-spec ((clause list-accumulation-clause))
-  'list)
+  'cl:list)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
