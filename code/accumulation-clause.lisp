@@ -9,6 +9,11 @@
               :initarg :into-var
               :initform (default-accumulation-variable))))
 
+(defmethod initialize-instance :after ((instance accumulation-clause) &rest initargs &key)
+  (declare (ignore initargs))
+  (unless (into-var instance)
+    (setf (into-var instance) (default-accumulation-variable))))
+
 ;;; We define three different accumulation CATEGORIES, each identified
 ;;; by a symbol: LIST, COUNT/SUM, and MAX/MIN.  Accumulation clauses
 ;;; within a category are compatible in that they can be mixed, even

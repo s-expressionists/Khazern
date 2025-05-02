@@ -3,34 +3,16 @@
 (defclass sum-clause (count/sum-accumulation-clause form-mixin)
   ())
 
-(defclass sum-it-clause (sum-clause it-mixin)
-  ())
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parsers.
 
 (define-parser sum-clause (:body-clause :selectable-clause)
-  (consecutive (lambda (form var type-spec
-                        &aux (itp (it-keyword-p form)))
-                 (cond ((and itp var)
-                        (make-instance 'sum-it-clause
-                                       :form form
-                                       :into-var var
-                                       :type-spec type-spec))
-                       (itp
-                        (make-instance 'sum-it-clause
-                                       :form form
-                                       :type-spec type-spec))
-                       (var
-                        (make-instance 'sum-clause
-                                       :form form
-                                       :into-var var
-                                       :type-spec type-spec))
-                       (t
-                        (make-instance 'sum-clause
-                                       :form form
-                                       :type-spec type-spec))))
+  (consecutive (lambda (form var type-spec)
+                 (make-instance 'sum-clause
+                                :form form
+                                :into-var var
+                                :type-spec type-spec))
                (keyword :sum :summing)
                'terminal
                'anything
@@ -43,10 +25,8 @@
 
 (defmethod body-forms ((clause sum-clause) end-tag)
   (declare (ignore end-tag))
-  `((incf ,(into-var clause) ,(form clause))))
-
-(defmethod body-forms ((clause sum-it-clause) end-tag)
-  (declare (ignore end-tag))
-  (if *it-var*
-      `((incf ,(into-var clause) ,*it-var*))
-      (call-next-method)))
+  (let ((form (form clause)))
+    `((incf ,(into-var clause)
+            ,(if (and *it-var* (it-keyword-p form))
+                 *it-var*
+                 form)))))

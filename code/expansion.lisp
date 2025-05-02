@@ -138,30 +138,40 @@
     result))
 
 (defun accumulation-bindings (clauses)
-  (let ((bindings nil))
+  (let ((bindings nil)
+        (variables nil))
     (map-variables (lambda (name type category)
-                     (unless (eq category t)
-                       (pushnew `(,name
-                                  ,(case category
-                                     (count/sum
-                                      (coerce 0 type))
-                                     (always/never
-                                      t)
-                                     (otherwise
-                                      nil)))
-                                bindings :key #'car)
+                     (unless (or (eq category t)
+                                 (member name variables))
+                       (push name variables)
+                       (push `(,name
+                               ,(case category
+                                  (count/sum
+                                   (coerce 0 type))
+                                  (always/never
+                                   t)
+                                  (otherwise
+                                   nil)))
+                             bindings)
                        (when (eq category 'list)
-                         (pushnew `(,(tail-variable name) nil)
-                                  bindings :key #'car))))
+                         (push `(,(tail-variable name) nil)
+                               bindings))))
                    clauses)
     (nreverse bindings)))
 
 (defun accumulation-declarations (clauses)
- (let ((declarations nil))
-   (map-variables (lambda (name type category)
-                    (unless (eq category t)
-                      (pushnew `(cl:type ,type ,name)
-                               declarations :key #'third)))
+  (let ((declarations nil)
+        (variables nil))
+    (map-variables (lambda (name type category)
+                     (unless (or (eq category t)
+                                 (member name variables))
+                       (push name variables)
+                       (push `(cl:type ,(if (or (not (eq category 'count/sum))
+                                                (cl:typep (coerce 0 type) type))
+                                            type
+                                            `(or (integer 0 0) ,type))
+                                       ,name)
+                             declarations)))
                    clauses)
     (nreverse declarations)))
 

@@ -3,30 +3,15 @@
 (defclass collect-clause (list-accumulation-clause form-mixin)
   ())
 
-(defclass collect-it-clause (collect-clause it-mixin)
-  ())
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parsers.
 
 (define-parser collect-clause (:body-clause :selectable-clause)
-  (consecutive (lambda (form var
-                        &aux (itp (it-keyword-p form)))
-                 (cond ((and itp var)
-                        (make-instance 'collect-it-clause
-                                       :form form
-                                       :into-var var))
-                       (itp
-                        (make-instance 'collect-it-clause
-                                       :form form))
-                       (var
-                        (make-instance 'collect-clause
-                                       :form form
-                                       :into-var var))
-                       (t
-                        (make-instance 'collect-clause
-                                       :form form))))
+  (consecutive (lambda (form var)
+                 (make-instance 'collect-clause
+                                :form form
+                                :into-var var))
                (keyword :collect :collecting)
                'terminal
                'anything
@@ -36,46 +21,36 @@
 ;;;
 ;;; Compute body-forms.
 
-(defun collect-clause-expander
-    (form accumulation-variable list-tail-accumulation-variable)
-  `((cond ((null ,accumulation-variable)
-           ;; If the accumulation variable is NIL, then so is the tail
-           ;; variable.  Then just allocate a new CONS cell containing the
-           ;; value of the form, and set bot the accumulation variable and
-           ;; the tail variable to point to it.
-           (setq ,list-tail-accumulation-variable
-                 (cons ,form nil)
-                 ,accumulation-variable
-                 ,list-tail-accumulation-variable))
-          ;; If the accumulation variable is not NIL, then the tail
-          ;; variable may or may not be NIL.
-          (t
-           ,(copy-cons-cells
-             accumulation-variable list-tail-accumulation-variable)
-           ;; When we come here, every CONS cell after the one that the
-           ;; tail variable points to has been copied, and the tail
-           ;; variable points to the last CONS cell in the list.  It
-           ;; remains to attach a new CONS cell containing the value of
-           ;; the form and to advance the tail variable to point to that
-           ;; new CONS cell.
-           (unless (null (cdr ,list-tail-accumulation-variable))
-             (error 'type-error
-                    :datum (cdr ,list-tail-accumulation-variable)
-                    :expected-type 'null))
-           (setf (cdr ,list-tail-accumulation-variable)
-                 (cons ,form nil)
-                 ,list-tail-accumulation-variable
-                 (cdr ,list-tail-accumulation-variable))))))
-
 (defmethod body-forms ((clause collect-clause) end-tag)
   (declare (ignore end-tag))
-  (collect-clause-expander (form clause) (into-var clause)
-                           (tail-variable (into-var clause))))
-
-(defmethod body-forms ((clause collect-it-clause) end-tag)
-  (declare (ignore end-tag))
-  (if *it-var*
-      (collect-clause-expander *it-var* (into-var clause)
-                               (tail-variable (into-var clause)))
-      (call-next-method)))
-    
+  (let* ((form (form clause))
+         (into-var (into-var clause))
+         (tail-var (tail-variable into-var)))
+    (when (and *it-var* (it-keyword-p form))
+      (setf form *it-var*))
+    `((cond ((null ,into-var)
+             ;; If the accumulation variable is NIL, then so is the tail
+             ;; variable.  Then just allocate a new CONS cell containing the
+             ;; value of the form, and set bot the accumulation variable and
+             ;; the tail variable to point to it.
+             (setq ,tail-var (cons ,form nil)
+                   ,into-var ,tail-var))
+            ;; If the accumulation variable is not NIL, then the tail
+            ;; variable may or may not be NIL.
+            (t
+             ,(copy-cons-cells
+               into-var tail-var)
+             ;; When we come here, every CONS cell after the one that the
+             ;; tail variable points to has been copied, and the tail
+             ;; variable points to the last CONS cell in the list.  It
+             ;; remains to attach a new CONS cell containing the value of
+             ;; the form and to advance the tail variable to point to that
+             ;; new CONS cell.
+             (unless (null (cdr ,tail-var))
+               (error 'type-error
+                      :datum (cdr ,tail-var)
+                      :expected-type 'null))
+             (setf (cdr ,tail-var)
+                   (cons ,form nil)
+                   ,tail-var
+                   (cdr ,tail-var)))))))
