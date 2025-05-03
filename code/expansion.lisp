@@ -128,12 +128,12 @@
 
 (defun default-accumulation-variable ()
   (or *accumulation-variable*
-      (setf *accumulation-variable* (gensym))))
+      (setf *accumulation-variable* (gensym "ACC"))))
 
 (defun tail-variable (head-variable)
   (let ((result (gethash head-variable *tail-variables*)))
     (when (null result)
-      (setf result (gensym))
+      (setf result (gensym "TAIL"))
       (setf (gethash head-variable *tail-variables*) result))
     result))
 

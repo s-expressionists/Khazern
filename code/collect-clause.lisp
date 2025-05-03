@@ -32,12 +32,5 @@
              (setq ,tail-var (cons ,form nil)
                    ,into-var ,tail-var))
             (t
-             (tagbody
-              next
-                (when (consp (cdr ,tail-var))
-                  (setq ,tail-var (cdr ,tail-var))
-                  (go next)))
-             (if (cdr ,tail-var)
-                 (error "improper list")
-                 (setf (cdr ,tail-var) (cons ,form nil)
-                       ,tail-var (cdr ,tail-var))))))))
+             (rplacd ,tail-var (cons ,form nil))
+             (setq ,tail-var (cdr ,tail-var)))))))
