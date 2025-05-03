@@ -23,32 +23,29 @@
 
 (defmethod body-forms ((clause append-clause) end-tag)
   (declare (ignore end-tag))
-  (let* ((form (form clause))
+  (let* ((head-var (gensym))
+         (form (form clause))
          (into-var (into-var clause))
          (tail-var (tail-variable into-var)))
     (when (and *it-var* (it-keyword-p form))
       (setf form *it-var*))
-    `((cond ((null ,into-var)
-             ;; If the accumulation variable is NIL, then so is the tail
-             ;; variable.  We leave the tail variable as NIL so as to
-             ;; indicate that every CONS cell in the list starting at the
-             ;; accumulation variable must be copied whenever yet more CONS
-             ;; cells are attached at the end.
-             (setq ,into-var ,form))
-            (t
-             ;; If the accumulation variable is not NIL, then the tail
-             ;; variable may or may not be NIL.
-             ,(copy-cons-cells into-var tail-var)
-             ;; When we come here, every CONS cell after the one that the
-             ;; tail variable points to has been copied, and the tail
-             ;; variable points to the last CONS cell in the list.  It
-             ;; remains to attach the new list to the end.  And we leave
-             ;; the tail variable where it is, indicating that the CONS
-             ;; cells of the newly attached list must be copied whenever
-             ;; yet more cells are attached at the end.
-             (unless (null (cdr ,tail-var))
-               (error 'type-error
-                      :datum (cdr ,tail-var)
-                      :expected-type 'null))
-             (setf (cdr ,tail-var)
-                   ,form))))))
+    `((let ((,head-var ,form))
+        (tagbody
+         repeat
+           (cond ((null ,head-var))
+                 ((and (null ,into-var) (consp ,head-var))
+                  (setq ,into-var (cons (car ,head-var) nil)
+                        ,tail-var ,into-var
+                        ,head-var (cdr ,head-var))
+                  (go repeat))
+                 ((null ,into-var)
+                  (setq ,into-var ,head-var
+                        ,tail-var ,into-var))
+                 ((consp ,head-var)
+                  (rplacd ,tail-var (cons (car ,head-var) nil))
+                  (setq ,tail-var (cdr ,tail-var)
+                        ,head-var (cdr ,head-var))
+                  (go repeat))
+                 (t
+                  (rplacd ,tail-var ,head-var)
+                  (setq ,tail-var (cdr ,tail-var)))))))))
