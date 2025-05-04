@@ -33,7 +33,7 @@
                      ((symbolp d-var-spec)
                       (push `(,d-var-spec ,form) bindings))
                      ((not (consp d-var-spec))
-                      (error 'zexpected-var-spec-but-found
+                      (error 'expected-var-spec-but-found
                              :found d-var-spec))
                      (t
                       (let ((temp (gensym)))

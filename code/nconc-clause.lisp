@@ -24,16 +24,16 @@
   (declare (ignore end-tag))
   (let* ((form (form clause))
          (into-var (into-var clause))
-         (tail-var (tail-variable into-var)))
+         (tail-var (tail-variable into-var))
+         (next-tag (gensym "NEXT")))
     (when (and *it-var* (it-keyword-p form))
       (setf form *it-var*))
-    `((tagbody
-         (if (null ,into-var)
-             (setq ,into-var ,form
-                   ,tail-var ,into-var)
-             (rplacd ,tail-var ,form))
-       next
-         (when (and (consp ,tail-var)
-                    (consp (cdr ,tail-var)))
-           (setq ,tail-var (cdr ,tail-var))
-           (go next))))))
+    `((if (null ,into-var)
+          (setq ,into-var ,form
+                ,tail-var ,into-var)
+          (rplacd ,tail-var ,form))
+      ,next-tag
+      (when (and (consp ,tail-var)
+                 (consp (cdr ,tail-var)))
+        (setq ,tail-var (cdr ,tail-var))
+        (go next)))))

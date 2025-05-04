@@ -37,3 +37,21 @@
                 :components ((:file "packages")
                              (:file "test")
                              (:file "ansi-test")))))
+
+(asdf:defsystem "khazern-extrinsic/benchmark"
+  :description "Benchmark system for Khazern"
+  :license "MIT"
+  :author ("Tarn W. Burton")
+  :version (:read-file-form "version.sexp")
+  :homepage "https://github.com/s-expressionists/Khazern"
+  :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
+  :source-control (:git "https://github.com/s-expressionists/Khazern.git")
+  :depends-on ("cl-spark"
+               "cl-ascii-table"
+               "khazern-extrinsic")
+  :components ((:module "code"
+                :pathname "code/extrinsic/benchmark/"
+                :serial t
+                :components ((:file "packages")
+                             (:file "utility")
+                             (:file "benchmarks")))))

@@ -2,7 +2,8 @@
 
 (defclass repeat-clause (termination-test-clause var-and-type-spec-mixin)
   ((%form :initarg :form :reader form))
-  (:default-initargs :var-spec (gensym) :type-spec 'real))
+  (:default-initargs :var-spec (gensym "REPEAT")
+                     :type-spec 'fixnum))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -27,7 +28,7 @@
 ;;; Compute the declarations.
 
 (defmethod initial-declarations ((clause repeat-clause))
-  `((cl:type number ,(var-spec clause))))
+  `((cl:type ,(type-spec clause) ,(var-spec clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

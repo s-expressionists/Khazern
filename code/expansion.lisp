@@ -178,7 +178,7 @@
 (defvar *loop-name*)
 
 (defun prologue-body-epilogue (clauses end-tag)
-  (let ((start-tag (gensym)))
+  (let ((start-tag (gensym "BODY")))
     `((tagbody
          ,@(wrap-let* (reduce #'append (mapcar #'prologue-bindings clauses)
                               :from-end t)
