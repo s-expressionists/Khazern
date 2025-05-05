@@ -21,7 +21,7 @@
 ;;; Compute the bindings.
 
 (defmethod initial-bindings ((clause repeat-clause))
-  `((,(var-spec clause) ,(form clause))))
+  `((,(var-spec clause) (ceiling ,(form clause)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

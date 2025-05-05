@@ -28,12 +28,13 @@
          (next-tag (gensym "NEXT")))
     (when (and *it-var* (it-keyword-p form))
       (setf form *it-var*))
-    `((if (null ,into-var)
-          (setq ,into-var ,form
-                ,tail-var ,into-var)
-          (rplacd ,tail-var ,form))
-      ,next-tag
-      (when (and (consp ,tail-var)
-                 (consp (cdr ,tail-var)))
-        (setq ,tail-var (cdr ,tail-var))
-        (go next)))))
+    `((tagbody
+         (if (null ,into-var)
+             (setq ,into-var ,form
+                   ,tail-var ,into-var)
+             (rplacd ,tail-var ,form))
+       ,next-tag
+         (when (and (consp ,tail-var)
+                    (consp (cdr ,tail-var)))
+           (setq ,tail-var (cdr ,tail-var))
+           (go ,next-tag))))))

@@ -18,58 +18,105 @@
 (defun it-keyword-p (symbol)
   (symbol-equal symbol :it))
 
-;;; This function generates code for destructuring a value according
-;;; to a tree of variables.  D-VAR-SPEC is a tree of variable names
-;;; (symbols).  FORM is a form that, at runtime, computes the value to
-;;; be assigned to the root of D-VAR-SPEC.  This function returns a
-;;; list of bindings to be used in a LET* form.  These bindings
-;;; destructure the root value until the leaves of the tree are
-;;; reached, generating intermediate temporary variables as necessary.
-(defun destructure-variables (d-var-spec form)
-  (let ((bindings '()))
-    (labels ((traverse (d-var-spec form)
-               (cond ((null d-var-spec)
-                      nil)
-                     ((symbolp d-var-spec)
-                      (push `(,d-var-spec ,form) bindings))
-                     ((not (consp d-var-spec))
-                      (error 'expected-var-spec-but-found
-                             :found d-var-spec))
-                     (t
-                      (let ((temp (gensym)))
-                        (push `(,temp ,form) bindings)
-                        (traverse (car d-var-spec) `(car ,temp))
-                        (traverse (cdr d-var-spec) `(cdr ,temp)))))))
-      (traverse d-var-spec form)
-      (reverse bindings))))
+(defun wrap-let (bindings declarations forms)
+  (cond ((and bindings declarations)
+         `((let ,bindings
+             (declare ,@declarations)
+             ,@forms)))
+        (bindings
+         `((let ,bindings
+             ,@forms)))
+        (declarations
+         `((locally
+               (declare ,@declarations)
+             ,@forms)))
+        (t
+         forms)))
 
-;;; Given a D-VAR-SPEC, compute a D-VAR-SPEC with the same structure
-;;; as the one given as argument, except that the non-NIL leaves
-;;; (i.e., the variables names) have been replaced by fresh symbols.
-;;; Return two values: the new D-VAR-SPEC and a list of assignments
-;;; in the form of list (var temp-var ...)
-(defun fresh-variables (d-var-spec)
-  (let* ((assignments '()))
+(defun wrap-let* (bindings declarations forms)
+  (cond ((and bindings declarations)
+         `((let* ,bindings
+             (declare ,@declarations)
+             ,@forms)))
+        (bindings
+         `((let* ,bindings
+             ,@forms)))
+        (declarations
+         `((locally
+               (declare ,@declarations)
+             ,@forms)))
+        (t
+         forms)))
+
+(defun var-spec-temps (d-var-spec &optional temp-var-p)
+  (let ((temps (make-hash-table)))
     (labels ((traverse (d-var-spec)
                (cond ((null d-var-spec)
                       nil)
                      ((symbolp d-var-spec)
-                      (let ((temp (gensym)))
-                        (push d-var-spec assignments)
-                        (push temp assignments)
-                        temp))
+                      (when temp-var-p
+                        (setf (gethash d-var-spec temps) (gensym "TMP")))
+                      t)
+                     ((not (consp d-var-spec))
+                      (error 'expected-var-spec-but-found
+                             :found d-var-spec))
                      (t
-                      (cons (traverse (car d-var-spec))
-                            (traverse (cdr d-var-spec)))))))
-      (values (traverse d-var-spec)
-              (nreverse assignments)))))
+                      (let ((car-p (traverse (car d-var-spec)))
+                            (cdr-p (traverse (cdr d-var-spec))))
+                        (when (and car-p cdr-p)
+                          (setf (gethash d-var-spec temps) (gensym "DE")))
+                          (or car-p cdr-p))))))
+      (traverse d-var-spec)
+      temps)))
+
+(defun var-spec-bindings (d-var-spec form temps &optional bind-all-p)
+  (let ((bindings '()))
+    (labels ((traverse (d-var-spec form)
+               (cond ((null d-var-spec))
+                     ((symbolp d-var-spec)
+                      (let ((temp (gethash d-var-spec temps)))
+                        (when temp
+                          (push `(,temp ,form) bindings))
+                        (when bind-all-p
+                          (push `(,d-var-spec ,(or temp form)) bindings))))
+                     ((consp d-var-spec)
+                      (let ((temp (gethash d-var-spec temps)))
+                        (cond (temp
+                               (push `(,temp ,form) bindings)
+                               (traverse (car d-var-spec) `(car ,temp))
+                               (traverse (cdr d-var-spec) `(cdr ,temp)))
+                              (t
+                               (traverse (car d-var-spec) `(car ,form))
+                               (traverse (cdr d-var-spec) `(cdr ,form)))))))))
+      (traverse d-var-spec form)
+      (nreverse bindings))))
+
+(defun var-spec-assignments (d-var-spec form temps)
+  (let ((assignments '()))
+    (labels ((traverse (d-var-spec form)
+               (cond ((null d-var-spec))
+                     ((symbolp d-var-spec)
+                      (push d-var-spec assignments)
+                      (push (or (gethash d-var-spec temps) form) assignments))
+                     ((not (consp d-var-spec))
+                      (error 'expected-var-spec-but-found
+                             :found d-var-spec))
+                     (t
+                      (let ((temp (gethash d-var-spec temps)))
+                        (cond (temp
+                               (traverse (car d-var-spec) `(car ,temp))
+                               (traverse (cdr d-var-spec) `(cdr ,temp)))
+                              (t
+                               (traverse (car d-var-spec) `(car ,form))
+                               (traverse (cdr d-var-spec) `(cdr ,form)))))))))
+      (traverse d-var-spec form)
+      (nreverse assignments))))
 
 (defun generate-assignments (d-var-spec form)
-  (multiple-value-bind (temp-d-var-spec assignments)
-      (fresh-variables d-var-spec)
-    (when assignments
-      `((let* ,(destructure-variables temp-d-var-spec form)
-          (setq ,@assignments))))))
+  (let ((temps (var-spec-temps d-var-spec)))
+    (wrap-let* (var-spec-bindings d-var-spec form temps)
+               nil
+               `((setq ,@(var-spec-assignments d-var-spec form temps))))))
 
 (defun %map-variables (function var-spec type-spec)
   (cond ((null var-spec))
@@ -162,33 +209,3 @@
 
 (defun fourth-result (&rest rest)
   (fourth rest))
-
-(defun wrap-let (bindings declarations forms)
-  (cond ((and bindings declarations)
-         `((let ,bindings
-             (declare ,@declarations)
-             ,@forms)))
-        (bindings
-         `((let ,bindings
-             ,@forms)))
-        (declarations
-         `((locally
-               (declare ,@declarations)
-             ,@forms)))
-        (t
-         forms)))
-
-(defun wrap-let* (bindings declarations forms)
-  (cond ((and bindings declarations)
-         `((let* ,bindings
-             (declare ,@declarations)
-             ,@forms)))
-        (bindings
-         `((let* ,bindings
-             ,@forms)))
-        (declarations
-         `((locally
-               (declare ,@declarations)
-             ,@forms)))
-        (t
-         forms)))

@@ -19,12 +19,10 @@
            #:copy-cons-cells
            #:copy-parser-table
            #:define-parser
-           #:destructure-variables
            #:epilogue-forms
            #:expand-body
            #:final-bindings
            #:final-declarations
-           #:fresh-variables
            #:generate-assignments
            #:generate-variable-bindings
            #:generate-variable-declarations

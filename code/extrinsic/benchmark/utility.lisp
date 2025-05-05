@@ -38,18 +38,18 @@
                         :extrinsic-function (lambda ()
                                               ,@(make-extrinsic body)))))
 
-(defvar *minimum-bench-time* 10)
+(defvar *minimum-bench-time* 15)
 
 (defvar *overhead-time* 0)
 
 (defun bench (thunk)
-  (loop with start = (get-internal-run-time)
+  (loop with start = (get-internal-real-time)
         with end = (+ start (* *minimum-bench-time* internal-time-units-per-second))
         for count from 1
-        finally (return (- (/ (coerce (- (get-internal-run-time) start) 'double-float)
+        finally (return (- (/ (coerce (- (get-internal-real-time) start) 'double-float)
                               internal-time-units-per-second count)
                             *overhead-time*))
-        while (< (get-internal-run-time) end)
+        while (< (get-internal-real-time) end)
         do (funcall thunk)))
 
 (defun run ()

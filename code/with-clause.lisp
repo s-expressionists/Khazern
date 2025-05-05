@@ -46,6 +46,11 @@
   ((%form :initarg :form :reader form)
    (%form-var :initform (gensym) :reader form-var)))
 
+(defmethod initialize-instance :after
+    ((clause with-subclause-with-form) &rest initargs &key &allow-other-keys)
+  (declare (ignore initargs))
+  (setf (temps clause) (var-spec-temps (var-spec clause) nil)))
+
 ;;; The default form is NIL.
 (defmethod form ((subclause with-subclause))
   nil)
@@ -104,7 +109,8 @@
 ;;; Compute the subclause wrapper.
 
 (defmethod wrap-subclause ((subclause with-subclause-with-form) inner-form)
-  (wrap-let* (destructure-variables (var-spec subclause) (form-var subclause))
+  (wrap-let* (var-spec-bindings (var-spec subclause) (form-var subclause)
+                                (temps subclause) t)
              '()
              inner-form))
 

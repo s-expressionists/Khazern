@@ -6,18 +6,12 @@
 
 (defclass for-as-equals-then (for-as-subclause)
   ((%initial-form :initarg :initial-form :reader initial-form)
-   (%subsequent-form :initarg :subsequent-form :reader subsequent-form)
-   (%temp-tree :initarg :temp-tree :accessor temp-tree)
-   (%assignments :initarg :assignments :accessor assignments)))
+   (%subsequent-form :initarg :subsequent-form :reader subsequent-form)))
 
 (defmethod initialize-instance :after
     ((clause for-as-equals-then) &rest initargs &key &allow-other-keys)
   (declare (ignore initargs))
-  (multiple-value-bind (temp-tree assignments)
-      (fresh-variables (var-spec clause))
-    (reinitialize-instance clause
-                           :temp-tree temp-tree
-                           :assignments assignments)))
+  (setf (temps clause) (var-spec-temps (var-spec clause) t)))
 
 (defmethod map-variables (function (clause for-as-equals-then))
   (%map-variables function (var-spec clause) nil))
@@ -64,7 +58,7 @@
 ;;; Compute the prologue-bindings.
 
 (defmethod prologue-bindings ((clause for-as-equals-then))
-  (destructure-variables (temp-tree clause) (initial-form clause)))
+  (var-spec-bindings (var-spec clause) (initial-form clause) (temps clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -72,18 +66,18 @@
 
 (defmethod prologue-forms ((clause for-as-equals-then) end-tag)
   (declare (ignore end-tag))
-  `((setq ,@(assignments clause))))
+  `((setq ,@(var-spec-assignments (var-spec clause) (initial-form clause) (temps clause)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the step-bindings.
 
 (defmethod step-bindings ((clause for-as-equals-then))
-  (destructure-variables (temp-tree clause) (subsequent-form clause)))
+  (var-spec-bindings (var-spec clause) (subsequent-form clause) (temps clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the step-forms.
 
 (defmethod step-forms ((clause for-as-equals-then))
-  `((setq ,@(assignments clause))))
+  `((setq ,@(var-spec-assignments (var-spec clause) (subsequent-form clause) (temps clause)))))
