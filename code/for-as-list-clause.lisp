@@ -75,14 +75,14 @@
 
 (defmethod final-bindings ((clause for-as-list))
   `((,(rest-var clause) ,(list-var clause))
-    ,.(d-spec-generate-variable-bindings (var clause))))
+    ,.(d-spec-outer-bindings (var clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the declarations.
 
 (defmethod final-declarations ((clause for-as-list))
-  (d-spec-generate-variable-declarations (var clause)))
+  (d-spec-outer-declarations (var clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -90,7 +90,7 @@
 
 (defmethod prologue-forms ((clause for-as-in-list) end-tag)
   `(,@(termination-forms clause end-tag)
-    ,@(d-spec-generate-assignments (var clause) `(car ,(rest-var clause)))
+    ,@(d-spec-inner-form (var clause) `(car ,(rest-var clause)))
     ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
          `(setq ,(rest-var clause)
                 (,(cadr (by-form clause)) ,(rest-var clause)))
@@ -99,7 +99,7 @@
 
 (defmethod prologue-forms ((clause for-as-on-list) end-tag)
   `(,@(termination-forms clause end-tag)
-    ,@(d-spec-generate-assignments (var clause) (rest-var clause))
+    ,@(d-spec-inner-form (var clause) (rest-var clause))
     ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
          `(setq ,(rest-var clause)
                 (,(cadr (by-form clause)) ,(rest-var clause)))
@@ -123,7 +123,7 @@
 ;;; Compute the step-forms.
 
 (defmethod step-forms ((clause for-as-in-list))
-  `(,@(d-spec-generate-assignments (var clause) `(car ,(rest-var clause)))
+  `(,@(d-spec-inner-form (var clause) `(car ,(rest-var clause)))
     ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
          `(setq ,(rest-var clause)
                 (,(cadr (by-form clause)) ,(rest-var clause)))
@@ -131,7 +131,7 @@
                 (funcall ,(by-var clause) ,(rest-var clause))))))
 
 (defmethod step-forms ((clause for-as-on-list))
-  `(,@(d-spec-generate-assignments (var clause) (rest-var clause))
+  `(,@(d-spec-inner-form (var clause) (rest-var clause))
     ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
          `(setq ,(rest-var clause)
                 (,(cadr (by-form clause)) ,(rest-var clause)))

@@ -40,14 +40,14 @@
 
 (defmethod final-bindings ((clause for-as-across))
   `((,(length-var clause) (length ,(form-var clause)))
-    ,.(d-spec-generate-variable-bindings (var clause))))
+    ,.(d-spec-outer-bindings (var clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute declarations.
 
 (defmethod final-declarations ((clause for-as-across))
-  (d-spec-generate-variable-declarations (var clause)))
+  (d-spec-outer-declarations (var clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -55,9 +55,9 @@
 
 (defmethod prologue-forms ((clause for-as-across) end-tag)
   `(,@(termination-forms clause end-tag)
-    ,@(d-spec-generate-assignments (var clause)
-                                   `(aref ,(form-var clause)
-                                          ,(index-var clause)))
+    ,@(d-spec-inner-form (var clause)
+                         `(aref ,(form-var clause)
+                                ,(index-var clause)))
     (incf ,(index-var clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -73,7 +73,7 @@
 ;;; Compute step-forms.
 
 (defmethod step-forms ((clause for-as-across))
-  `(,@(d-spec-generate-assignments (var clause)
-                                   `(aref ,(form-var clause)
-                                          ,(index-var clause)))
+  `(,@(d-spec-inner-form (var clause)
+                         `(aref ,(form-var clause)
+                                ,(index-var clause)))
     (incf ,(index-var clause))))

@@ -56,7 +56,7 @@
   (declare (ignore initargs))
   (set-d-spec-temps clause temp-var-p))
 
-(defun d-spec-bindings (d-spec form &optional bind-all-p)
+(defun d-spec-inner-bindings (d-spec form &optional bind-all-p)
   (let ((bindings '())
         (temps (temps d-spec)))
     (labels ((traverse (d-var-spec form)
@@ -79,7 +79,7 @@
       (traverse (var-spec d-spec) form)
       (nreverse bindings))))
 
-(defun d-spec-assignments (d-spec form)
+(defun d-spec-inner-assignments (d-spec form)
   (let ((assignments '())
         (temps (temps d-spec)))
     (labels ((traverse (d-var-spec form)
@@ -101,10 +101,10 @@
       (traverse (var-spec d-spec) form)
       (nreverse assignments))))
 
-(defun d-spec-generate-assignments (d-spec form)
-  (wrap-let* (d-spec-bindings d-spec form)
+(defun d-spec-inner-form (d-spec form)
+  (wrap-let* (d-spec-inner-bindings d-spec form)
              nil
-             `((setq ,@(d-spec-assignments d-spec form)))))
+             `((setq ,@(d-spec-inner-assignments d-spec form)))))
 
 (defmethod map-variables (function (d-spec d-spec))
   (labels ((traverse (var-spec type-spec)
@@ -126,7 +126,7 @@
              nil))
     (traverse (var-spec d-spec) (type-spec d-spec))))
 
-(defun d-spec-generate-variable-declarations (d-spec)
+(defun d-spec-outer-declarations (d-spec)
   (let ((result '()))
     (map-variables (lambda (var type category)
                      (declare (ignore category))
@@ -135,7 +135,7 @@
                    d-spec)
     (nreverse result)))
 
-(defun d-spec-generate-variable-bindings (d-spec)
+(defun d-spec-outer-bindings (d-spec)
   (let ((result '()))
     (map-variables (lambda (var type category)
                      (declare (ignore type category))

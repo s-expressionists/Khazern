@@ -63,8 +63,8 @@
 (defmethod wrap-subclause ((subclause for-as-package) inner-form)
   (wrap-let `((,(temp-entry-p-var subclause) nil)
               (,(temp-symbol-var subclause) nil)
-              ,.(d-spec-generate-variable-bindings (var subclause)))
-            (d-spec-generate-variable-declarations (var subclause))
+              ,.(d-spec-outer-bindings (var subclause)))
+            (d-spec-outer-declarations (var subclause))
             `((with-package-iterator
                   (,(iterator-var subclause)
                    ,(package-var subclause)
@@ -81,8 +81,8 @@
       (,(iterator-var subclause)))
     (unless ,(temp-entry-p-var subclause)
       (go ,end-tag))
-    ,@(d-spec-generate-assignments (var subclause)
-                                   (temp-symbol-var subclause))
+    ,@(d-spec-inner-form (var subclause)
+                         (temp-symbol-var subclause))
     (multiple-value-setq (,(temp-entry-p-var subclause)
                           ,(temp-symbol-var subclause))
       (,(iterator-var subclause)))))
@@ -100,7 +100,7 @@
 ;;; Compute the step form.
 
 (defmethod step-forms ((subclause for-as-package))
-  `(,@(d-spec-generate-assignments (var subclause)
+  `(,@(d-spec-inner-form (var subclause)
                                    (temp-symbol-var subclause))
     (multiple-value-setq (,(temp-entry-p-var subclause)
                           ,(temp-symbol-var subclause))

@@ -96,7 +96,7 @@
 
 (defmethod initial-bindings ((clause with-subclause-with-form))
   (list* `(,(form-var clause) ,(form clause))
-         (d-spec-generate-variable-bindings (var clause))))
+         (d-spec-outer-bindings (var clause))))
 
 (defmethod initial-bindings ((clause with-subclause-no-form))
   (let ((result '()))
@@ -113,9 +113,9 @@
 ;;; Compute the subclause wrapper.
 
 (defmethod wrap-subclause ((subclause with-subclause-with-form) inner-form)
-  (wrap-let* (d-spec-bindings (var subclause) (form-var subclause))
+  (wrap-let* (d-spec-inner-bindings (var subclause) (form-var subclause))
              '()
-             `((setq ,@(d-spec-assignments (var subclause) (form-var subclause)))
+             `((setq ,@(d-spec-inner-assignments (var subclause) (form-var subclause)))
                ,@inner-form)))
 
 #+(or)(defmethod wrap-subclause ((subclause with-subclause-no-form) inner-form)
@@ -133,8 +133,8 @@
 ;;; Compute the declarations.
 
 (defmethod initial-declarations ((clause with-subclause-with-form))
-  (d-spec-generate-variable-declarations (var clause)))
+  (d-spec-outer-declarations (var clause)))
 
 (defmethod initial-declarations ((clause with-subclause-no-form))
-  (d-spec-generate-variable-declarations (var clause)))
+  (d-spec-outer-declarations (var clause)))
 

@@ -18,8 +18,13 @@
            #:consecutive
            #:copy-cons-cells
            #:copy-parser-table
-           #:define-parser
            #:d-spec
+           #:d-spec-inner-assignments
+           #:d-spec-inner-bindings
+           #:d-spec-inner-form
+           #:d-spec-outer-bindings
+           #:d-spec-outer-declarations
+           #:define-parser
            #:epilogue-forms
            #:expand-body
            #:final-bindings
