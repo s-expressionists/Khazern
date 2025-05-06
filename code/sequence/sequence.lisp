@@ -6,6 +6,7 @@
 
 (defclass for-as-over ()
   ((%var :initarg :var :accessor var)
+   (%other-var :initarg :other-var :accessor other-var)
    (%sequence-form :initarg :sequence-form :reader sequence-form)
    (%form-var :initform (gensym) :reader form-var)
    (%length-var :initform (gensym) :reader length-var)
@@ -34,9 +35,12 @@
 (khazern:define-parser for-as-over (:for-as-subclause)
   (khazern:consecutive (lambda (var type-spec other-var sequence-form)
                          (make-instance 'for-as-over
-                                        :var-spec var
-                                        :type-spec type-spec
-                                        :other-var other-var
+                                        :var (make-instance 'khazern:d-spec
+                                                            :var-spec var
+                                                            :type-spec type-spec)
+                                        :other-var (when other-var
+                                                     (make-instance 'khazern:d-spec
+                                                                    :var other-var))
                                         :sequence-form sequence-form))
                        'khazern:anything
                        'khazern:optional-type-spec
@@ -65,9 +69,9 @@
     ,(index-var clause)))
 
 (defmethod khazern:final-bindings ((clause for-as-over))
-  `(,@(when (other-var clause)
-        `(,(other-var clause)))
-    ,.(khazern:generate-variable-bindings (var-spec clause))))
+  (nconc (khazern:d-spec-outer-bindings (var clause))
+         (when (other-var clause)
+           (khazern:d-spec-outer-bindings (other-var clause)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -77,7 +81,7 @@
   `((ignorable ,(write-var clause) ,(index-var clause))))
 
 (defmethod khazern:final-declarations ((clause for-as-over))
-  (khazern:generate-variable-declarations (var-spec clause) (type-spec clause)))
+  (khazern:d-spec-outer-declarations (var clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -89,13 +93,13 @@
                           ,(write-var clause) ,(index-var clause))
       (sequence:make-sequence-iterator ,(form-var clause)))
     ,@(khazern:termination-forms clause end-tag)
-    ,@(khazern:generate-assignments (var-spec clause)
-                                   `(funcall ,(read-var clause) ,(form-var clause)
-                                             ,(state-var clause)))
+    ,@(khazern:d-spec-inner-form (var clause)
+                                 `(funcall ,(read-var clause) ,(form-var clause)
+                                           ,(state-var clause)))
     ,@(when (other-var clause)
-        (khazern:generate-assignments (other-var clause)
-				      `(funcall ,(index-var clause) ,(form-var clause)
-						,(state-var clause))))
+        (khazern:d-spec-inner-form (other-var clause)
+				   `(funcall ,(index-var clause) ,(form-var clause)
+					     ,(state-var clause))))
     (setf ,(state-var clause)
           (funcall ,(step-var clause) ,(form-var clause) ,(state-var clause) ,(from-end-var clause)))))
 
@@ -113,13 +117,13 @@
 ;;; Compute step-forms.
 
 (defmethod khazern:step-forms ((clause for-as-over))
-  `(,@(khazern:generate-assignments (var-spec clause)
-                                   `(funcall ,(read-var clause) ,(form-var clause)
-                                             ,(state-var clause)))
+  `(,@(khazern:d-spec-inner-form (var clause)
+                                 `(funcall ,(read-var clause) ,(form-var clause)
+                                           ,(state-var clause)))
     ,.(when (other-var clause)
-        (khazern:generate-assignments (other-var clause)
-                                            `(funcall ,(index-var clause) ,(form-var clause)
-                                                      ,(state-var clause))))
+        (khazern:d-spec-inner-form (other-var clause)
+                                   `(funcall ,(index-var clause) ,(form-var clause)
+                                             ,(state-var clause))))
     (setf ,(state-var clause)
           (funcall ,(step-var clause) ,(form-var clause)
                    ,(state-var clause) ,(from-end-var clause)))))

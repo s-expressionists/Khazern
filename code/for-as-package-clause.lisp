@@ -101,7 +101,7 @@
 
 (defmethod step-forms ((subclause for-as-package))
   `(,@(d-spec-inner-form (var subclause)
-                                   (temp-symbol-var subclause))
+                         (temp-symbol-var subclause))
     (multiple-value-setq (,(temp-entry-p-var subclause)
                           ,(temp-symbol-var subclause))
       (,(iterator-var subclause)))))

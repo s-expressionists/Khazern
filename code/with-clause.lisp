@@ -113,10 +113,8 @@
 ;;; Compute the subclause wrapper.
 
 (defmethod wrap-subclause ((subclause with-subclause-with-form) inner-form)
-  (wrap-let* (d-spec-inner-bindings (var subclause) (form-var subclause))
-             '()
-             `((setq ,@(d-spec-inner-assignments (var subclause) (form-var subclause)))
-               ,@inner-form)))
+  (nconc (d-spec-inner-form (var subclause) (form-var subclause))
+         inner-form))
 
 #+(or)(defmethod wrap-subclause ((subclause with-subclause-no-form) inner-form)
   (wrap-let (map-variables (lambda (var type category)

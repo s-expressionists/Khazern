@@ -19,9 +19,9 @@
   (consecutive (lambda (var-spec type-spec form1 initargs)
                  (apply #'make-instance 'for-as-equals-then
                         :var (make-instance 'd-spec
-                                                    :var-spec var-spec
-                                                    :type-spec type-spec
-                                                    :temp-var t)
+                                            :var-spec var-spec
+                                            :type-spec type-spec
+                                            :temp-var t)
                         :initial-form form1
                         (or initargs (cl:list :subsequent-form form1))))
                'd-var-spec
