@@ -13,7 +13,7 @@
    (%iterator-keywords :initarg :iterator-keywords :reader iterator-keywords)))
 
 (defmethod map-variables (function (clause for-as-package))
-  (%map-variables function (var-spec clause) nil))
+  (map-variables function (var clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -25,8 +25,9 @@
                         iterator-keywords
                         package-form)
                  (make-instance 'for-as-package
-                                :var-spec var-spec
-                                :type-spec type-spec
+                                :var (make-instance 'd-spec
+                                                    :var-spec var-spec
+                                                    :type-spec type-spec)
                                 :package-form package-form
                                 :iterator-keywords iterator-keywords))
                'anything
@@ -62,8 +63,8 @@
 (defmethod wrap-subclause ((subclause for-as-package) inner-form)
   (wrap-let `((,(temp-entry-p-var subclause) nil)
               (,(temp-symbol-var subclause) nil)
-              ,.(generate-variable-bindings (var-spec subclause)))
-            (generate-variable-declarations (var-spec subclause) (type-spec subclause))
+              ,.(d-spec-generate-variable-bindings (var subclause)))
+            (d-spec-generate-variable-declarations (var subclause))
             `((with-package-iterator
                   (,(iterator-var subclause)
                    ,(package-var subclause)
@@ -80,8 +81,8 @@
       (,(iterator-var subclause)))
     (unless ,(temp-entry-p-var subclause)
       (go ,end-tag))
-    ,@(generate-assignments (var-spec subclause)
-                            (temp-symbol-var subclause))
+    ,@(d-spec-generate-assignments (var subclause)
+                                   (temp-symbol-var subclause))
     (multiple-value-setq (,(temp-entry-p-var subclause)
                           ,(temp-symbol-var subclause))
       (,(iterator-var subclause)))))
@@ -99,8 +100,8 @@
 ;;; Compute the step form.
 
 (defmethod step-forms ((subclause for-as-package))
-  `(,@(generate-assignments (var-spec subclause)
-                            (temp-symbol-var subclause))
+  `(,@(d-spec-generate-assignments (var subclause)
+                                   (temp-symbol-var subclause))
     (multiple-value-setq (,(temp-entry-p-var subclause)
                           ,(temp-symbol-var subclause))
       (,(iterator-var subclause)))))

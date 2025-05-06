@@ -38,18 +38,13 @@
 
 (defclass with-clause (variable-clause subclauses-mixin) ())
 
-(defclass with-subclause (var-and-type-spec-mixin) ())
+(defclass with-subclause (var-mixin) ())
 
 (defclass with-subclause-no-form (with-subclause) ())
 
 (defclass with-subclause-with-form (with-subclause)
   ((%form :initarg :form :reader form)
    (%form-var :initform (gensym) :reader form-var)))
-
-(defmethod initialize-instance :after
-    ((clause with-subclause-with-form) &rest initargs &key &allow-other-keys)
-  (declare (ignore initargs))
-  (setf (temps clause) (var-spec-temps (var-spec clause) nil)))
 
 ;;; The default form is NIL.
 (defmethod form ((subclause with-subclause))
@@ -59,7 +54,7 @@
   (map-variables function (subclauses clause)))
 
 (defmethod map-variables (function (clause with-subclause))
-  (%map-variables function (var-spec clause) nil))
+  (map-variables function (var clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -70,8 +65,9 @@
                  (apply #'make-instance (if initargs
                                             'with-subclause-with-form
                                             'with-subclause-no-form)
-                        :var-spec var-spec
-                        :type-spec type-spec
+                        :var (make-instance 'd-spec
+                                            :var-spec var-spec
+                                            :type-spec type-spec)
                         initargs))
                'anything
                'optional-type-spec
@@ -98,28 +94,37 @@
 ;;;
 ;;; Compute the bindings.
 
-(defmethod initial-bindings ((clause with-clause))
-  (reduce #'append (mapcar #'initial-bindings (subclauses clause))))
-
 (defmethod initial-bindings ((clause with-subclause-with-form))
-  `((,(form-var clause) ,(form clause))))
+  (list* `(,(form-var clause) ,(form clause))
+         (d-spec-generate-variable-bindings (var clause))))
+
+(defmethod initial-bindings ((clause with-subclause-no-form))
+  (let ((result '()))
+    (map-variables (lambda (var type category)
+                     (declare (ignore category))
+                   (push `(,var ,(if (subtypep type 'number)
+                               (coerce 0 type)
+                               nil)) result))
+                   (var clause))
+    (nreverse result)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the subclause wrapper.
 
 (defmethod wrap-subclause ((subclause with-subclause-with-form) inner-form)
-  (wrap-let* (var-spec-bindings (var-spec subclause) (form-var subclause)
-                                (temps subclause) t)
+  (wrap-let* (d-spec-bindings (var subclause) (form-var subclause))
              '()
-             inner-form))
+             `((setq ,@(d-spec-assignments (var subclause) (form-var subclause)))
+               ,@inner-form)))
 
-(defmethod wrap-subclause ((subclause with-subclause-no-form) inner-form)
-  (wrap-let (map-variable-types (lambda (var type)
-                                  `(,var ,(if (subtypep type 'number)
-                                              (coerce 0 type)
-                                              nil)))
-                                (var-spec subclause) (type-spec subclause))
+#+(or)(defmethod wrap-subclause ((subclause with-subclause-no-form) inner-form)
+  (wrap-let (map-variables (lambda (var type category)
+                             (declare (ignore category))
+                             `(,var ,(if (subtypep type 'number)
+                                         (coerce 0 type)
+                                         nil)))
+                           (var subclause))
             '()
             inner-form))
 
@@ -127,6 +132,9 @@
 ;;;
 ;;; Compute the declarations.
 
-(defmethod initial-declarations ((clause with-subclause))
-  (reduce #'append (mapcar #'initial-declarations (subclauses clause))
-          :from-end t))
+(defmethod initial-declarations ((clause with-subclause-with-form))
+  (d-spec-generate-variable-declarations (var clause)))
+
+(defmethod initial-declarations ((clause with-subclause-no-form))
+  (d-spec-generate-variable-declarations (var clause)))
+

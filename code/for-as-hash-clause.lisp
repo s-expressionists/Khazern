@@ -18,7 +18,7 @@
 (defclass for-as-hash-value (for-as-hash) ())
 
 (defmethod map-variables (function (clause for-as-hash))
-  (%map-variables function (var-spec clause) nil)
+  (map-variables function (var clause))
   (%map-variables function (other-var-spec clause) nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -40,8 +40,9 @@
 (define-parser for-as-hash-key (:for-as-subclause)
   (consecutive (lambda (var-spec type-spec hash-table-form other)
                  (make-instance 'for-as-hash-key
-                                :var-spec var-spec
-                                :type-spec type-spec
+                                :var (make-instance 'd-spec
+                                                    :var-spec var-spec
+                                                    :type-spec type-spec)
                                 :hash-table-form hash-table-form
                                 :other-var-spec other))
                'd-var-spec
@@ -61,8 +62,9 @@
 (define-parser for-as-hash-value (:for-as-subclause)
   (consecutive (lambda (var-spec type-spec hash-table-form other)
                  (make-instance 'for-as-hash-value
-                                :var-spec var-spec
-                                :type-spec type-spec
+                                :var (make-instance 'd-spec
+                                                    :var-spec var-spec
+                                                    :type-spec type-spec)
                                 :hash-table-form hash-table-form
                                 :other-var-spec other))
                'd-var-spec
@@ -94,9 +96,9 @@
   (wrap-let `((,(temp-entry-p-var subclause) nil)
               (,(temp-key-var subclause) nil)
               (,(temp-value-var subclause) nil)
-              ,.(generate-variable-bindings (var-spec subclause))
+              ,.(d-spec-generate-variable-bindings (var subclause))
               ,.(generate-variable-bindings (other-var-spec subclause)))
-            (generate-variable-declarations (var-spec subclause) (type-spec subclause))
+            (d-spec-generate-variable-declarations (var subclause))
             `((with-hash-table-iterator
                   (,(iterator-var subclause) ,(hash-table-var subclause))
                 ,@inner-form))))
@@ -112,8 +114,8 @@
       (,(iterator-var subclause)))
     (unless ,(temp-entry-p-var subclause)
       (go ,end-tag))
-    ,@(generate-assignments (var-spec subclause)
-                            (temp-key-var subclause))
+    ,@(d-spec-generate-assignments (var subclause)
+                                   (temp-key-var subclause))
     ,@(generate-assignments (other-var-spec subclause)
                             (temp-value-var subclause))
     (multiple-value-setq (,(temp-entry-p-var subclause)
@@ -128,8 +130,8 @@
       (,(iterator-var subclause)))
     (unless ,(temp-entry-p-var subclause)
       (go ,end-tag))
-    ,@(generate-assignments (var-spec subclause)
-                            (temp-value-var subclause))
+    ,@(d-spec-generate-assignments (var subclause)
+                                   (temp-value-var subclause))
     ,@(generate-assignments (other-var-spec subclause)
                             (temp-key-var subclause))
     (multiple-value-setq (,(temp-entry-p-var subclause)
@@ -150,8 +152,8 @@
 ;;; Compute the step form.
 
 (defmethod step-forms ((subclause for-as-hash-key))
-  `(,@(generate-assignments (var-spec subclause)
-                            (temp-key-var subclause))
+  `(,@(d-spec-generate-assignments (var subclause)
+                                   (temp-key-var subclause))
     ,@(generate-assignments (other-var-spec subclause)
                             (temp-value-var subclause))
     (multiple-value-setq (,(temp-entry-p-var subclause)
@@ -160,8 +162,8 @@
       (,(iterator-var subclause)))))
 
 (defmethod step-forms ((subclause for-as-hash-value))
-  `(,@(generate-assignments (var-spec subclause)
-                            (temp-value-var subclause))
+  `(,@(d-spec-generate-assignments (var subclause)
+                                   (temp-value-var subclause))
     ,@(generate-assignments (other-var-spec subclause)
                             (temp-key-var subclause))
     (multiple-value-setq (,(temp-entry-p-var subclause)

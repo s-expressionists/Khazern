@@ -4,7 +4,7 @@
 ;;;
 ;;; Clause FOR-AS-ARITHMETIC.
 
-(defclass for-as-arithmetic (for-as-subclause var-and-type-spec-mixin)
+(defclass for-as-arithmetic (for-as-subclause)
   (;; The order in which the forms are given.  This is a list of three
    ;; elements FROM, TO, and BY in the order that they were given in
    ;; the clause.
@@ -41,7 +41,7 @@
 (defclass for-as-arithmetic-down (for-as-arithmetic) ())
 
 (defmethod map-variables (function (clause for-as-arithmetic))
-  (%map-variables function (var-spec clause) nil))
+  (map-variables function (var clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -297,8 +297,9 @@
   (consecutive (lambda (var-spec type-spec g)
                  (apply #'make-instance
                         (or (car g) 'for-as-arithmetic-up)
-                        :var-spec var-spec
-                        :type-spec type-spec
+                        :var (make-instance 'd-spec
+                                            :var-spec var-spec
+                                            :type-spec type-spec)
                         (cdr g)))
                'd-var-spec
                'optional-type-spec
@@ -358,13 +359,13 @@
 ;;; Compute subclause wrapping.
 
 (defmethod wrap-subclause ((subclause for-as-arithmetic) inner-form)
-  (if (null (var-spec subclause))
+  (if (null (var-spec (var subclause)))
       (wrap-let `((,(temp-var subclause) ,(start-var subclause)))
                 '()
                 inner-form)
       (wrap-let `((,(temp-var subclause) ,(start-var subclause))
-                  (,(var-spec subclause) ,(start-var subclause)))
-                `((cl:type ,(type-spec subclause) ,(var-spec subclause)))
+                  (,(var-spec (var subclause)) ,(start-var subclause)))
+                `((cl:type ,(type-spec (var subclause)) ,(var-spec (var subclause))))
                 inner-form)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -414,13 +415,13 @@
 ;;; Compute the step-forms.
 
 (defmethod step-forms ((clause for-as-arithmetic-up))
-  (if (null (var-spec clause))
+  (if (null (var-spec (var clause)))
       `((incf ,(temp-var clause) ,(by-var clause)))
-      `((setq ,(var-spec clause) ,(temp-var clause))
+      `((setq ,(var-spec (var clause)) ,(temp-var clause))
         (incf ,(temp-var clause) ,(by-var clause)))))
 
 (defmethod step-forms ((clause for-as-arithmetic-down))
-  (if (null (var-spec clause))
+  (if (null (var-spec (var clause)))
       `((decf ,(temp-var clause) ,(by-var clause)))
-      `((setq ,(var-spec clause) ,(temp-var clause))
+      `((setq ,(var-spec (var clause)) ,(temp-var clause))
         (decf ,(temp-var clause) ,(by-var clause)))))

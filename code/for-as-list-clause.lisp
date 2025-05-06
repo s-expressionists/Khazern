@@ -14,7 +14,7 @@
 (defclass for-as-in-list (for-as-list) ())
 
 (defmethod map-variables (function (clause for-as-list))
-  (%map-variables function (var-spec clause) nil))
+  (map-variables function (var clause)))
 
 (define-parser for-as-list-by-parser ()
   (optional '#'cdr
@@ -29,8 +29,9 @@
 (define-parser for-as-in-list-parser (:for-as-subclause)
   (consecutive (lambda (var type-spec list-form by-form)
                  (make-instance 'for-as-in-list
-                                :var-spec var
-                                :type-spec type-spec
+                                :var (make-instance 'd-spec
+                                                    :var-spec var
+                                                    :type-spec type-spec)
                                 :list-form list-form
                                 :by-form by-form))
                'd-var-spec
@@ -50,8 +51,9 @@
 (define-parser for-as-on-list-parser (:for-as-subclause)
   (consecutive (lambda (var type-spec list-form by-form)
                  (make-instance 'for-as-on-list
-                                :var-spec var
-                                :type-spec type-spec
+                                :var (make-instance 'd-spec
+                                                    :var-spec var
+                                                    :type-spec type-spec)
                                 :list-form list-form
                                 :by-form by-form))
                'd-var-spec
@@ -73,14 +75,14 @@
 
 (defmethod final-bindings ((clause for-as-list))
   `((,(rest-var clause) ,(list-var clause))
-    ,.(generate-variable-bindings (var-spec clause))))
+    ,.(d-spec-generate-variable-bindings (var clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the declarations.
 
 (defmethod final-declarations ((clause for-as-list))
-  (generate-variable-declarations (var-spec clause) (type-spec clause)))
+  (d-spec-generate-variable-declarations (var clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -88,7 +90,7 @@
 
 (defmethod prologue-forms ((clause for-as-in-list) end-tag)
   `(,@(termination-forms clause end-tag)
-    ,@(generate-assignments (var-spec clause) `(car ,(rest-var clause)))
+    ,@(d-spec-generate-assignments (var clause) `(car ,(rest-var clause)))
     ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
          `(setq ,(rest-var clause)
                 (,(cadr (by-form clause)) ,(rest-var clause)))
@@ -97,7 +99,7 @@
 
 (defmethod prologue-forms ((clause for-as-on-list) end-tag)
   `(,@(termination-forms clause end-tag)
-    ,@(generate-assignments (var-spec clause) (rest-var clause))
+    ,@(d-spec-generate-assignments (var clause) (rest-var clause))
     ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
          `(setq ,(rest-var clause)
                 (,(cadr (by-form clause)) ,(rest-var clause)))
@@ -121,7 +123,7 @@
 ;;; Compute the step-forms.
 
 (defmethod step-forms ((clause for-as-in-list))
-  `(,@(generate-assignments (var-spec clause) `(car ,(rest-var clause)))
+  `(,@(d-spec-generate-assignments (var clause) `(car ,(rest-var clause)))
     ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
          `(setq ,(rest-var clause)
                 (,(cadr (by-form clause)) ,(rest-var clause)))
@@ -129,7 +131,7 @@
                 (funcall ,(by-var clause) ,(rest-var clause))))))
 
 (defmethod step-forms ((clause for-as-on-list))
-  `(,@(generate-assignments (var-spec clause) (rest-var clause))
+  `(,@(d-spec-generate-assignments (var clause) (rest-var clause))
     ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
          `(setq ,(rest-var clause)
                 (,(cadr (by-form clause)) ,(rest-var clause)))

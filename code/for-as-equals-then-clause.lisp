@@ -8,13 +8,8 @@
   ((%initial-form :initarg :initial-form :reader initial-form)
    (%subsequent-form :initarg :subsequent-form :reader subsequent-form)))
 
-(defmethod initialize-instance :after
-    ((clause for-as-equals-then) &rest initargs &key &allow-other-keys)
-  (declare (ignore initargs))
-  (setf (temps clause) (var-spec-temps (var-spec clause) t)))
-
 (defmethod map-variables (function (clause for-as-equals-then))
-  (%map-variables function (var-spec clause) nil))
+  (map-variables function (var clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -23,8 +18,10 @@
 (define-parser for-as-equals-then-parser (:for-as-subclause)
   (consecutive (lambda (var-spec type-spec form1 initargs)
                  (apply #'make-instance 'for-as-equals-then
-                        :var-spec var-spec
-                        :type-spec type-spec
+                        :var (make-instance 'd-spec
+                                                    :var-spec var-spec
+                                                    :type-spec type-spec
+                                                    :temp-var t)
                         :initial-form form1
                         (or initargs (cl:list :subsequent-form form1))))
                'd-var-spec
@@ -44,21 +41,21 @@
 ;;; Compute the bindings.
 
 (defmethod initial-bindings ((clause for-as-equals-then))
-  (generate-variable-bindings (var-spec clause)))
+  (d-spec-generate-variable-bindings (var clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the declarations.
 
 (defmethod initial-declarations ((clause for-as-equals-then))
-  (generate-variable-declarations (var-spec clause) (type-spec clause)))
+  (d-spec-generate-variable-declarations (var clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the prologue-bindings.
 
 (defmethod prologue-bindings ((clause for-as-equals-then))
-  (var-spec-bindings (var-spec clause) (initial-form clause) (temps clause)))
+  (d-spec-bindings (var clause) (initial-form clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -66,18 +63,18 @@
 
 (defmethod prologue-forms ((clause for-as-equals-then) end-tag)
   (declare (ignore end-tag))
-  `((setq ,@(var-spec-assignments (var-spec clause) (initial-form clause) (temps clause)))))
+  `((setq ,@(d-spec-assignments (var clause) (initial-form clause)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the step-bindings.
 
 (defmethod step-bindings ((clause for-as-equals-then))
-  (var-spec-bindings (var-spec clause) (subsequent-form clause) (temps clause)))
+  (d-spec-bindings (var clause) (subsequent-form clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the step-forms.
 
 (defmethod step-forms ((clause for-as-equals-then))
-  `((setq ,@(var-spec-assignments (var-spec clause) (subsequent-form clause) (temps clause)))))
+  `((setq ,@(d-spec-assignments (var clause) (subsequent-form clause)))))

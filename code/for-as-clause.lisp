@@ -43,7 +43,7 @@
 
 (defclass for-as-clause (variable-clause subclauses-mixin) ())
 
-(defclass for-as-subclause (var-and-type-spec-mixin)
+(defclass for-as-subclause (var-mixin)
   ())
 
 (defmethod map-variables (function (clause for-as-clause))
@@ -62,62 +62,3 @@
                (keyword :for :as)
                'for-as-subclause+))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Expansion methods for FOR-AS clause.
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the bindings.
-
-(defmethod initial-bindings ((clause for-as-clause))
-  (reduce #'append (mapcar #'initial-bindings (subclauses clause))
-          :from-end t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the declarations.
-
-(defmethod initial-declarations ((clause for-as-clause))
-  (reduce #'append (mapcar #'initial-declarations (subclauses clause))
-          :from-end t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the prologue-form.
-
-(defmethod prologue-forms ((clause for-as-clause) end-tag)
-  (wrap-let* (reduce #'append (mapcar #'prologue-bindings (subclauses clause))
-                     :from-end t)
-             '()
-             (mapcan (lambda (subclause)
-                       (prologue-forms subclause end-tag))
-                     (subclauses clause))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the termination-forms.
-
-(defmethod termination-forms ((clause for-as-clause) end-tag)
-  (mapcan (lambda (subclause)
-            (termination-forms subclause end-tag))
-          (subclauses clause)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the body-forms.
-
-(defmethod body-forms ((clause for-as-clause) end-tag)
-  (mapcan (lambda (clause)
-            (body-forms clause end-tag))
-          (subclauses clause)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Step a FOR-AS clause.
-
-(defmethod step-forms ((clause for-as-clause))
-  (wrap-let* (reduce #'append (mapcar #'step-bindings (subclauses clause))
-                     :from-end t)
-             '()
-             (mapcan #'step-forms (subclauses clause))))

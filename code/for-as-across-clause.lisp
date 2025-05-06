@@ -4,14 +4,14 @@
 ;;;
 ;;; Clause FOR-AS-ACROSS
 
-(defclass for-as-across (for-as-subclause var-and-type-spec-mixin)
+(defclass for-as-across (for-as-subclause)
   ((%vector-form :initarg :vector-form :reader vector-form)
    (%form-var :initform (gensym) :reader form-var)
    (%length-var :initform (gensym) :reader length-var)
    (%index-var :initform (gensym) :reader index-var)))
 
 (defmethod map-variables (function (clause for-as-across))
-  (%map-variables function (var-spec clause) nil))
+  (map-variables function (var clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -20,8 +20,9 @@
 (define-parser for-as-across (:for-as-subclause)
   (consecutive (lambda (var-spec type-spec vector-form)
                  (make-instance 'for-as-across
-                                :var-spec var-spec
-                                :type-spec type-spec
+                                :var (make-instance 'd-spec
+                                                    :var-spec var-spec
+                                                    :type-spec type-spec)
                                 :vector-form vector-form))
                'd-var-spec
                'optional-type-spec
@@ -39,14 +40,14 @@
 
 (defmethod final-bindings ((clause for-as-across))
   `((,(length-var clause) (length ,(form-var clause)))
-    ,.(generate-variable-bindings (var-spec clause))))
+    ,.(d-spec-generate-variable-bindings (var clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute declarations.
 
 (defmethod final-declarations ((clause for-as-across))
-  (generate-variable-declarations (var-spec clause) (type-spec clause)))
+  (d-spec-generate-variable-declarations (var clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -54,9 +55,9 @@
 
 (defmethod prologue-forms ((clause for-as-across) end-tag)
   `(,@(termination-forms clause end-tag)
-    ,@(generate-assignments (var-spec clause)
-                            `(aref ,(form-var clause)
-                                   ,(index-var clause)))
+    ,@(d-spec-generate-assignments (var clause)
+                                   `(aref ,(form-var clause)
+                                          ,(index-var clause)))
     (incf ,(index-var clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -72,7 +73,7 @@
 ;;; Compute step-forms.
 
 (defmethod step-forms ((clause for-as-across))
-  `(,@(generate-assignments (var-spec clause)
-                            `(aref ,(form-var clause)
-                                   ,(index-var clause)))
+  `(,@(d-spec-generate-assignments (var clause)
+                                   `(aref ,(form-var clause)
+                                          ,(index-var clause)))
     (incf ,(index-var clause))))
