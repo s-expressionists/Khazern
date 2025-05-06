@@ -54,7 +54,7 @@
 (defmethod initialize-instance :after
     ((clause d-spec) &rest initargs &key ((:temp-var temp-var-p) nil))
   (declare (ignore initargs))
-  (setf (temps clause) (var-spec-temps (var-spec clause) temp-var-p)))
+  (set-d-spec-temps clause temp-var-p))
 
 (defun d-spec-bindings (d-spec form &optional bind-all-p)
   (let ((bindings '())

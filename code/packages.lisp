@@ -19,21 +19,17 @@
            #:copy-cons-cells
            #:copy-parser-table
            #:define-parser
+           #:d-spec
            #:epilogue-forms
            #:expand-body
            #:final-bindings
            #:final-declarations
-           #:generate-assignments
-           #:generate-variable-bindings
-           #:generate-variable-declarations
            #:initial-bindings
            #:initial-declarations
            #:keyword
            #:list
            #:main-clause-p
-           #:map-variable-types
            #:map-variables
-           #:%map-variables
            #:name-clause-p
            #:optional
            #:optional-type-spec

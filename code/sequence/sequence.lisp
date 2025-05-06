@@ -5,12 +5,7 @@
 ;;; Clause FOR-AS-OVER
 
 (defclass for-as-over ()
-  ((%var-spec :initarg :var-spec :accessor var-spec)
-   (%type-spec :initarg :type-spec :accessor type-spec)
-   ;; This slot contains a copy of the tree contained in the VAR-SPEC
-   ;; slot except that the non-NIL leaves have been replaced by
-   ;; GENSYMs.
-   (%other-var :initarg :other-var :reader other-var)
+  ((%var :initarg :var :accessor var)
    (%sequence-form :initarg :sequence-form :reader sequence-form)
    (%form-var :initform (gensym) :reader form-var)
    (%length-var :initform (gensym) :reader length-var)
