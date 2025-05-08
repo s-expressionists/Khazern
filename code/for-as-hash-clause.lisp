@@ -21,67 +21,44 @@
   (map-variables function (var clause))
   (map-variables function (other-var clause)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers
+(defun make-for-as-hash-key (name var-spec type-spec data
+                             &key (in nil inp) using)
+  (declare (ignore name data))
+  (unless inp
+    (error "IN preposition is required."))
+  (when (> (length using) 2)
+    (error "Multiple USING key values."))
+  (unless (or (null using)
+              (symbol-equal (first using) :hash-value)
+              (symbol-equal (first using) :hash-values))
+    (error "Unknown USING ~a" (first using)))
+  (make-instance 'for-as-hash-key
+                 :var (make-instance 'd-spec
+                                     :var-spec var-spec
+                                     :type-spec type-spec)
+                 :hash-table-form in
+                 :other-var (make-instance 'd-spec
+                                           :var-spec (second using))))
 
-(define-parser hash-value-other-parser ()
-  (list (lambda (other-var)
-          other-var)
-        (keyword :hash-value)
-        'd-var-spec))
 
-(define-parser hash-key-other-parser ()
-  (list (lambda (other-var)
-          other-var)
-        (keyword :hash-key)
-        'd-var-spec))
-
-(define-parser for-as-hash-key (:for-as-subclause)
-  (consecutive (lambda (var-spec type-spec hash-table-form other)
-                 (make-instance 'for-as-hash-key
-                                :var (make-instance 'd-spec
-                                                    :var-spec var-spec
-                                                    :type-spec type-spec)
-                                :hash-table-form hash-table-form
-                                :other-var (make-instance 'd-spec
-                                                          :var-spec other)))
-               'd-var-spec
-               'optional-type-spec
-               (keyword :being)
-               (keyword :each :the)
-               (keyword :hash-key :hash-keys)
-               'terminal
-               (keyword :in :of)
-               'anything
-               (optional nil
-                         (consecutive #'identity
-                                      (keyword :using)
-                                      'terminal
-                                      'hash-value-other-parser))))
-
-(define-parser for-as-hash-value (:for-as-subclause)
-  (consecutive (lambda (var-spec type-spec hash-table-form other)
-                 (make-instance 'for-as-hash-value
-                                :var (make-instance 'd-spec
-                                                    :var-spec var-spec
-                                                    :type-spec type-spec)
-                                :hash-table-form hash-table-form
-                                :other-var (make-instance 'd-spec
-                                                          :var-spec other)))
-               'd-var-spec
-               'optional-type-spec
-               (keyword :being)
-               (keyword :each :the)
-               (keyword :hash-value :hash-values)
-               'terminal
-               (keyword :in :of)
-               'anything
-               (optional nil
-                         (consecutive #'identity
-                                      (keyword :using)
-                                      'terminal
-                                      'hash-key-other-parser))))
+(defun make-for-as-hash-value (name var-spec type-spec data
+                               &key (in nil inp) using)
+  (declare (ignore name data))
+  (unless inp
+    (error "IN preposition is required."))
+  (when (> (length using) 2)
+    (error "Multiple USING key values."))
+  (unless (or (null using)
+              (symbol-equal (first using) :hash-key)
+              (symbol-equal (first using) :hash-keys))
+    (error "Unknown USING ~a" (first using)))
+  (make-instance 'for-as-hash-value
+                 :var (make-instance 'd-spec
+                                     :var-spec var-spec
+                                     :type-spec type-spec)
+                 :hash-table-form in
+                 :other-var (make-instance 'd-spec
+                                           :var-spec (second using))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

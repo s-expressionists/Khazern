@@ -52,6 +52,7 @@
                              (:file "for-as-list-clause")
                              (:file "for-as-equals-then-clause")
                              (:file "for-as-across-clause")
+                             (:file "for-as-path-clause")
                              (:file "for-as-hash-clause")
                              (:file "for-as-package-clause")
                              (:file "default-table")

@@ -15,39 +15,32 @@
 (defmethod map-variables (function (clause for-as-package))
   (map-variables function (var clause)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers
+(defun make-for-as-package-symbol (name var-spec type-spec data &key (in '*package*))
+  (declare (ignore name data))
+  (make-instance 'for-as-package
+                 :package-form in
+                 :var (make-instance 'd-spec
+                                     :var-spec var-spec
+                                     :type-spec type-spec)
+                 :iterator-keywords '(:internal :external :inherited)))
 
-(define-parser for-as-package-parser (:for-as-subclause)
-  (consecutive (lambda (var-spec
-                        type-spec
-                        iterator-keywords
-                        package-form)
-                 (make-instance 'for-as-package
-                                :var (make-instance 'd-spec
-                                                    :var-spec var-spec
-                                                    :type-spec type-spec)
-                                :package-form package-form
-                                :iterator-keywords iterator-keywords))
-               'anything
-               'optional-type-spec
-               (keyword :being)
-               (keyword :each :the)
-               (alternative (consecutive (lambda ()
-                                           '(:internal :external :inherited))
-                                         (keyword :symbol :symbols))
-                            (consecutive (lambda ()
-                                           '(:internal :external))
-                                         (keyword :present-symbol :present-symbols))
-                            (consecutive (lambda ()
-                                           '(:external))
-                                         (keyword :external-symbol :external-symbols)))
-               'terminal
-               (optional '*package*
-                         (consecutive #'identity
-                                      (keyword :in :of)
-                                      'anything))))
+(defun make-for-as-package-present-symbol (name var-spec type-spec data &key (in '*package*))
+  (declare (ignore name data))
+  (make-instance 'for-as-package
+                 :package-form in
+                 :var (make-instance 'd-spec
+                                     :var-spec var-spec
+                                     :type-spec type-spec)
+                 :iterator-keywords '(:internal :external)))
+
+(defun make-for-as-package-external-symbol (name var-spec type-spec data &key (in '*package*))
+  (declare (ignore name data))
+  (make-instance 'for-as-package
+                 :package-form in
+                 :var (make-instance 'd-spec
+                                     :var-spec var-spec
+                                     :type-spec type-spec)
+                 :iterator-keywords '(:external)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
