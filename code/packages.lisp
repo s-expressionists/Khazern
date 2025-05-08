@@ -50,4 +50,5 @@
            #:terminal
            #:termination-forms
            #:typep
+           #:var
            #:variable-clause-p))

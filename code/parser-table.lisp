@@ -21,25 +21,27 @@
 
 (defgeneric add-path (table pathname-or-names path-function list-of-allowable-prepositions data)
   (:method ((table parser-table) pathname-or-names path-function list-of-allowable-prepositions data)
-    (let* ((instance (make-path :function path-function
-                                :data data))
+    (let* ((instance (make-instance 'path
+                                    :function path-function
+                                    :data data))
            (prepositions (path-prepositions instance)))
       (mapc (lambda (names)
-              (let ((key (keyword (symbol-name (if (listp names)
-                                                   (car names)
-                                                   names)))))
+              (let ((key (intern (symbol-name (if (listp names)
+                                                  (car names)
+                                                  names))
+                                 :keyword)))
                 (mapc (lambda (name)
                         (setf (gethash (symbol-name name) prepositions)
                               key))
                       (if (listp names)
                           names
-                          (list names)))))
+                          (cl:list names)))))
             list-of-allowable-prepositions)
       (mapc (lambda (name)
-              (setf (gethash (symbol-name name) (paths table)) instance))
+              (setf (gethash (symbol-name name) (parser-table-paths table)) instance))
             (if (listp pathname-or-names)
                 pathname-or-names
-                (list pathname-or-names))))))
+                (cl:list pathname-or-names))))))
 
 (defgeneric copy-parser-table (table))
 
