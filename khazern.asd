@@ -15,6 +15,7 @@
                              (:file "run-time-conditions")
                              (:file "condition-reporters-english")
                              (:file "utilities")
+                             (:file "interface")
                              (:file "parser-table")
                              (:file "combinatory-parsing")
                              (:file "parse-common")

@@ -5,18 +5,27 @@
 ;;; ELEMENTS Path
 
 (defclass for-as-elements (khazern::for-as-subclause)
-  ((%form :initarg :form :accessor form)
-   (%form-var :initform (gensym) :reader form-var)
-   (%next-index-var :initform (gensym "INDEX")
-               :accessor next-index-var)
-   (%index-var :initarg :index-var :initform nil
-               :accessor index-var)
-   (%start-form :initform 0 :accessor start-form)
-   (%start-var :initform (gensym "START") :reader start-var)
+  ((%form :accessor form
+          :initarg :form)
+   (%form-var :reader form-var
+              :initform (gensym "FORM"))
+   (%next-index-var :accessor next-index-var
+                    :initform (gensym "INDEX"))
+   (%index-var :accessor index-var
+               :initarg :index-var
+               :initform nil)
+   (%start-form :accessor start-form
+                :initform 0)
+   (%start-var :reader start-var
+               :initform (gensym "START"))
    (%end-form :accessor end-form)
-   (%end-var :initform (gensym "END") :reader end-var)
-   (%by-form :initform 1 :initarg :by-form :accessor by-form)
-   (%by-var :initform (gensym) :reader by-var)))
+   (%end-var :reader end-var
+             :initform (gensym "END"))
+   (%by-form :accessor by-form
+             :initarg :by-form
+             :initform 1)
+   (%by-var :reader by-var
+            :initform (gensym "BY"))))
 
 (defmethod initialize-instance :after ((instance for-as-elements) &rest initargs &key)
   (declare (ignore initargs))

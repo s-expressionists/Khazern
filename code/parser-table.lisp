@@ -9,20 +9,6 @@
           :initarg :paths
           :initform (make-hash-table :test #'equal))))
 
-(defgeneric add-path (table constructor &rest names)
-  (:method ((table parser-table) constructor &rest names)
-    (let ((paths (parser-table-paths table)))
-      (mapc (lambda (name)
-              (setf (gethash (symbol-name name) paths) constructor))
-            names)
-      nil)))
-
-(defgeneric copy-parser-table (table))
-
-(defgeneric parser-enabled-p (table name))
-
-(defgeneric (setf parser-enabled-p) (value table name))
-
 (defmethod parser-enabled-p ((table parser-table) name)
   (and (member name (parser-table-parsers table))
        t))
@@ -44,12 +30,13 @@
 
 (defparameter *parser-table* nil)
 
-(defgeneric path-preposition-p (instance name))
-
-(defgeneric path-preposition (instance name))
-
-(defgeneric (setf path-preposition) (new-value instance name))
-
 (defun loop-path-p (name)
   (and (gethash (symbol-name name) (parser-table-paths *parser-table*)) t))
+
+(defmethod add-path ((table parser-table) constructor &rest names)
+  (let ((paths (parser-table-paths table)))
+    (mapc (lambda (name)
+            (setf (gethash (symbol-name name) paths) constructor))
+          names)
+    nil))
 

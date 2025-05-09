@@ -53,6 +53,7 @@
                    clauses)))
 
 ;;; FIXME: Add more analyses.
-(defun analyze-clauses (clauses)
+(defmethod analyze ((clauses cons))
+  (mapc #'analyze clauses)
   (verify-clause-order clauses)
   (check-variables clauses))

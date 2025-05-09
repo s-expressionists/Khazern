@@ -4,11 +4,6 @@
 ;;;; dictionary description of the loop macro in the HyperSpec.  It is
 ;;;; not the same as the terminology used in the section 6.1.
 
-(defgeneric subclauses (clause)
-  (:method (clause)
-    (declare (ignore clause))
-    '()))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Common classes.

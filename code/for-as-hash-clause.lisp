@@ -5,13 +5,20 @@
 ;;; Clause FOR-AS-HASH
 
 (defclass for-as-hash (for-as-subclause)
-  ((%hash-table-form :initarg :hash-table-form :accessor hash-table-form)
-   (%hash-table-var :initform (gensym) :reader hash-table-var)
-   (%temp-entry-p-var :initform (gensym) :reader temp-entry-p-var)
-   (%temp-key-var :initform (gensym) :reader temp-key-var)
-   (%temp-value-var :initform (gensym) :reader temp-value-var)
-   (%iterator-var :initform (gensym) :reader iterator-var)
-   (%other-var :initarg :other-var :accessor other-var
+  ((%hash-table-form :accessor hash-table-form
+                     :initarg :hash-table-form)
+   (%hash-table-var :reader hash-table-var
+                    :initform (gensym))
+   (%temp-entry-p-var :reader temp-entry-p-var
+                      :initform (gensym))
+   (%temp-key-var :reader temp-key-var
+                  :initform (gensym))
+   (%temp-value-var :reader temp-value-var
+                    :initform (gensym))
+   (%iterator-var :reader iterator-var
+                  :initform (gensym))
+   (%other-var :accessor other-var
+               :initarg :other-var
                :initform (make-instance 'd-spec
                                         :var-spec nil))))
 

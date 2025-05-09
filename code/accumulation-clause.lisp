@@ -14,13 +14,6 @@
   (unless (into-var instance)
     (setf (into-var instance) (default-accumulation-variable))))
 
-;;; We define three different accumulation CATEGORIES, each identified
-;;; by a symbol: LIST, COUNT/SUM, and MAX/MIN.  Accumulation clauses
-;;; within a category are compatible in that they can be mixed, even
-;;; when they accumulate into the same variable.  This generic
-;;; function takes an accumulation clause and returns the category.
-(defgeneric accumulation-category (clause))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; LIST-ACCUMULATION-CLAUSE.
