@@ -44,20 +44,34 @@
                                      :var-spec var-spec
                                      :type-spec type-spec)))
 
-(defmethod khazern::path-preposition-p ((instance for-as-elements) name)
-  (member name '(:in :of :using :from :to) :test #'khazern::symbol-equal))
-
-(defmethod (setf khazern::path-preposition) (expression (instance for-as-elements) name)
+(defmethod khazern::path-preposition-key ((instance for-as-elements) name)
   (cond ((member name '(:in :of) :test #'khazern::symbol-equal)
-         (setf (form instance) expression))
-        ((member name '(:from) :test #'khazern::symbol-equal)
-         (setf (start-form instance) expression))
-        ((member name '(:to) :test #'khazern::symbol-equal)
-         (setf (end-form instance) expression))
+         :in)
+        ((khazern::symbol-equal name :from)
+         :from)
+        ((khazern::symbol-equal name :to)
+         :to)
         ((khazern::symbol-equal name :using)
-         (setf (index-var instance) (second expression)))
+         :using)
+        ((khazern::symbol-equal name :by)
+         :by)
         (t
-         (error "Unknown path preposition ~a" name)))
+         nil)))
+
+(defmethod (setf khazern::path-preposition) (expression (instance for-as-elements) (key (eql :in)))
+  (setf (form instance) expression))
+
+(defmethod (setf khazern::path-preposition) (expression (instance for-as-elements) (key (eql :from)))
+  (setf (start-form instance) expression))
+
+(defmethod (setf khazern::path-preposition) (expression (instance for-as-elements) (key (eql :to)))
+  (setf (end-form instance) expression))
+
+(defmethod (setf khazern::path-preposition) (expression (instance for-as-elements) (key (eql :by)))
+  (setf (by-form instance) expression))
+
+(defmethod (setf khazern::path-preposition) (expression (instance for-as-elements) (key (eql :using)))
+  (setf (index-var instance) (second expression))
   expression)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -67,6 +81,7 @@
 (defmethod khazern:initial-bindings ((clause for-as-elements))
   `((,(form-var clause) ,(form clause))
     (,(next-index-var clause) ,(start-form clause))
+    (,(by-var clause) ,(by-form clause))
     ,@(when (index-var clause)
         `((,(index-var clause) nil)))))
 
@@ -87,7 +102,7 @@
 
 (defmethod khazern:prologue-forms ((clause for-as-elements) end-tag)
   `(,@(khazern:termination-forms clause end-tag)
-    (incf ,(next-index-var clause))))
+    (incf ,(next-index-var clause) ,(by-var clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -107,4 +122,4 @@
 ;;; Compute step-forms.
 
 (defmethod khazern:step-forms ((clause for-as-elements))
-  `((incf ,(next-index-var clause))))
+  `((incf ,(next-index-var clause) ,(by-var clause))))

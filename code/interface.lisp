@@ -138,9 +138,9 @@
 ;;; function takes an accumulation clause and returns the category.
 (defgeneric accumulation-category (clause))
 
-(defgeneric path-preposition-p (instance name))
+(defgeneric path-preposition-key (instance name))
 
-(defgeneric path-preposition (instance name))
+(defgeneric path-preposition (instance key))
 
 (defgeneric (setf path-preposition) (new-value instance name))
 
@@ -151,7 +151,9 @@
 
 (defgeneric analyze (clause-or-clauses)
   (:method (clause-or-clauses)
-    (declare (ignore clause-or-clauses))))
+    (declare (ignore clause-or-clauses)))
+  (:method :before (clause-or-clauses)
+    (mapc #'analyze (subclauses clause-or-clauses))))
 
 ;;; Parser Table interface
 

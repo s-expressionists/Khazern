@@ -102,3 +102,7 @@
 
 (defun fourth-result (&rest rest)
   (fourth rest))
+
+(defun normalize-keyword (x choices)
+  (car (find x choices
+             :test (lambda (x y) (find x y :test #'symbol-equal)))))

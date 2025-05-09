@@ -39,15 +39,13 @@
                                      :type-spec type-spec)
                  :iterator-keywords '(:external)))
 
-(defmethod path-preposition-p ((instance for-as-package) name)
-  (member name '(:in :of) :test #'symbol-equal))
+(defmethod path-preposition-key ((instance for-as-package) name)
+  (if (member name '(:in :of) :test #'symbol-equal)
+      :in
+      nil))
 
-(defmethod (setf path-preposition) (expression (instance for-as-package) name)
-  (cond ((member name '(:in :of) :test #'symbol-equal)
-         (setf (package-form instance) expression))
-        (t
-         (error "Unknown path preposition ~a" name)))
-  expression)
+(defmethod (setf path-preposition) (expression (instance for-as-package) (key (eql :in)))
+  (setf (package-form instance) expression))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
