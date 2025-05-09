@@ -9,39 +9,13 @@
           :initarg :paths
           :initform (make-hash-table :test #'equal))))
 
-(defclass path ()
-  ((%function :reader path-function
-              :initarg :function)
-   (%prepositions :reader path-prepositions
-                  :initarg :prepositions
-                  :initform (make-hash-table :test #'equal))
-   (%data :reader path-data
-          :initform nil
-          :initarg :data)))
-
-(defgeneric add-path (table pathname-or-names path-function list-of-allowable-prepositions data)
-  (:method ((table parser-table) pathname-or-names path-function list-of-allowable-prepositions data)
-    (let* ((instance (make-instance 'path
-                                    :function path-function
-                                    :data data))
-           (prepositions (path-prepositions instance)))
-      (mapc (lambda (names)
-              (let ((key (intern (symbol-name (if (listp names)
-                                                  (car names)
-                                                  names))
-                                 :keyword)))
-                (mapc (lambda (name)
-                        (setf (gethash (symbol-name name) prepositions)
-                              key))
-                      (if (listp names)
-                          names
-                          (cl:list names)))))
-            list-of-allowable-prepositions)
+(defgeneric add-path (table constructor &rest names)
+  (:method ((table parser-table) constructor &rest names)
+    (let ((paths (parser-table-paths table)))
       (mapc (lambda (name)
-              (setf (gethash (symbol-name name) (parser-table-paths table)) instance))
-            (if (listp pathname-or-names)
-                pathname-or-names
-                (cl:list pathname-or-names))))))
+              (setf (gethash (symbol-name name) paths) constructor))
+            names)
+      nil)))
 
 (defgeneric copy-parser-table (table))
 
@@ -69,6 +43,12 @@
                           paths)))
 
 (defparameter *parser-table* nil)
+
+(defgeneric path-preposition-p (instance name))
+
+(defgeneric path-preposition (instance name))
+
+(defgeneric (setf path-preposition) (new-value instance name))
 
 (defun loop-path-p (name)
   (and (gethash (symbol-name name) (parser-table-paths *parser-table*)) t))

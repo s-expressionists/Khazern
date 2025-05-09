@@ -5,13 +5,15 @@
 ;;; Clause FOR-AS-HASH
 
 (defclass for-as-hash (for-as-subclause)
-  ((%hash-table-form :initarg :hash-table-form :reader hash-table-form)
+  ((%hash-table-form :initarg :hash-table-form :accessor hash-table-form)
    (%hash-table-var :initform (gensym) :reader hash-table-var)
    (%temp-entry-p-var :initform (gensym) :reader temp-entry-p-var)
    (%temp-key-var :initform (gensym) :reader temp-key-var)
    (%temp-value-var :initform (gensym) :reader temp-value-var)
    (%iterator-var :initform (gensym) :reader iterator-var)
-   (%other-var :initarg :other-var :reader other-var)))
+   (%other-var :initarg :other-var :accessor other-var
+               :initform (make-instance 'd-spec
+                                        :var-spec nil))))
 
 (defclass for-as-hash-key (for-as-hash) ())
 
@@ -21,44 +23,46 @@
   (map-variables function (var clause))
   (map-variables function (other-var clause)))
 
-(defun make-for-as-hash-key (name var-spec type-spec data
-                             &key (in nil inp) using)
-  (declare (ignore name data))
-  (unless inp
-    (error "IN preposition is required."))
-  (when (> (length using) 2)
-    (error "Multiple USING key values."))
-  (unless (or (null using)
-              (symbol-equal (first using) :hash-value)
-              (symbol-equal (first using) :hash-values))
-    (error "Unknown USING ~a" (first using)))
+(defun make-for-as-hash-key (name var-spec type-spec)
+  (declare (ignore name))
   (make-instance 'for-as-hash-key
                  :var (make-instance 'd-spec
                                      :var-spec var-spec
-                                     :type-spec type-spec)
-                 :hash-table-form in
-                 :other-var (make-instance 'd-spec
-                                           :var-spec (second using))))
+                                     :type-spec type-spec)))
 
-
-(defun make-for-as-hash-value (name var-spec type-spec data
-                               &key (in nil inp) using)
-  (declare (ignore name data))
-  (unless inp
-    (error "IN preposition is required."))
-  (when (> (length using) 2)
-    (error "Multiple USING key values."))
-  (unless (or (null using)
-              (symbol-equal (first using) :hash-key)
-              (symbol-equal (first using) :hash-keys))
-    (error "Unknown USING ~a" (first using)))
+(defun make-for-as-hash-value (name var-spec type-spec)
+  (declare (ignore name))
   (make-instance 'for-as-hash-value
                  :var (make-instance 'd-spec
                                      :var-spec var-spec
-                                     :type-spec type-spec)
-                 :hash-table-form in
-                 :other-var (make-instance 'd-spec
-                                           :var-spec (second using))))
+                                     :type-spec type-spec)))
+
+(defmethod path-preposition-p ((instance for-as-hash) name)
+  (member name '(:in :of :using) :test #'symbol-equal))
+
+(defmethod (setf path-preposition) ((expression cons) (instance for-as-hash-key) name)
+  (if (and (symbol-equal name :using)
+              (= (length expression) 2)
+              (not (member (first expression) '(:hash-value :hash-values) :test #'symbol-equal)))
+      (error "Unknown USING ~a" (first expression))
+      (call-next-method)))
+
+(defmethod (setf path-preposition) ((expression cons) (instance for-as-hash-value) name)
+  (if (and (symbol-equal name :using)
+              (= (length expression) 2)
+              (not (member (first expression) '(:hash-key :hash-keys) :test #'symbol-equal)))
+      (error "Unknown USING ~a" (first expression))
+      (call-next-method)))
+
+(defmethod (setf path-preposition) (expression (instance for-as-hash) name)
+  (cond ((member name '(:in :of) :test #'symbol-equal)
+         (setf (hash-table-form instance) expression))
+        ((symbol-equal name :using)
+         (setf (other-var instance) (make-instance 'd-spec
+                                                   :var-spec (second expression))))
+        (t
+         (error "Unknown path preposition ~a" name)))
+  expression)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

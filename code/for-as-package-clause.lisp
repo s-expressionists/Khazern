@@ -5,7 +5,7 @@
 ;;; Clause FOR-AS-PACKAGE
 
 (defclass for-as-package (for-as-subclause)
-  ((%package-form :initarg :package-form :reader package-form)
+  ((%package-form :initarg :package-form :accessor package-form :initform '*package*)
    (%package-var :initform (gensym) :reader package-var)
    (%temp-entry-p-var :initform (gensym) :reader temp-entry-p-var)
    (%temp-symbol-var :initform (gensym) :reader temp-symbol-var)
@@ -15,32 +15,39 @@
 (defmethod map-variables (function (clause for-as-package))
   (map-variables function (var clause)))
 
-(defun make-for-as-package-symbol (name var-spec type-spec data &key (in '*package*))
-  (declare (ignore name data))
+(defun make-for-as-package-symbol (name var-spec type-spec)
+  (declare (ignore name))
   (make-instance 'for-as-package
-                 :package-form in
                  :var (make-instance 'd-spec
                                      :var-spec var-spec
                                      :type-spec type-spec)
                  :iterator-keywords '(:internal :external :inherited)))
 
-(defun make-for-as-package-present-symbol (name var-spec type-spec data &key (in '*package*))
-  (declare (ignore name data))
+(defun make-for-as-package-present-symbol (name var-spec type-spec)
+  (declare (ignore name))
   (make-instance 'for-as-package
-                 :package-form in
                  :var (make-instance 'd-spec
                                      :var-spec var-spec
                                      :type-spec type-spec)
                  :iterator-keywords '(:internal :external)))
 
-(defun make-for-as-package-external-symbol (name var-spec type-spec data &key (in '*package*))
-  (declare (ignore name data))
+(defun make-for-as-package-external-symbol (name var-spec type-spec)
+  (declare (ignore name))
   (make-instance 'for-as-package
-                 :package-form in
                  :var (make-instance 'd-spec
                                      :var-spec var-spec
                                      :type-spec type-spec)
                  :iterator-keywords '(:external)))
+
+(defmethod path-preposition-p ((instance for-as-package) name)
+  (member name '(:in :of) :test #'symbol-equal))
+
+(defmethod (setf path-preposition) (expression (instance for-as-package) name)
+  (cond ((member name '(:in :of) :test #'symbol-equal)
+         (setf (package-form instance) expression))
+        (t
+         (error "Unknown path preposition ~a" name)))
+  expression)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

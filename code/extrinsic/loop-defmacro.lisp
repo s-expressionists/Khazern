@@ -8,5 +8,5 @@
 (defmacro loop (&rest forms)
   (khazern:expand-body forms 'end-loop *parser-table*))
 
-(defun define-loop-path (pathname-or-names path-function list-of-allowable-prepositions &rest data)
-  (khazern::add-path *parser-table* pathname-or-names path-function list-of-allowable-prepositions data))
+(defun define-loop-path (constructor &rest names)
+  (apply #'khazern::add-path *parser-table* constructor names))

@@ -30,41 +30,16 @@
     with-clause))
 
 (defparameter *default-paths*
-  '((:names (:hash-key :hash-keys)
-     :function make-for-as-hash-key
-     :prepositions ((:in :of)
-                    (:using)))
-    (:names (:hash-value :hash-values)
-     :function make-for-as-hash-value
-     :prepositions ((:in :of)
-                    (:using)))
-    (:names (:symbol :symbols)
-     :function make-for-as-package-symbol
-     :prepositions ((:in :of)))
-    (:names (:present-symbol :present-symbols)
-     :function make-for-as-package-present-symbol
-     :prepositions ((:in :of)))
-    (:names (:external-symbol :external-symbols)
-     :function make-for-as-package-external-symbol
-     :prepositions ((:in :of)))))
+  '((make-for-as-hash-key :hash-key :hash-keys)
+    (make-for-as-hash-value :hash-value :hash-values)
+    (make-for-as-package-symbol :symbol :symbols)
+    (make-for-as-package-present-symbol :present-symbol :present-symbols)
+    (make-for-as-package-external-symbol :external-symbol :external-symbols)))
 
 (defmethod copy-parser-table ((table null))
-  (make-instance 'parser-table
-                 :parsers (copy-list *default-parsers*)
-                 :paths (let ((paths (make-hash-table :test #'equal)))
-                          (mapc (lambda (path-desc)
-                                  (let ((instance (make-instance 'path
-                                                                 :function (getf path-desc :function)
-                                                                 :data (getf path-desc :data))))
-                                    (mapc (lambda (p)
-                                            (mapc (lambda (n)
-                                                    (setf (gethash (symbol-name n) (path-prepositions instance))
-                                                          (car p)))
-                                                  p))
-                                          (getf path-desc :prepositions))
-                                    (mapc (lambda (name)
-                                            (setf (gethash (symbol-name name) paths)
-                                                  instance))
-                                          (getf path-desc :names))))
-                                *default-paths*)
-                          paths)))
+  (let ((table (make-instance 'parser-table
+                              :parsers (copy-list *default-parsers*))))
+    (mapc (lambda (args)
+            (apply #'add-path table args))
+          *default-paths*)
+    table))
