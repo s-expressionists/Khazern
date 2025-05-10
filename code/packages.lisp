@@ -42,6 +42,7 @@
            #:optional
            #:optional-type-spec
            #:parser-enabled-p
+           #:path-inclusive-p
            #:path-inclusive-permitted-p
            #:path-preposition
            #:path-preposition-key

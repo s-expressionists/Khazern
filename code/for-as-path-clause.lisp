@@ -28,8 +28,9 @@
                    (unless (path-inclusive-permitted-p *current-path*)
                      (error 'loop-path-non-inclusive :path (car args)))
                    (setf (path-preposition instance
-                                           (path-preposition-key instance :in))
-                         (second args)))
+                                           (path-preposition-key instance :of))
+                         (second args)
+                         (path-inclusive-p instance) t)))
                  *current-path*)
                'd-var-spec
                'optional-type-spec

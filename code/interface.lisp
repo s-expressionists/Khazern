@@ -143,6 +143,10 @@
     (declare (ignore instance))
     nil))
 
+(defgeneric path-inclusive-p (instance))
+
+(defgeneric (setf path-inclusive-p) (instance))
+
 (defgeneric path-preposition-key (instance name))
 
 (defgeneric path-preposition (instance key))
