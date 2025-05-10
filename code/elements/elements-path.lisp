@@ -44,33 +44,33 @@
                                      :var-spec var-spec
                                      :type-spec type-spec)))
 
-(defmethod khazern::path-preposition-key ((instance for-as-elements) name)
-  (cond ((member name '(:in :of) :test #'khazern::symbol-equal)
+(defmethod khazern:path-preposition-key ((instance for-as-elements) name)
+  (cond ((member name '(:in :of) :test #'khazern:symbol-equal)
          :in)
-        ((khazern::symbol-equal name :from)
+        ((khazern:symbol-equal name :from)
          :from)
-        ((khazern::symbol-equal name :to)
+        ((khazern:symbol-equal name :to)
          :to)
-        ((khazern::symbol-equal name :using)
+        ((khazern:symbol-equal name :using)
          :using)
-        ((khazern::symbol-equal name :by)
+        ((khazern:symbol-equal name :by)
          :by)
         (t
          nil)))
 
-(defmethod (setf khazern::path-preposition) (expression (instance for-as-elements) (key (eql :in)))
+(defmethod (setf khazern:path-preposition) (expression (instance for-as-elements) (key (eql :in)))
   (setf (form instance) expression))
 
-(defmethod (setf khazern::path-preposition) (expression (instance for-as-elements) (key (eql :from)))
+(defmethod (setf khazern:path-preposition) (expression (instance for-as-elements) (key (eql :from)))
   (setf (start-form instance) expression))
 
-(defmethod (setf khazern::path-preposition) (expression (instance for-as-elements) (key (eql :to)))
+(defmethod (setf khazern:path-preposition) (expression (instance for-as-elements) (key (eql :to)))
   (setf (end-form instance) expression))
 
-(defmethod (setf khazern::path-preposition) (expression (instance for-as-elements) (key (eql :by)))
+(defmethod (setf khazern:path-preposition) (expression (instance for-as-elements) (key (eql :by)))
   (setf (by-form instance) expression))
 
-(defmethod (setf khazern::path-preposition) (expression (instance for-as-elements) (key (eql :using)))
+(defmethod (setf khazern:path-preposition) (expression (instance for-as-elements) (key (eql :using)))
   (setf (index-var instance) (second expression))
   expression)
 

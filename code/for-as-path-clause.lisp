@@ -19,18 +19,35 @@
 (defparameter *current-path-prepositions* nil)
 
 (define-parser for-as-path-intro ()
-  (consecutive (lambda (var-spec type-spec name)
+  (consecutive (lambda (var-spec type-spec args)
                  (setf *current-path*
-                       (funcall (gethash (symbol-name name)
+                       (funcall (gethash (symbol-name (car args))
                                          (parser-table-paths *parser-table*))
-                                name var-spec type-spec)))
+                                (car args) var-spec type-spec))
+                 (when (cdr args)
+                   (unless (path-inclusive-permitted-p *current-path*)
+                     (error 'loop-path-non-inclusive :path (car args)))
+                   (setf (path-preposition instance
+                                           (path-preposition-key instance :in))
+                         (second args)))
+                 *current-path*)
                'd-var-spec
                'optional-type-spec
                (keyword :being)
-               (keyword :each :the)
                'terminal
-               (typep '(satisfies loop-path-p))))
-
+               (alternative (consecutive (lambda (path)
+                                           (cl:list path))
+                                         (keyword :each :the)
+                                         'terminal
+                                         (typep '(satisfies loop-path-p)))
+                            (consecutive (lambda (expression path)
+                                           (cl:list path expression))
+                                         'anything
+                                         (keyword :and)
+                                         (keyword :its :each :his :her)
+                                         'terminal
+                                         (typep '(satisfies loop-path-p))))))
+ 
 (defun current-path-preposition-p (name)
   (and *current-path*
        (let ((key (path-preposition-key *current-path* name)))

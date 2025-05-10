@@ -138,6 +138,11 @@
 ;;; function takes an accumulation clause and returns the category.
 (defgeneric accumulation-category (clause))
 
+(defgeneric path-inclusive-permitted-p (instance)
+  (:method (instance)
+    (declare (ignore instance))
+    nil))
+
 (defgeneric path-preposition-key (instance name))
 
 (defgeneric path-preposition (instance key))

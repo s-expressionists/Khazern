@@ -121,3 +121,7 @@
 ;;; The root of all semantic errors.
 (define-condition loop-semantic-error (program-error acclimation:condition)
   ())
+
+(define-condition loop-path-non-inclusive (loop-semantic-error)
+  ((%path :reader path
+          :initarg :path)))

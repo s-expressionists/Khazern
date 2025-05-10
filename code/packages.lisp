@@ -12,7 +12,10 @@
    ;; need to shadow this name
    #:typep
    #:condition)
-  (:export #:alternative
+  (:export #:accumulation-category
+           #:add-path
+           #:alternative
+           #:analyze
            #:anything
            #:body-forms
            #:consecutive
@@ -39,6 +42,9 @@
            #:optional
            #:optional-type-spec
            #:parser-enabled-p
+           #:path-inclusive-permitted-p
+           #:path-preposition
+           #:path-preposition-key
            #:prologue-bindings
            #:prologue-forms
            #:repeat*
@@ -47,8 +53,11 @@
            #:step-bindings
            #:step-forms
            #:subclauses
+           #:symbol-equal
            #:terminal
            #:termination-forms
            #:typep
            #:var
-           #:variable-clause-p))
+           #:variable-clause-p
+           #:wrap-clause
+           #:wrap-subclause))
