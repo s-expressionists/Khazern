@@ -60,7 +60,7 @@
 
 (defvar *loop-name*)
 
-(defvar *end-tag*)
+(defvar *epilogue-tag*)
 
 (defun prologue-body-epilogue (clauses)
   (let ((start-tag (gensym "BODY")))
@@ -75,7 +75,7 @@
                       (mapcan #'step-declarations clauses)
                       (mapcan #'step-forms clauses))
          (go ,start-tag)
-       ,*end-tag*
+       ,*epilogue-tag*
          ,@(mapcan #'epilogue-forms clauses)
          (return-from ,*loop-name*
            ,*accumulation-variable*)))))
@@ -111,10 +111,10 @@
             (accumulation-declarations all-clauses)
             (do-clauses all-clauses)))
 
-(defun expand-body (loop-body end-tag parser-table)
+(defun expand-body (loop-body epilogue-tag parser-table)
   (cond ((notevery #'listp loop-body)
          (let* ((*accumulation-variable* nil)
-                (*end-tag* end-tag)
+                (*epilogue-tag* epilogue-tag)
                 (clauses (parse-loop-body loop-body parser-table)))
            (analyze clauses)
            (let* ((name (if (name-clause-p (car clauses))

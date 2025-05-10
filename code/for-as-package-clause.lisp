@@ -78,7 +78,7 @@
                           ,(temp-symbol-var subclause))
       (,(iterator-var subclause)))
     (unless ,(temp-entry-p-var subclause)
-      (go ,*end-tag*))
+      (go ,*epilogue-tag*))
     ,@(d-spec-inner-form (var subclause)
                          (temp-symbol-var subclause))
     (multiple-value-setq (,(temp-entry-p-var subclause)
@@ -91,7 +91,7 @@
 
 (defmethod termination-forms ((subclause for-as-package))
   `((unless ,(temp-entry-p-var subclause)
-      (go ,*end-tag*))))
+      (go ,*epilogue-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

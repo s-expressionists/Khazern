@@ -193,16 +193,16 @@
 
 (defmacro define-interface (&optional intrinsic)
   (let* ((intrinsic-pkg (if intrinsic (find-package '#:common-lisp) *package*))
-         (end-loop (ensure-symbol '#:end-loop))
+         (epilogue-tag (ensure-symbol '#:epilogue))
          (parser-table (ensure-symbol '#:*parser-table*)))
     `(progn
        (defparameter ,parser-table (khazern:copy-parser-table nil))
 
        (defmacro ,(ensure-symbol '#:loop-finish intrinsic-pkg) ()
-         '(go ,end-loop))
+         '(go ,epilogue-tag))
 
        (defmacro ,(ensure-symbol '#:loop intrinsic-pkg) (&rest forms)
-         (khazern:expand-body forms ',end-loop ,parser-table))
+         (khazern:expand-body forms ',epilogue-tag ,parser-table))
 
        (defun ,(ensure-symbol '#:define-loop-path) (constructor &rest names)
          (apply #'khazern:add-path ,parser-table constructor names)))))

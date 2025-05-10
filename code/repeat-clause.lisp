@@ -36,7 +36,7 @@
 
 (defmethod prologue-forms ((clause repeat-clause))
   `((when (zerop ,(var-spec clause))
-      (go ,*end-tag*))))
+      (go ,*epilogue-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -44,7 +44,7 @@
 
 (defmethod termination-forms ((clause repeat-clause))
   `((when (<= ,(var-spec clause) 1)
-      (go ,*end-tag*))))
+      (go ,*epilogue-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

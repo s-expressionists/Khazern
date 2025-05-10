@@ -66,7 +66,7 @@
 
 (defmethod termination-forms ((clause for-as-across))
   `((when (>= ,(index-var clause) ,(length-var clause))
-      (go ,*end-tag*))))
+      (go ,*epilogue-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

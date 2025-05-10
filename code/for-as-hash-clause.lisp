@@ -108,7 +108,7 @@
                           ,(temp-value-var subclause))
       (,(iterator-var subclause)))
     (unless ,(temp-entry-p-var subclause)
-      (go ,*end-tag*))
+      (go ,*epilogue-tag*))
     ,@(d-spec-inner-form (var subclause)
                          (temp-key-var subclause))
     ,@(d-spec-inner-form (other-var subclause)
@@ -124,7 +124,7 @@
                           ,(temp-value-var subclause))
       (,(iterator-var subclause)))
     (unless ,(temp-entry-p-var subclause)
-      (go ,*end-tag*))
+      (go ,*epilogue-tag*))
     ,@(d-spec-inner-form (var subclause)
                          (temp-value-var subclause))
     ,@(d-spec-inner-form (other-var subclause)
@@ -140,7 +140,7 @@
 
 (defmethod termination-forms ((subclause for-as-hash))
   `((unless ,(temp-entry-p-var subclause)
-      (go ,*end-tag*))))
+      (go ,*epilogue-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

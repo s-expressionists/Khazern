@@ -158,7 +158,7 @@
          :from-end ,(from-end-var clause)))
     (when (funcall ,(endp-func clause) ,(in-var clause) ,(iterator-var clause)
                    ,(limit-var clause) ,(from-end-var clause))
-      (go ,khazern:*end-tag*))
+      (go ,khazern:*epilogue-tag*))
     ,@(khazern:d-spec-inner-form (var clause)
                                  `(funcall ,(read-func clause) ,(in-var clause)
                                            ,(iterator-var clause)))
@@ -177,7 +177,7 @@
                    ,(iterator-var clause) ,(from-end-var clause)))
     (when (funcall ,(endp-func clause) ,(in-var clause) ,(iterator-var clause)
                    ,(limit-var clause) ,(from-end-var clause))
-      (go ,khazern:*end-tag*))))
+      (go ,khazern:*epilogue-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

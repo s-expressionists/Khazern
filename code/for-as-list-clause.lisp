@@ -112,11 +112,11 @@
 
 (defmethod termination-forms ((clause for-as-in-list))
   `((when (endp ,(rest-var clause))
-      (go ,*end-tag*))))
+      (go ,*epilogue-tag*))))
 
 (defmethod termination-forms ((clause for-as-on-list))
   `((when (atom ,(rest-var clause))
-      (go ,*end-tag*))))
+      (go ,*epilogue-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

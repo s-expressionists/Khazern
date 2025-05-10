@@ -27,4 +27,4 @@
 
 (defmethod body-forms ((clause while-clause))
   `((unless ,(form clause)
-      (go ,*end-tag*))))
+      (go ,*epilogue-tag*))))

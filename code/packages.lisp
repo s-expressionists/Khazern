@@ -13,7 +13,7 @@
    #:typep
    #:condition)
   (:export #:*accumulation-var*
-           #:*end-tag*
+           #:*epilogue-tag*
            #:*it-var*
            #:*loop-name*
            #:accumulation-category

@@ -378,7 +378,7 @@
       `((unless (,(termination-test clause)
 		 ,(temp-var clause)
 		 ,(end-var clause))
-	  (go ,*end-tag*))
+	  (go ,*epilogue-tag*))
 	(incf ,(temp-var clause) ,(by-var clause)))))
 
 (defmethod prologue-forms ((clause for-as-arithmetic-down))
@@ -387,7 +387,7 @@
       `((unless (,(termination-test clause)
 		 ,(end-var clause)
 		 ,(temp-var clause))
-	  (go ,*end-tag*))
+	  (go ,*epilogue-tag*))
 	(decf ,(temp-var clause) ,(by-var clause)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -400,7 +400,7 @@
       `((unless (,(termination-test clause)
                  ,(temp-var clause)
                  ,(end-var clause))
-          (go ,*end-tag*)))))
+          (go ,*epilogue-tag*)))))
 
 (defmethod termination-forms ((clause for-as-arithmetic-down))
   (if (null (termination-test clause))
@@ -408,7 +408,7 @@
       `((unless (,(termination-test clause)
                  ,(end-var clause)
                  ,(temp-var clause))
-          (go ,*end-tag*)))))
+          (go ,*epilogue-tag*)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
