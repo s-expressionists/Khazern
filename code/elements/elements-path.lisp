@@ -1,8 +1,10 @@
 (cl:in-package #:khazern-elements)
 
+#+abcl (require :extensible-sequences)
+
 #-(or abcl clasp sbcl)
 (defun make-sequence-iterator (seq &key (start 0) end from-end)
-  (let ((end (or end (length s))))
+  (let ((end (or end (length seq))))
     (values (if from-end
                 (1- end)
                 start)
