@@ -61,8 +61,7 @@
 ;;;
 ;;; Compute the prologue-form.
 
-(defmethod prologue-forms ((clause for-as-equals-then) end-tag)
-  (declare (ignore end-tag))
+(defmethod prologue-forms ((clause for-as-equals-then))
   `((setq ,@(d-spec-inner-assignments (var clause) (initial-form clause)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

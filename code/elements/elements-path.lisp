@@ -146,7 +146,7 @@
 ;;;
 ;;; Compute prologue-forms.
 
-(defmethod khazern:prologue-forms ((clause for-as-elements) end-tag)
+(defmethod khazern:prologue-forms ((clause for-as-elements))
   `((multiple-value-setq (,(iterator-var clause) ,(limit-var clause) ,(from-end-var clause)
                           ,(step-func clause) ,(endp-func clause) ,(read-func clause)
                           ,(write-func clause) ,(index-func clause))
@@ -158,7 +158,7 @@
          :from-end ,(from-end-var clause)))
     (when (funcall ,(endp-func clause) ,(in-var clause) ,(iterator-var clause)
                    ,(limit-var clause) ,(from-end-var clause))
-      (go ,end-tag))
+      (go ,khazern:*end-tag*))
     ,@(khazern:d-spec-inner-form (var clause)
                                  `(funcall ,(read-func clause) ,(in-var clause)
                                            ,(iterator-var clause)))
@@ -171,13 +171,13 @@
 ;;;
 ;;; Compute termination-forms
 
-(defmethod khazern:termination-forms ((clause for-as-elements) end-tag)
+(defmethod khazern:termination-forms ((clause for-as-elements))
   `((setq ,(iterator-var clause)
           (funcall ,(step-func clause) ,(in-var clause)
                    ,(iterator-var clause) ,(from-end-var clause)))
     (when (funcall ,(endp-func clause) ,(in-var clause) ,(iterator-var clause)
                    ,(limit-var clause) ,(from-end-var clause))
-      (go ,end-tag))))
+      (go ,khazern:*end-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

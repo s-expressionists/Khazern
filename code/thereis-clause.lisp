@@ -20,8 +20,7 @@
 ;;;
 ;;; Compute the body-forms
 
-(defmethod body-forms ((clause thereis-clause) end-tag)
-  (declare (ignore end-tag))
+(defmethod body-forms ((clause thereis-clause))
   `((let ((temp ,(form clause)))
       (when temp
         (return-from ,*loop-name* temp)))))

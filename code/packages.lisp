@@ -12,7 +12,11 @@
    ;; need to shadow this name
    #:typep
    #:condition)
-  (:export #:accumulation-category
+  (:export #:*accumulation-var*
+           #:*end-tag*
+           #:*it-var*
+           #:*loop-name*
+           #:accumulation-category
            #:add-path
            #:alternative
            #:analyze

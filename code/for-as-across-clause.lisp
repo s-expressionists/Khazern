@@ -53,8 +53,8 @@
 ;;;
 ;;; Compute prologue-form.
 
-(defmethod prologue-forms ((clause for-as-across) end-tag)
-  `(,@(termination-forms clause end-tag)
+(defmethod prologue-forms ((clause for-as-across))
+  `(,@(termination-forms clause)
     ,@(d-spec-inner-form (var clause)
                          `(aref ,(form-var clause)
                                 ,(index-var clause)))
@@ -64,9 +64,9 @@
 ;;;
 ;;; Compute termination-forms
 
-(defmethod termination-forms ((clause for-as-across) end-tag)
+(defmethod termination-forms ((clause for-as-across))
   `((when (>= ,(index-var clause) ,(length-var clause))
-      (go ,end-tag))))
+      (go ,*end-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

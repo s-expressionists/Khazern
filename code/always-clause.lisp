@@ -21,7 +21,6 @@
 ;;;
 ;;; Compute the body-forms
 
-(defmethod body-forms ((clause always-clause) end-tag)
-  (declare (ignore end-tag))
+(defmethod body-forms ((clause always-clause))
   `((unless ,(form clause)
       (return-from ,*loop-name* nil))))

@@ -23,8 +23,7 @@
 ;;;
 ;;; Compute the BODY-FORM.
 
-(defmethod body-forms ((clause count-clause) end-tag)
-  (declare (ignore end-tag))
+(defmethod body-forms ((clause count-clause))
   (let ((form (form clause))
         (into-var (into-var clause)))
     `((when ,(if (and *it-var* (it-keyword-p form))

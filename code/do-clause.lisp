@@ -29,6 +29,5 @@
 ;;;
 ;;; Compute the body-forms.
 
-(defmethod body-forms ((clause do-clause) end-tag)
-  (declare (ignore end-tag))
-  (forms clause))
+(defmethod body-forms ((clause do-clause))
+  (copy-list (forms clause)))

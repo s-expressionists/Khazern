@@ -23,8 +23,7 @@
 ;;;
 ;;; Compute the BODY-FORM.
 
-(defmethod body-forms ((clause minimize-clause) end-tag)
-  (declare (ignore end-tag))
+(defmethod body-forms ((clause minimize-clause))
   (let ((form (form clause)))
     (when (and *it-var* (it-keyword-p form))
       (setf form *it-var*))

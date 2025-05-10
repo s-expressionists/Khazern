@@ -21,8 +21,7 @@
 ;;;
 ;;; Compute body-forms.
 
-(defmethod body-forms ((clause collect-clause) end-tag)
-  (declare (ignore end-tag))
+(defmethod body-forms ((clause collect-clause))
   (let* ((form (form clause))
          (into-var (into-var clause))
          (tail-var (tail-variable into-var)))

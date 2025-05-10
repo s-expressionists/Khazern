@@ -48,18 +48,14 @@
 ;;;
 ;;; Compute body-forms.
 
-(defmethod body-forms ((clause conditional-clause) end-tag)
+(defmethod body-forms ((clause conditional-clause))
   (let ((*it-var* (gensym)))
     `((let ((,*it-var* ,(condition clause)))
         (cond (,*it-var*
-               ,@(body-forms (car (then-clauses clause)) end-tag)
+               ,@(body-forms (car (then-clauses clause)))
                ,@(let (*it-var*)
-                   (mapcan (lambda (clause)
-                             (body-forms clause end-tag))
-                           (cdr (then-clauses clause)))))
+                   (mapcan #'body-forms (cdr (then-clauses clause)))))
               (t
-               ,@(body-forms (car (else-clauses clause)) end-tag)
+               ,@(body-forms (car (else-clauses clause)))
                ,@(let (*it-var*)
-                   (mapcan (lambda (clause)
-                             (body-forms clause end-tag))
-                           (cdr (else-clauses clause))))))))))
+                   (mapcan #'body-forms (cdr (else-clauses clause))))))))))

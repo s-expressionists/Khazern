@@ -24,8 +24,7 @@
 ;;; Compute the bindings.
 
 (defmethod initial-bindings ((clause subclauses-mixin))
-  (reduce #'append (mapcar #'initial-bindings (subclauses clause))
-          :from-end t))
+  (mapcan #'initial-bindings (subclauses clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -38,40 +37,32 @@
 ;;;
 ;;; Compute the prologue-form.
 
-(defmethod prologue-forms ((clause subclauses-mixin) end-tag)
-  (wrap-let* (reduce #'append (mapcar #'prologue-bindings (subclauses clause))
-                     :from-end t)
-             '()
-             (mapcan (lambda (subclause)
-                       (prologue-forms subclause end-tag))
-                     (subclauses clause))))
+(defmethod prologue-forms ((clause subclauses-mixin))
+  (wrap-let* (mapcan #'prologue-bindings (subclauses clause))
+             (mapcan #'prologue-declarations (subclauses clause))
+             (mapcan #'prologue-forms (subclauses clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the termination-forms.
 
-(defmethod termination-forms ((clause subclauses-mixin) end-tag)
-  (mapcan (lambda (subclause)
-            (termination-forms subclause end-tag))
-          (subclauses clause)))
+(defmethod termination-forms ((clause subclauses-mixin))
+  (mapcan #'termination-forms (subclauses clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the body-forms.
 
-(defmethod body-forms ((clause subclauses-mixin) end-tag)
-  (mapcan (lambda (clause)
-            (body-forms clause end-tag))
-          (subclauses clause)))
+(defmethod body-forms ((clause subclauses-mixin))
+  (mapcan #'body-forms (subclauses clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Step a FOR-AS clause.
 
 (defmethod step-forms ((clause subclauses-mixin))
-  (wrap-let* (reduce #'append (mapcar #'step-bindings (subclauses clause))
-                     :from-end t)
-             '()
+  (wrap-let* (mapcan #'step-bindings (subclauses clause))
+             (mapcan #'step-declarations (subclauses clause))
              (mapcan #'step-forms (subclauses clause))))
 
 ;;; Mixin for clauses and subclauses that take

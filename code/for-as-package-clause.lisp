@@ -73,12 +73,12 @@
 ;;;
 ;;; Compute the prologue form.
 
-(defmethod prologue-forms ((subclause for-as-package) end-tag)
+(defmethod prologue-forms ((subclause for-as-package))
   `((multiple-value-setq (,(temp-entry-p-var subclause)
                           ,(temp-symbol-var subclause))
       (,(iterator-var subclause)))
     (unless ,(temp-entry-p-var subclause)
-      (go ,end-tag))
+      (go ,*end-tag*))
     ,@(d-spec-inner-form (var subclause)
                          (temp-symbol-var subclause))
     (multiple-value-setq (,(temp-entry-p-var subclause)
@@ -89,9 +89,9 @@
 ;;;
 ;;; Compute the termination form.
 
-(defmethod termination-forms ((subclause for-as-package) end-tag)
+(defmethod termination-forms ((subclause for-as-package))
   `((unless ,(temp-entry-p-var subclause)
-      (go ,end-tag))))
+      (go ,*end-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

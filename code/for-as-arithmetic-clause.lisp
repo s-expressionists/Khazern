@@ -372,43 +372,43 @@
 ;;;
 ;;; Compute the prologue-form.
 
-(defmethod prologue-forms ((clause for-as-arithmetic-up) end-tag)
+(defmethod prologue-forms ((clause for-as-arithmetic-up))
   (if (null (termination-test clause))
       `((incf ,(temp-var clause) ,(by-var clause)))
       `((unless (,(termination-test clause)
 		 ,(temp-var clause)
 		 ,(end-var clause))
-	  (go ,end-tag))
+	  (go ,*end-tag*))
 	(incf ,(temp-var clause) ,(by-var clause)))))
 
-(defmethod prologue-forms ((clause for-as-arithmetic-down) end-tag)
+(defmethod prologue-forms ((clause for-as-arithmetic-down))
   (if (null (termination-test clause))
       `((decf ,(temp-var clause) ,(by-var clause)))
       `((unless (,(termination-test clause)
 		 ,(end-var clause)
 		 ,(temp-var clause))
-	  (go ,end-tag))
+	  (go ,*end-tag*))
 	(decf ,(temp-var clause) ,(by-var clause)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the termination-forms.
 
-(defmethod termination-forms ((clause for-as-arithmetic-up) end-tag)
+(defmethod termination-forms ((clause for-as-arithmetic-up))
   (if (null (termination-test clause))
       nil
       `((unless (,(termination-test clause)
                  ,(temp-var clause)
                  ,(end-var clause))
-          (go ,end-tag)))))
+          (go ,*end-tag*)))))
 
-(defmethod termination-forms ((clause for-as-arithmetic-down) end-tag)
+(defmethod termination-forms ((clause for-as-arithmetic-down))
   (if (null (termination-test clause))
       nil
       `((unless (,(termination-test clause)
                  ,(end-var clause)
                  ,(temp-var clause))
-          (go ,end-tag)))))
+          (go ,*end-tag*)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

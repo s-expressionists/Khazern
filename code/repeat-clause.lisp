@@ -21,7 +21,7 @@
 ;;; Compute the bindings.
 
 (defmethod initial-bindings ((clause repeat-clause))
-  `((,(var-spec clause) (ceiling ,(form clause)))))
+  `((,(var-spec clause) (max 0 (ceiling ,(form clause))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -34,17 +34,17 @@
 ;;;
 ;;; Compute the prologue-form.
 
-(defmethod prologue-forms ((clause repeat-clause) end-tag)
-  `((when (<= ,(var-spec clause) 0)
-      (go ,end-tag))))
+(defmethod prologue-forms ((clause repeat-clause))
+  `((when (zerop ,(var-spec clause))
+      (go ,*end-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the termination-forms.
 
-(defmethod termination-forms ((clause repeat-clause) end-tag)
+(defmethod termination-forms ((clause repeat-clause))
   `((when (<= ,(var-spec clause) 1)
-      (go ,end-tag))))
+      (go ,*end-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

@@ -41,26 +41,31 @@
     (declare (ignore clause))
     nil))
 
+;;; This generic function returns the declarations for CLAUSE that should go in
+;;; the LOOP prologue.
+(defgeneric prologue-declarations (clause)
+  (:method (clause)
+    (declare (ignore clause))
+    nil))
+
 ;;; This generic function returns a form for CLAUSE that should go in
 ;;; the LOOP prologue.  The INITIALLY clause is an obvious candidate
 ;;; for such code.  But the stepping clauses also have code that goes
 ;;; in the prologue, namely an initial termination test to determine
-;;; whether any iterations at all should be executed.  END-TAG is the
-;;; tag to GO to when the initial termination test says that no
-;;; iterations should be executed.
-(defgeneric prologue-forms(clause end-tag)
-  (:method (clause end-tag)
-    (declare (ignore clause end-tag))
+;;; whether any iterations at all should be executed. 
+(defgeneric prologue-forms (clause)
+  (:method (clause)
+    (declare (ignore clause))
     nil))
 
 ;;; This generic function returns a form for CLAUSE that should go
 ;;; between the body code and the stepping forms in the body of the
 ;;; expanded code.  Some of the FOR-AS clauses and also the REPEAT
-;;; clause generate code here.  END-TAG is the tag to GO to when
+;;; clause generate code here.  is the tag to GO to when
 ;;; iteration should terminate.
-(defgeneric termination-forms (clause end-tag)
-  (:method (clause end-tag)
-    (declare (ignore clause end-tag))
+(defgeneric termination-forms (clause)
+  (:method (clause)
+    (declare (ignore clause))
     nil))
 
 ;;; This generic function returns a form for CLAUSE that should go in
@@ -68,12 +73,11 @@
 ;;; stepping forms, in the body of the expanded code.  The DO clause
 ;;; and the accumulation clauses are obvious candidates for such code.
 ;;;
-;;; FIXME: Currently, END-TAG is used only in the WHILE clause as a
-;;; termination test.  Investigate whether the WHILE clause should use
+;;; FIXME: Currently,  Investigate whether the WHILE clause should use
 ;;; TERMINATION-TEST instead, so that we can eliminate this parameter.
-(defgeneric body-forms (clause end-tag)
-  (:method (clause end-tag)
-    (declare (ignore clause end-tag))
+(defgeneric body-forms (clause)
+  (:method (clause)
+    (declare (ignore clause))
     nil))
 
 ;;; This generic function returns the bindings for CLAUSE that go
@@ -83,6 +87,14 @@
   (:method (clause)
     (declare (ignore clause))
     nil))
+
+;; This generic function returns the declarations for CLAUSE that go
+;;; after the main body code and the termination tests in the body of
+;;; the expanded code.
+(defgeneric step-declarations (clause)
+  (:method (clause)
+    (declare (ignore clause))
+    '()))
 
 ;;; This generic function returns a form for CLAUSE that should go
 ;;; after the main body code and the termination tests in the body of

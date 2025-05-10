@@ -88,8 +88,8 @@
 ;;;
 ;;; Compute the prologue.
 
-(defmethod prologue-forms ((clause for-as-in-list) end-tag)
-  `(,@(termination-forms clause end-tag)
+(defmethod prologue-forms ((clause for-as-in-list))
+  `(,@(termination-forms clause)
     ,@(d-spec-inner-form (var clause) `(car ,(rest-var clause)))
     ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
          `(setq ,(rest-var clause)
@@ -97,8 +97,8 @@
          `(setq ,(rest-var clause)
                 (funcall ,(by-var clause) ,(rest-var clause))))))
 
-(defmethod prologue-forms ((clause for-as-on-list) end-tag)
-  `(,@(termination-forms clause end-tag)
+(defmethod prologue-forms ((clause for-as-on-list))
+  `(,@(termination-forms clause)
     ,@(d-spec-inner-form (var clause) (rest-var clause))
     ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
          `(setq ,(rest-var clause)
@@ -110,13 +110,13 @@
 ;;;
 ;;; Compute the termination-forms.
 
-(defmethod termination-forms ((clause for-as-in-list) end-tag)
+(defmethod termination-forms ((clause for-as-in-list))
   `((when (endp ,(rest-var clause))
-      (go ,end-tag))))
+      (go ,*end-tag*))))
 
-(defmethod termination-forms ((clause for-as-on-list) end-tag)
+(defmethod termination-forms ((clause for-as-on-list))
   `((when (atom ,(rest-var clause))
-      (go ,end-tag))))
+      (go ,*end-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

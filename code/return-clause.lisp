@@ -30,8 +30,7 @@
 ;;;
 ;;; Compute body-forms.
 
-(defmethod body-forms ((clause return-clause) end-tag)
-  (declare (ignore end-tag))
+(defmethod body-forms ((clause return-clause))
   (let ((form (form clause)))
     `((return-from ,*loop-name*
         ,(if (and *it-var* (it-keyword-p form))

@@ -21,8 +21,7 @@
 ;;;
 ;;; Compute body-forms.
 
-(defmethod body-forms ((clause append-clause) end-tag)
-  (declare (ignore end-tag))
+(defmethod body-forms ((clause append-clause))
   (let* ((head-var (gensym))
          (form (form clause))
          (into-var (into-var clause))

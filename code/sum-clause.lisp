@@ -23,8 +23,7 @@
 ;;;
 ;;; Compute the BODY-FORM.
 
-(defmethod body-forms ((clause sum-clause) end-tag)
-  (declare (ignore end-tag))
+(defmethod body-forms ((clause sum-clause))
   (let ((form (form clause)))
     `((incf ,(into-var clause)
             ,(if (and *it-var* (it-keyword-p form))

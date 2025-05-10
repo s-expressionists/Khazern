@@ -102,13 +102,13 @@
 ;;;
 ;;; Compute the prologue form.
 
-(defmethod prologue-forms ((subclause for-as-hash-key) end-tag)
+(defmethod prologue-forms ((subclause for-as-hash-key))
   `((multiple-value-setq (,(temp-entry-p-var subclause)
                           ,(temp-key-var subclause)
                           ,(temp-value-var subclause))
       (,(iterator-var subclause)))
     (unless ,(temp-entry-p-var subclause)
-      (go ,end-tag))
+      (go ,*end-tag*))
     ,@(d-spec-inner-form (var subclause)
                          (temp-key-var subclause))
     ,@(d-spec-inner-form (other-var subclause)
@@ -118,13 +118,13 @@
                           ,(temp-value-var subclause))
       (,(iterator-var subclause)))))
 
-(defmethod prologue-forms ((subclause for-as-hash-value) end-tag)
+(defmethod prologue-forms ((subclause for-as-hash-value))
   `((multiple-value-setq (,(temp-entry-p-var subclause)
                           ,(temp-key-var subclause)
                           ,(temp-value-var subclause))
       (,(iterator-var subclause)))
     (unless ,(temp-entry-p-var subclause)
-      (go ,end-tag))
+      (go ,*end-tag*))
     ,@(d-spec-inner-form (var subclause)
                          (temp-value-var subclause))
     ,@(d-spec-inner-form (other-var subclause)
@@ -138,9 +138,9 @@
 ;;;
 ;;; Compute the termination form.
 
-(defmethod termination-forms ((subclause for-as-hash) end-tag)
+(defmethod termination-forms ((subclause for-as-hash))
   `((unless ,(temp-entry-p-var subclause)
-      (go ,end-tag))))
+      (go ,*end-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

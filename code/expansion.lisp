@@ -60,28 +60,22 @@
 
 (defvar *loop-name*)
 
-(defun prologue-body-epilogue (clauses end-tag)
+(defvar *end-tag*)
+
+(defun prologue-body-epilogue (clauses)
   (let ((start-tag (gensym "BODY")))
     `((tagbody
-         ,@(wrap-let* (reduce #'append (mapcar #'prologue-bindings clauses)
-                              :from-end t)
-                      '()
-                      (mapcan (lambda (clause)
-                                (prologue-forms clause end-tag))
-                              clauses))
+         ,@(wrap-let* (mapcan #'prologue-bindings clauses)
+                      (mapcan #'prologue-declarations clauses)
+                      (mapcan #'prologue-forms clauses))
        ,start-tag
-         ,@(mapcan (lambda (clause)
-                            (body-forms clause end-tag))
-                          clauses)
-         ,@(mapcan (lambda (clause)
-                            (termination-forms clause end-tag))
-                          clauses)
-         ,@(wrap-let* (reduce #'append (mapcar #'step-bindings clauses)
-                              :from-end t)
-                      '()
+         ,@(mapcan #'body-forms clauses)
+         ,@(mapcan #'termination-forms clauses)
+         ,@(wrap-let* (mapcan #'step-bindings clauses)
+                      (mapcan #'step-declarations clauses)
                       (mapcan #'step-forms clauses))
          (go ,start-tag)
-       ,end-tag
+       ,*end-tag*
          ,@(mapcan #'epilogue-forms clauses)
          (return-from ,*loop-name*
            ,*accumulation-variable*)))))
@@ -107,18 +101,20 @@
 ;;; Process all clauses by first computing the prologue, the body, and
 ;;; the epilogue, and then applying the clause-specific wrapper for
 ;;; each clause to the result.
-(defun do-clauses (all-clauses end-tag)
-  (reduce #'wrap-clause all-clauses :from-end t
-          :initial-value (prologue-body-epilogue all-clauses end-tag)))
+(defun do-clauses (all-clauses)
+  (reduce #'wrap-clause all-clauses
+          :from-end t
+          :initial-value (prologue-body-epilogue all-clauses)))
 
-(defun expand-clauses (all-clauses end-tag)
+(defun expand-clauses (all-clauses)
   (wrap-let (accumulation-bindings all-clauses)
             (accumulation-declarations all-clauses)
-            (do-clauses all-clauses end-tag)))
+            (do-clauses all-clauses)))
 
 (defun expand-body (loop-body end-tag parser-table)
   (cond ((notevery #'listp loop-body)
          (let* ((*accumulation-variable* nil)
+                (*end-tag* end-tag)
                 (clauses (parse-loop-body loop-body parser-table)))
            (analyze clauses)
            (let* ((name (if (name-clause-p (car clauses))
@@ -127,7 +123,7 @@
                   (*loop-name* name)
                   (*tail-variables* (make-hash-table :test #'eq)))
              `(block ,name
-                ,@(expand-clauses clauses end-tag)))))
+                ,@(expand-clauses clauses)))))
         ((some #'null loop-body)
          (error 'non-compound-form))
         (t
