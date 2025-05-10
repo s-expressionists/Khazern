@@ -9,4 +9,4 @@
   :components ((:module code
                 :pathname "code/environment/"
                 :serial t
-                :components ((:file "loop-defmacro")))))
+                :components ((:file "loop")))))

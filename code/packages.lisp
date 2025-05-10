@@ -27,6 +27,7 @@
            #:d-spec-inner-form
            #:d-spec-outer-bindings
            #:d-spec-outer-declarations
+           #:define-interface
            #:define-parser
            #:epilogue-forms
            #:expand-body

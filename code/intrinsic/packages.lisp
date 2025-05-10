@@ -2,4 +2,5 @@
 
 (defpackage #:khazern-intrinsic
   (:use #:common-lisp)
-  (:export #:*parser-table*))
+  (:export #:*parser-table*
+           #:define-loop-path))

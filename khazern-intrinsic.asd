@@ -13,7 +13,7 @@
                 :pathname "code/intrinsic/"
                 :serial t
                 :components ((:file "packages")
-                             (:file "loop-defmacro")))))
+                             (:file "loop")))))
 
 (asdf:defsystem :khazern-intrinsic/test
   :description "ANSI Test system for Khazern"

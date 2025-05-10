@@ -1,0 +1,1 @@
+(khazern:define-interface)

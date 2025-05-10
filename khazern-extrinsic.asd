@@ -13,7 +13,7 @@
                 :pathname "code/extrinsic/"
                 :serial t
                 :components ((:file "packages")
-                             (:file "loop-defmacro")))))
+                             (:file "loop")))))
 
 (asdf:defsystem "khazern-extrinsic/test"
   :description "Test system for Khazern"

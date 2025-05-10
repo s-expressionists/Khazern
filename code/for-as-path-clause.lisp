@@ -30,7 +30,7 @@
                    (setf (path-preposition instance
                                            (path-preposition-key instance :of))
                          (second args)
-                         (path-inclusive-p instance) t)))
+                         (path-inclusive-p instance) t))
                  *current-path*)
                'd-var-spec
                'optional-type-spec

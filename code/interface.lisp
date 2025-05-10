@@ -173,3 +173,24 @@
 (defgeneric (setf parser-enabled-p) (value table name))
 
 (defgeneric add-path (table constructor &rest names))
+
+;;; Interface declaration
+
+(defun ensure-symbol (name &optional (package *package*))
+  (intern (string name) package))
+
+(defmacro define-interface (&optional intrinsic)
+  (let* ((intrinsic-pkg (if intrinsic (find-package '#:common-lisp) *package*))
+         (end-loop (ensure-symbol '#:end-loop))
+         (parser-table (ensure-symbol '#:*parser-table*)))
+    `(progn
+       (defparameter ,parser-table (khazern:copy-parser-table nil))
+
+       (defmacro ,(ensure-symbol '#:loop-finish intrinsic-pkg) ()
+         '(go ,end-loop))
+
+       (defmacro ,(ensure-symbol '#:loop intrinsic-pkg) (&rest forms)
+         (khazern:expand-body forms ',end-loop ,parser-table))
+
+       (defun ,(ensure-symbol '#:define-loop-path) (constructor &rest names)
+         (apply #'khazern:add-path ,parser-table constructor names)))))

@@ -1,5 +1,5 @@
 (cl:in-package #:common-lisp-user)
 
-(defpackage #:khazern-sequence-extrinsic/test
+(defpackage #:khazern-elements-extrinsic/test
   (:use #:common-lisp #:parachute))
 
