@@ -34,6 +34,5 @@ jobs:
       run: |
         lisp -i ${{ matrix.lisp }} -e "(ql:quickload :khazern-extrinsic/test)" -e "(asdf:test-system :khazern-extrinsic)"
     - name: Run Extension Tests
-      if: ${{ matrix.lisp == 'abcl' || matrix.lisp == 'sbcl' }}
       run: |
-        lisp -i ${{ matrix.lisp }} -e "(ql:quickload :khazern-sequence-extrinsic/test)" -e "(asdf:test-system :khazern-sequence-extrinsic)"
+        lisp -i ${{ matrix.lisp }} -e "(ql:quickload :khazern-elements-extrinsic/test)" -e "(asdf:test-system :khazern-elements-extrinsic)"
