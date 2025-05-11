@@ -54,18 +54,18 @@
 ;;; Compute prologue-form.
 
 (defmethod prologue-forms ((clause for-as-across))
-  `(,@(termination-forms clause)
+  `((when (>= ,(index-var clause) ,(length-var clause))
+      (go ,*epilogue-tag*))
     ,@(d-spec-inner-form (var clause)
                          `(aref ,(form-var clause)
-                                ,(index-var clause)))
-    (incf ,(index-var clause))))
+                                ,(index-var clause)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute termination-forms
 
 (defmethod termination-forms ((clause for-as-across))
-  `((when (>= ,(index-var clause) ,(length-var clause))
+  `((when (>= (incf ,(index-var clause)) ,(length-var clause))
       (go ,*epilogue-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -73,7 +73,6 @@
 ;;; Compute step-forms.
 
 (defmethod step-forms ((clause for-as-across))
-  `(,@(d-spec-inner-form (var clause)
-                         `(aref ,(form-var clause)
-                                ,(index-var clause)))
-    (incf ,(index-var clause))))
+  (d-spec-inner-form (var clause)
+                     `(aref ,(form-var clause)
+                            ,(index-var clause))))

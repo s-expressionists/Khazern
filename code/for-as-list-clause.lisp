@@ -89,33 +89,35 @@
 ;;; Compute the prologue.
 
 (defmethod prologue-forms ((clause for-as-in-list))
-  `(,@(termination-forms clause)
-    ,@(d-spec-inner-form (var clause) `(car ,(rest-var clause)))
-    ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
-         `(setq ,(rest-var clause)
-                (,(cadr (by-form clause)) ,(rest-var clause)))
-         `(setq ,(rest-var clause)
-                (funcall ,(by-var clause) ,(rest-var clause))))))
+  `((when (endp ,(rest-var clause))
+      (go ,*epilogue-tag*))
+    ,@(d-spec-inner-form (var clause) `(car ,(rest-var clause)))))
 
 (defmethod prologue-forms ((clause for-as-on-list))
-  `(,@(termination-forms clause)
-    ,@(d-spec-inner-form (var clause) (rest-var clause))
-    ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
-         `(setq ,(rest-var clause)
-                (,(cadr (by-form clause)) ,(rest-var clause)))
-         `(setq ,(rest-var clause)
-                (funcall ,(by-var clause) ,(rest-var clause))))))
+  `((when (atom ,(rest-var clause))
+      (go ,*epilogue-tag*))
+    ,@(d-spec-inner-form (var clause) (rest-var clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the termination-forms.
 
 (defmethod termination-forms ((clause for-as-in-list))
-  `((when (endp ,(rest-var clause))
+  `(,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
+         `(setq ,(rest-var clause)
+                (,(cadr (by-form clause)) ,(rest-var clause)))
+         `(setq ,(rest-var clause)
+                (funcall ,(by-var clause) ,(rest-var clause))))
+    (when (endp ,(rest-var clause))
       (go ,*epilogue-tag*))))
 
 (defmethod termination-forms ((clause for-as-on-list))
-  `((when (atom ,(rest-var clause))
+  `(,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
+         `(setq ,(rest-var clause)
+                (,(cadr (by-form clause)) ,(rest-var clause)))
+         `(setq ,(rest-var clause)
+                (funcall ,(by-var clause) ,(rest-var clause))))
+    (when (atom ,(rest-var clause))
       (go ,*epilogue-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -123,17 +125,7 @@
 ;;; Compute the step-forms.
 
 (defmethod step-forms ((clause for-as-in-list))
-  `(,@(d-spec-inner-form (var clause) `(car ,(rest-var clause)))
-    ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
-         `(setq ,(rest-var clause)
-                (,(cadr (by-form clause)) ,(rest-var clause)))
-         `(setq ,(rest-var clause)
-                (funcall ,(by-var clause) ,(rest-var clause))))))
+  (d-spec-inner-form (var clause) `(car ,(rest-var clause))))
 
 (defmethod step-forms ((clause for-as-on-list))
-  `(,@(d-spec-inner-form (var clause) (rest-var clause))
-    ,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
-         `(setq ,(rest-var clause)
-                (,(cadr (by-form clause)) ,(rest-var clause)))
-         `(setq ,(rest-var clause)
-                (funcall ,(by-var clause) ,(rest-var clause))))))
+  (d-spec-inner-form (var clause) (rest-var clause)))

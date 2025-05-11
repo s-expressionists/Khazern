@@ -31,4 +31,4 @@
 ;;; Compute prologue-form.
 
 (defmethod prologue-forms ((clause initial-clause))
-  (forms clause))
+  (copy-list (forms clause)))

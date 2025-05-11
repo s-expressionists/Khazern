@@ -373,55 +373,47 @@
 ;;; Compute the prologue-form.
 
 (defmethod prologue-forms ((clause for-as-arithmetic-up))
-  (if (null (termination-test clause))
-      `((incf ,(temp-var clause) ,(by-var clause)))
-      `((unless (,(termination-test clause)
-		 ,(temp-var clause)
-		 ,(end-var clause))
-	  (go ,*epilogue-tag*))
-	(incf ,(temp-var clause) ,(by-var clause)))))
+  (nconc (when (termination-test clause)
+           `((unless (,(termination-test clause)
+                      ,(temp-var clause)
+                      ,(end-var clause))
+               (go ,*epilogue-tag*))))
+         (when (var-spec (var clause))
+           `((setq ,(var-spec (var clause)) ,(temp-var clause))))))
 
 (defmethod prologue-forms ((clause for-as-arithmetic-down))
-  (if (null (termination-test clause))
-      `((decf ,(temp-var clause) ,(by-var clause)))
-      `((unless (,(termination-test clause)
-		 ,(end-var clause)
-		 ,(temp-var clause))
-	  (go ,*epilogue-tag*))
-	(decf ,(temp-var clause) ,(by-var clause)))))
+  (nconc (when (termination-test clause)
+           `((unless (,(termination-test clause)
+                      ,(end-var clause)
+                      ,(temp-var clause))
+               (go ,*epilogue-tag*))))
+         (when (var-spec (var clause))
+           `((setq ,(var-spec (var clause)) ,(temp-var clause))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the termination-forms.
 
 (defmethod termination-forms ((clause for-as-arithmetic-up))
-  (if (null (termination-test clause))
-      nil
-      `((unless (,(termination-test clause)
-                 ,(temp-var clause)
-                 ,(end-var clause))
-          (go ,*epilogue-tag*)))))
+  `((incf ,(temp-var clause) ,(by-var clause))
+    ,@(when (termination-test clause)
+        `((unless (,(termination-test clause)
+                   ,(temp-var clause)
+                   ,(end-var clause))
+            (go ,*epilogue-tag*))))))
 
 (defmethod termination-forms ((clause for-as-arithmetic-down))
-  (if (null (termination-test clause))
-      nil
-      `((unless (,(termination-test clause)
-                 ,(end-var clause)
-                 ,(temp-var clause))
-          (go ,*epilogue-tag*)))))
+  `((decf ,(temp-var clause) ,(by-var clause))
+    ,@(when (termination-test clause)
+        `((unless (,(termination-test clause)
+                   ,(end-var clause)
+                   ,(temp-var clause))
+            (go ,*epilogue-tag*))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the step-forms.
 
-(defmethod step-forms ((clause for-as-arithmetic-up))
-  (if (null (var-spec (var clause)))
-      `((incf ,(temp-var clause) ,(by-var clause)))
-      `((setq ,(var-spec (var clause)) ,(temp-var clause))
-        (incf ,(temp-var clause) ,(by-var clause)))))
-
-(defmethod step-forms ((clause for-as-arithmetic-down))
-  (if (null (var-spec (var clause)))
-      `((decf ,(temp-var clause) ,(by-var clause)))
-      `((setq ,(var-spec (var clause)) ,(temp-var clause))
-        (decf ,(temp-var clause) ,(by-var clause)))))
+(defmethod step-forms ((clause for-as-arithmetic))
+  (when (var-spec (var clause))
+    `((setq ,(var-spec (var clause)) ,(temp-var clause)))))

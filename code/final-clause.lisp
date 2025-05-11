@@ -30,4 +30,4 @@
 ;;; Compute epilogue.
 
 (defmethod epilogue-forms ((clause final-clause))
-  (forms clause))
+  (copy-list (forms clause)))

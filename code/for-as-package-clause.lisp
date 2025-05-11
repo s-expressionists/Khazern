@@ -80,17 +80,17 @@
     (unless ,(temp-entry-p-var subclause)
       (go ,*epilogue-tag*))
     ,@(d-spec-inner-form (var subclause)
-                         (temp-symbol-var subclause))
-    (multiple-value-setq (,(temp-entry-p-var subclause)
-                          ,(temp-symbol-var subclause))
-      (,(iterator-var subclause)))))
+                         (temp-symbol-var subclause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the termination form.
 
 (defmethod termination-forms ((subclause for-as-package))
-  `((unless ,(temp-entry-p-var subclause)
+  `((multiple-value-setq (,(temp-entry-p-var subclause)
+                          ,(temp-symbol-var subclause))
+      (,(iterator-var subclause)))
+    (unless ,(temp-entry-p-var subclause)
       (go ,*epilogue-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -98,8 +98,5 @@
 ;;; Compute the step form.
 
 (defmethod step-forms ((subclause for-as-package))
-  `(,@(d-spec-inner-form (var subclause)
-                         (temp-symbol-var subclause))
-    (multiple-value-setq (,(temp-entry-p-var subclause)
-                          ,(temp-symbol-var subclause))
-      (,(iterator-var subclause)))))
+  (d-spec-inner-form (var subclause)
+                     (temp-symbol-var subclause)))
