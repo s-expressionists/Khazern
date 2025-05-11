@@ -34,20 +34,6 @@
     (declare (ignore clause))
     '()))
 
-;;; This generic function returns a binding for CLAUSE that should go in
-;;; the LOOP prologue.
-(defgeneric prologue-bindings (clause)
-  (:method (clause)
-    (declare (ignore clause))
-    nil))
-
-;;; This generic function returns the declarations for CLAUSE that should go in
-;;; the LOOP prologue.
-(defgeneric prologue-declarations (clause)
-  (:method (clause)
-    (declare (ignore clause))
-    nil))
-
 ;;; This generic function returns a form for CLAUSE that should go in
 ;;; the LOOP prologue.  The INITIALLY clause is an obvious candidate
 ;;; for such code.  But the stepping clauses also have code that goes
@@ -58,12 +44,17 @@
     (declare (ignore clause))
     nil))
 
-;;; This generic function returns a form for CLAUSE that should go
-;;; between the body code and the stepping forms in the body of the
-;;; expanded code.  Some of the FOR-AS clauses and also the REPEAT
-;;; clause generate code here.  is the tag to GO to when
-;;; iteration should terminate.
-(defgeneric termination-forms (clause)
+(defgeneric initial-step-bindings (clause)
+  (:method (clause)
+    (declare (ignore clause))
+    nil))
+
+(defgeneric initial-step-declarations (clause)
+  (:method (clause)
+    (declare (ignore clause))
+    nil))
+
+(defgeneric initial-step-forms (clause)
   (:method (clause)
     (declare (ignore clause))
     nil))
@@ -83,7 +74,7 @@
 ;;; This generic function returns the bindings for CLAUSE that go
 ;;; after the main body code and the termination tests in the body of
 ;;; the expanded code.
-(defgeneric step-bindings (clause)
+(defgeneric subsequent-step-bindings (clause)
   (:method (clause)
     (declare (ignore clause))
     nil))
@@ -91,7 +82,7 @@
 ;; This generic function returns the declarations for CLAUSE that go
 ;;; after the main body code and the termination tests in the body of
 ;;; the expanded code.
-(defgeneric step-declarations (clause)
+(defgeneric subsequent-step-declarations (clause)
   (:method (clause)
     (declare (ignore clause))
     '()))
@@ -100,7 +91,7 @@
 ;;; after the main body code and the termination tests in the body of
 ;;; the expanded code.  The FOR-AS clauses and also the REPEAT clause
 ;;; generate code here.
-(defgeneric step-forms (clause)
+(defgeneric subsequent-step-forms (clause)
   (:method (clause)
     (declare (ignore clause))
     nil))

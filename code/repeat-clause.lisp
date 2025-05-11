@@ -32,23 +32,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the prologue-form.
+;;; Compute the initial step forms.
 
-(defmethod prologue-forms ((clause repeat-clause))
+(defmethod initial-step-forms ((clause repeat-clause))
   `((when (zerop ,(var-spec clause))
       (go ,*epilogue-tag*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the termination-forms.
+;;; Compute the subsequent step forms.
 
-(defmethod termination-forms ((clause repeat-clause))
-  `((when (<= ,(var-spec clause) 1)
+(defmethod subsequent-step-forms ((clause repeat-clause))
+  `((when (zerop (decf ,(var-spec clause)))
       (go ,*epilogue-tag*))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the step-forms.
-
-(defmethod step-forms ((clause repeat-clause))
-  `((decf ,(var-spec clause))))

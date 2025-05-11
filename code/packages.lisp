@@ -39,6 +39,9 @@
            #:final-declarations
            #:initial-bindings
            #:initial-declarations
+           #:initial-step-bindings
+           #:initial-step-declarations
+           #:initial-step-forms
            #:keyword
            #:list
            #:main-clause-p
@@ -51,17 +54,16 @@
            #:path-inclusive-permitted-p
            #:path-preposition
            #:path-preposition-key
-           #:prologue-bindings
            #:prologue-forms
            #:repeat*
            #:repeat+
            #:singleton
-           #:step-bindings
-           #:step-forms
            #:subclauses
+           #:subsequent-step-bindings
+           #:subsequent-step-declarations
+           #:subsequent-step-forms
            #:symbol-equal
            #:terminal
-           #:termination-forms
            #:typep
            #:var
            #:variable-clause-p

@@ -144,14 +144,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute prologue-forms.
+;;; Compute initial step forms.
 
-(defmethod khazern:prologue-forms ((clause for-as-elements))
+(defmethod khazern:initial-step-forms ((clause for-as-elements))
   `((multiple-value-setq (,(iterator-var clause) ,(limit-var clause) ,(from-end-var clause)
                           ,(step-func clause) ,(endp-func clause) ,(read-func clause)
                           ,(write-func clause) ,(index-func clause))
       (#+(or abcl clasp sbcl) sequence:make-sequence-iterator
-       #-(or abcl clasp sbcl) make-sequence-iterator
+         #-(or abcl clasp sbcl) make-sequence-iterator
          ,(in-var clause)
          :start ,(start-var clause)
          :end ,(end-var clause)
@@ -169,27 +169,21 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute termination-forms
+;;; Compute the subsequent step forms.
 
-(defmethod khazern:termination-forms ((clause for-as-elements))
-  `((setq ,(iterator-var clause)
-          (funcall ,(step-func clause) ,(in-var clause)
-                   ,(iterator-var clause) ,(from-end-var clause)))
-    (when (funcall ,(endp-func clause) ,(in-var clause) ,(iterator-var clause)
-                   ,(limit-var clause) ,(from-end-var clause))
-      (go ,khazern:*epilogue-tag*))))
+(defmethod khazern:subsequent-step-forms ((clause for-as-elements))
+  (nconc  `((setq ,(iterator-var clause)
+                  (funcall ,(step-func clause) ,(in-var clause)
+                           ,(iterator-var clause) ,(from-end-var clause)))
+            (when (funcall ,(endp-func clause) ,(in-var clause) ,(iterator-var clause)
+                           ,(limit-var clause) ,(from-end-var clause))
+              (go ,khazern:*epilogue-tag*)))
+          (khazern:d-spec-inner-form (var clause)
+                                     `(funcall ,(read-func clause) ,(in-var clause)
+                                               ,(iterator-var clause)))
+          (when (index-var clause)
+            `((setq ,(index-var clause)
+	            (funcall ,(index-func clause) ,(in-var clause)
+			     ,(iterator-var clause)))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute step-forms.
 
-(defmethod khazern:step-forms ((clause for-as-elements))
-  (nconc (khazern:d-spec-inner-form (var clause)
-                                    `(funcall ,(read-func clause) ,(in-var clause)
-                                              ,(iterator-var clause)))
-         (when (index-var clause)
-           `((setq ,(index-var clause)
-	           (funcall ,(index-func clause) ,(in-var clause)
-			    ,(iterator-var clause)))))))
-  
-  

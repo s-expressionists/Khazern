@@ -35,19 +35,24 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the prologue-form.
+;;; Compute the prologue-forms.
 
 (defmethod prologue-forms ((clause subclauses-mixin))
-  (wrap-let* (mapcan #'prologue-bindings (subclauses clause))
-             (mapcan #'prologue-declarations (subclauses clause))
-             (mapcan #'prologue-forms (subclauses clause))))
+  (mapcan #'prologue-forms (subclauses clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the termination-forms.
+;;; Compute the step forms.
 
-(defmethod termination-forms ((clause subclauses-mixin))
-  (mapcan #'termination-forms (subclauses clause)))
+(defmethod initial-step-forms ((clause subclauses-mixin))
+  (wrap-let* (mapcan #'initial-step-bindings (subclauses clause))
+             (mapcan #'initial-step-declarations (subclauses clause))
+             (mapcan #'initial-step-forms (subclauses clause))))
+
+(defmethod subsequent-step-forms ((clause subclauses-mixin))
+  (wrap-let* (mapcan #'subsequent-step-bindings (subclauses clause))
+             (mapcan #'subsequent-step-declarations (subclauses clause))
+             (mapcan #'subsequent-step-forms (subclauses clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -56,14 +61,12 @@
 (defmethod body-forms ((clause subclauses-mixin))
   (mapcan #'body-forms (subclauses clause)))
 
+(defmethod epilogue-forms ((clause subclauses-mixin))
+  (mapcan #'epilogue-forms (subclauses clause)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Step a FOR-AS clause.
-
-(defmethod step-forms ((clause subclauses-mixin))
-  (wrap-let* (mapcan #'step-bindings (subclauses clause))
-             (mapcan #'step-declarations (subclauses clause))
-             (mapcan #'step-forms (subclauses clause))))
 
 ;;; Mixin for clauses and subclauses that take
 ;;; a VAR-SPEC and a TYPE-SPEC.

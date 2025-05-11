@@ -102,7 +102,7 @@
 ;;;
 ;;; Compute the prologue form.
 
-(defmethod prologue-forms ((subclause for-as-hash-key))
+(defmethod initial-step-forms ((subclause for-as-hash-key))
   `((multiple-value-setq (,(temp-entry-p-var subclause)
                           ,(temp-key-var subclause)
                           ,(temp-value-var subclause))
@@ -114,7 +114,7 @@
     ,@(d-spec-inner-form (other-var subclause)
                          (temp-value-var subclause))))
 
-(defmethod prologue-forms ((subclause for-as-hash-value))
+(defmethod initial-step-forms ((subclause for-as-hash-value))
   `((multiple-value-setq (,(temp-entry-p-var subclause)
                           ,(temp-key-var subclause)
                           ,(temp-value-var subclause))
@@ -128,28 +128,28 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Compute the termination form.
+;;; Compute the step form.
 
-(defmethod termination-forms ((subclause for-as-hash))
+(defmethod subsequent-step-forms ((subclause for-as-hash-key))
   `((multiple-value-setq (,(temp-entry-p-var subclause)
                           ,(temp-key-var subclause)
                           ,(temp-value-var subclause))
       (,(iterator-var subclause)))
     (unless ,(temp-entry-p-var subclause)
-      (go ,*epilogue-tag*))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the step form.
-
-(defmethod step-forms ((subclause for-as-hash-key))
-  `(,@(d-spec-inner-form (var subclause)
+      (go ,*epilogue-tag*))
+    ,@(d-spec-inner-form (var subclause)
                          (temp-key-var subclause))
     ,@(d-spec-inner-form (other-var subclause)
                          (temp-value-var subclause))))
 
-(defmethod step-forms ((subclause for-as-hash-value))
-  `(,@(d-spec-inner-form (var subclause)
+(defmethod subsequent-step-forms ((subclause for-as-hash-value))
+  `((multiple-value-setq (,(temp-entry-p-var subclause)
+                          ,(temp-key-var subclause)
+                          ,(temp-value-var subclause))
+      (,(iterator-var subclause)))
+    (unless ,(temp-entry-p-var subclause)
+      (go ,*epilogue-tag*))
+    ,@(d-spec-inner-form (var subclause)
                          (temp-value-var subclause))
     ,@(d-spec-inner-form (other-var subclause)
                          (temp-key-var subclause))))

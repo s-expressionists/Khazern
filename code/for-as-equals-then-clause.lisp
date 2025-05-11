@@ -54,26 +54,26 @@
 ;;;
 ;;; Compute the prologue-bindings.
 
-(defmethod prologue-bindings ((clause for-as-equals-then))
+(defmethod initial-step-bindings ((clause for-as-equals-then))
   (d-spec-inner-bindings (var clause) (initial-form clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the prologue-form.
 
-(defmethod prologue-forms ((clause for-as-equals-then))
+(defmethod initial-step-forms ((clause for-as-equals-then))
   `((setq ,@(d-spec-inner-assignments (var clause) (initial-form clause)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the step-bindings.
 
-(defmethod step-bindings ((clause for-as-equals-then))
+(defmethod subsequent-step-bindings ((clause for-as-equals-then))
   (d-spec-inner-bindings (var clause) (subsequent-form clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the step-forms.
 
-(defmethod step-forms ((clause for-as-equals-then))
+(defmethod subsequent-step-forms ((clause for-as-equals-then))
   `((setq ,@(d-spec-inner-assignments (var clause) (subsequent-form clause)))))
