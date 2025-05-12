@@ -364,8 +364,8 @@
                 '()
                 inner-form)
       (wrap-let `((,(temp-var subclause) ,(start-var subclause))
-                  (,(var-spec (var subclause)) ,(start-var subclause)))
-                `((cl:type ,(type-spec (var subclause)) ,(var-spec (var subclause))))
+                  ,@(d-spec-outer-bindings (var subclause)))
+                (d-spec-outer-declarations (var subclause))
                 inner-form)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
