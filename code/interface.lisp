@@ -150,11 +150,23 @@
 
 (defgeneric (setf path-inclusive-p) (instance))
 
-(defgeneric path-preposition-key (instance name))
+(defgeneric path-preposition-names (instance)
+  (:method (instance)
+    (declare (ignore instance))
+    nil))
 
 (defgeneric path-preposition (instance key))
 
 (defgeneric (setf path-preposition) (new-value instance name))
+
+(defgeneric path-using-names (instance)
+  (:method (instance)
+    (declare (ignore instance))
+    nil))
+
+(defgeneric path-using (instance key))
+
+(defgeneric (setf path-using) (new-value instance name))
 
 (defgeneric subclauses (clause)
   (:method (clause)
@@ -175,7 +187,11 @@
 
 (defgeneric (setf parser-enabled-p) (value table name))
 
-(defgeneric add-path (table constructor &rest names))
+(defgeneric iterator-path (table name))
+
+(defgeneric (setf iterator-path) (new-function table name))
+
+(defgeneric remove-iterator-path (table name))
 
 ;;; Interface declaration
 
@@ -195,5 +211,12 @@
        (defmacro ,(ensure-symbol '#:loop intrinsic-pkg) (&rest forms)
          (khazern:expand-body forms ',epilogue-tag ,parser-table))
 
-       (defun ,(ensure-symbol '#:define-loop-path) (constructor &rest names)
-         (apply #'khazern:add-path ,parser-table constructor names)))))
+       (defun ,(ensure-symbol '#:set-loop-path) (name func)
+         (setf (khazern:iterator-path ,parser-table name) func))
+
+       (defun ,(ensure-symbol '#:get-loop-path) (name)
+         (khazern:iterator-path ,parser-table name))
+       
+       (defun ,(ensure-symbol '#:remove-loop-path) (name)
+         (khazern:remove-iterator-path iterator-path ,parser-table name)))))
+       

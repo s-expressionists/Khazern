@@ -3,6 +3,8 @@
   (:shadow #:loop
            #:loop-finish)
   (:export #:*parser-table*
-           #:define-loop-path
+           #:get-loop-path
            #:loop
-           #:loop-finish))
+           #:loop-finish
+           #:remove-loop-path
+           #:set-loop-path))

@@ -17,7 +17,6 @@
            #:*it-var*
            #:*loop-name*
            #:accumulation-category
-           #:add-path
            #:alternative
            #:analyze
            #:anything
@@ -42,6 +41,7 @@
            #:initial-step-bindings
            #:initial-step-declarations
            #:initial-step-forms
+           #:iterator-path
            #:keyword
            #:list
            #:main-clause-p
@@ -53,8 +53,11 @@
            #:path-inclusive-p
            #:path-inclusive-permitted-p
            #:path-preposition
-           #:path-preposition-key
+           #:path-preposition-names
+           #:path-using
+           #:path-using-names
            #:prologue-forms
+           #:remove-iterator-path
            #:repeat*
            #:repeat+
            #:singleton
@@ -63,6 +66,7 @@
            #:subsequent-step-declarations
            #:subsequent-step-forms
            #:symbol-equal
+           #:symbol-lookup
            #:terminal
            #:typep
            #:var

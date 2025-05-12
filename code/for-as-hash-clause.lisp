@@ -44,33 +44,22 @@
                                      :var-spec var-spec
                                      :type-spec type-spec)))
 
-(defmethod path-preposition-key ((instance for-as-hash) name)
-  (cond ((member name '(:in :of) :test #'symbol-equal)
-         :in)
-        ((symbol-equal name :using)
-         :using)
-        (t
-         nil)))
-
-(defmethod (setf path-preposition) ((expression cons) (instance for-as-hash-key) (key (eql :using)))
-  (if (and (= (length expression) 2)
-           (not (member (first expression) '(:hash-value :hash-values) :test #'symbol-equal)))
-      (error "Unknown USING ~a" (first expression))
-      (call-next-method)))
-
-(defmethod (setf path-preposition) ((expression cons) (instance for-as-hash-value) (key (eql :using)))
-  (if (and (= (length expression) 2)
-           (not (member (first expression) '(:hash-key :hash-keys) :test #'symbol-equal)))
-      (error "Unknown USING ~a" (first expression))
-      (call-next-method)))
+(defmethod path-preposition-names ((instance for-as-hash))
+  '((:in . :in) (:of . :in)))
 
 (defmethod (setf path-preposition) (expression (instance for-as-hash) (key (eql :in)))
   (setf (hash-table-form instance) expression))
 
-(defmethod (setf path-preposition) (expression (instance for-as-hash) (key (eql :using)))
+(defmethod path-using-names ((instance for-as-hash-key))
+  '((:hash-value . :other) (:hash-values . :other)))
+
+(defmethod path-using-names ((instance for-as-hash-value))
+  '((:hash-key . :other) (:hash-keys . :other)))
+
+(defmethod (setf path-using) (value (instance for-as-hash) (key (eql :other)))
   (setf (other-var instance) (make-instance 'd-spec
-                                            :var-spec (second expression)))
-  expression)
+                                            :var-spec value))
+  value)
 
 (defmethod analyze ((clause for-as-hash))
   (unless (slot-boundp clause '%hash-table-form)

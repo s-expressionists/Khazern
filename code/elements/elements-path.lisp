@@ -78,19 +78,12 @@
                                      :var-spec var-spec
                                      :type-spec type-spec)))
 
-(defmethod khazern:path-preposition-key ((instance for-as-elements) name)
-  (cond ((member name '(:in :of) :test #'khazern:symbol-equal)
-         :in)
-        ((khazern:symbol-equal name :start)
-         :start)
-        ((khazern:symbol-equal name :end)
-         :end)
-        ((khazern:symbol-equal name :from-end)
-         :from-end)
-        ((khazern:symbol-equal name :using)
-         :using)
-        (t
-         nil)))
+(defmethod khazern:path-preposition-names ((instance for-as-elements))
+  '((:in . :in)
+    (:of . :in)
+    (:start . :start)
+    (:end . :end)
+    (:from-end . :from-end)))
 
 (defmethod (setf khazern:path-preposition) (expression (instance for-as-elements) (key (eql :in)))
   (setf (in-form instance) expression))
@@ -104,9 +97,12 @@
 (defmethod (setf khazern:path-preposition) (expression (instance for-as-elements) (key (eql :from-end)))
   (setf (from-end-form instance) expression))
 
-(defmethod (setf khazern:path-preposition) (expression (instance for-as-elements) (key (eql :using)))
-  (setf (index-var instance) (second expression))
-  expression)
+(defmethod khazern:path-using-names ((instance for-as-elements))
+  '((:index . :index)
+    (:indicies . :indicies)))
+
+(defmethod (setf khazern:path-using) (value (instance for-as-elements) (key (eql :index)))
+  (setf (index-var instance) value))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

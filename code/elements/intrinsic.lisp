@@ -1,3 +1,4 @@
 (cl:in-package #:khazern-elements)
 
-(khazern-intrinisc:define-loop-path #'make-elements-path :elements :element)
+(khazern-intrinsic:set-loop-path :elements #'make-elements-path)
+(khazern-intrinsic:set-loop-path :element #'make-elements-path)

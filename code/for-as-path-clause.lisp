@@ -18,17 +18,18 @@
 
 (defparameter *current-path-prepositions* nil)
 
+(defparameter *current-path-usings* nil)
+
 (define-parser for-as-path-intro ()
   (consecutive (lambda (var-spec type-spec args)
                  (setf *current-path*
-                       (funcall (gethash (symbol-name (car args))
-                                         (parser-table-paths *parser-table*))
+                       (funcall (iterator-path *parser-table* (car args))
                                 (car args) var-spec type-spec))
                  (when (cdr args)
                    (unless (path-inclusive-permitted-p *current-path*)
                      (error 'loop-path-non-inclusive :path (car args)))
                    (setf (path-preposition instance
-                                           (path-preposition-key instance :of))
+                                           (symbol-lookup (path-preposition-names instance :of)))
                          (second args)
                          (path-inclusive-p instance) t))
                  *current-path*)
@@ -51,28 +52,54 @@
  
 (defun current-path-preposition-p (name)
   (and *current-path*
-       (let ((key (path-preposition-key *current-path* name)))
+       (let ((key (symbol-lookup name (path-preposition-names *current-path*))))
          (and key
               (not (member key *current-path-prepositions*))))
        t))
 
+(defun current-path-using-p (name)
+  (and *current-path*
+       (not (member :using *current-path-prepositions*))
+       (let ((key (symbol-lookup name (path-using-names *current-path*))))
+         (and key
+              (not (member key *current-path-usings*))))
+       t))
+
 (define-parser for-as-path-preposition ()
   (consecutive (lambda (name expression)
-                 (let ((key (path-preposition-key *current-path* name)))
+                 (let ((key (symbol-lookup name (path-preposition-names *current-path*))))
                    (setf (path-preposition *current-path* key) expression)
                    (push key *current-path-prepositions*))
-                 (values))
+                 nil)
                (typep '(satisfies current-path-preposition-p))
                'anything))
+
+(define-parser for-as-path-using ()
+  (consecutive (lambda (&rest args)
+                 (push :using *current-path-prepositions*)
+                 args)
+               (keyword :using)
+               (list (lambda (&rest args)
+                       args)
+                     (repeat+ (lambda (&rest args)
+                                args)
+                              (consecutive (lambda (name expression)
+                                             (let ((key (symbol-lookup name (path-using-names *current-path*))))
+                                               (setf (path-using *current-path* key) expression)
+                                               (push key *current-path-usings*)))
+                                           (typep '(satisfies current-path-using-p))
+                                           'anything)))))
 
 (define-parser for-as-path-parser (:for-as-subclause)
   (lambda (tokens)
     (let ((*current-path* nil)
-          (*current-path-prepositions* nil))
+          (*current-path-prepositions* nil)
+          (*current-path-usings* nil))
       (funcall (consecutive (lambda (path preps)
                               path)
                             'for-as-path-intro
                             (repeat* (lambda (&rest args)
                                        args)
-                                     'for-as-path-preposition))
+                                     (alternative 'for-as-path-preposition
+                                                  'for-as-path-using)))
                tokens))))

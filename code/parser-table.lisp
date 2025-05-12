@@ -30,13 +30,15 @@
 
 (defparameter *parser-table* nil)
 
-(defun loop-path-p (name)
-  (and (gethash (symbol-name name) (parser-table-paths *parser-table*)) t))
+(defmethod (setf iterator-path) (new-func (table parser-table) name)
+  (setf (gethash (symbol-name name) (parser-table-paths table)) new-func))
 
-(defmethod add-path ((table parser-table) constructor &rest names)
-  (let ((paths (parser-table-paths table)))
-    (mapc (lambda (name)
-            (setf (gethash (symbol-name name) paths) constructor))
-          names)
-    nil))
+(defmethod iterator-path ((table parser-table) name)
+  (gethash (symbol-name name) (parser-table-paths table)))
+
+(defmethod remove-iterator-path ((table parser-table) name)
+  (remhash (symbol-name name) (parser-table-paths table)))
+
+(defun loop-path-p (name)
+  (and (iterator-path *parser-table* name) t))
 

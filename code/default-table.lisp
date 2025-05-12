@@ -30,16 +30,21 @@
     with-clause))
 
 (defparameter *default-paths*
-  '((make-for-as-hash-key :hash-key :hash-keys)
-    (make-for-as-hash-value :hash-value :hash-values)
-    (make-for-as-package-symbol :symbol :symbols)
-    (make-for-as-package-present-symbol :present-symbol :present-symbols)
-    (make-for-as-package-external-symbol :external-symbol :external-symbols)))
+  '((:hash-key make-for-as-hash-key)
+    (:hash-keys make-for-as-hash-key)
+    (:hash-value make-for-as-hash-value)
+    (:hash-values make-for-as-hash-value)
+    (:symbol make-for-as-package-symbol)
+    (:symbols make-for-as-package-symbol)
+    (:present-symbol make-for-as-package-present-symbol)
+    (:present-symbols make-for-as-package-present-symbol)
+    (:external-symbol make-for-as-package-external-symbol)
+    (:external-symbols make-for-as-package-external-symbol)))
 
 (defmethod copy-parser-table ((table null))
   (let ((table (make-instance 'parser-table
                               :parsers (copy-list *default-parsers*))))
     (mapc (lambda (args)
-            (apply #'add-path table args))
+            (setf (iterator-path table (first args)) (second args)))
           *default-paths*)
     table))

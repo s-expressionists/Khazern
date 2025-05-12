@@ -3,4 +3,7 @@
 (defpackage #:khazern-intrinsic
   (:use #:common-lisp)
   (:export #:*parser-table*
-           #:define-loop-path))
+           #:get-loop-path
+           #:remove-loop-path
+           #:set-loop-path))
+ 

@@ -39,10 +39,8 @@
                                      :type-spec type-spec)
                  :iterator-keywords '(:external)))
 
-(defmethod path-preposition-key ((instance for-as-package) name)
-  (if (member name '(:in :of) :test #'symbol-equal)
-      :in
-      nil))
+(defmethod path-preposition-names ((instance for-as-package))
+  '((:in . :in) (:of . :in)))
 
 (defmethod (setf path-preposition) (expression (instance for-as-package) (key (eql :in)))
   (setf (package-form instance) expression))

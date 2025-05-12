@@ -15,6 +15,11 @@
        (symbolp symbol2)
        (string= symbol1 symbol2)))
 
+(defun symbol-lookup (symbol choices)
+  (let ((pair (assoc symbol choices :test #'symbol-equal)))
+    (and pair
+         (cdr pair))))
+
 (defun it-keyword-p (symbol)
   (symbol-equal symbol :it))
 
