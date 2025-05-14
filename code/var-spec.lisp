@@ -154,14 +154,15 @@
                    (type-spec type-spec))
       d-spec
     (let (decl)
-      (unless (eq type-spec t)
-        (push `(cl:type ,(if nullablep
+      (when var-spec
+        (unless (eq type-spec t)
+          (push `(cl:type ,(if nullablep
                              (type-or-null type-spec)
                              type-spec)
-                        ,var-spec)
-              decl))
-      (when ignorablep
-        (push `(ignorable ,var-spec) decl))
+                          ,var-spec)
+                decl))
+        (when ignorablep
+          (push `(ignorable ,var-spec) decl)))
       decl)))
 
 (defun d-spec-simple-bindings (d-spec &optional form)
