@@ -218,5 +218,5 @@
          (khazern:iterator-path ,parser-table name))
        
        (defun ,(ensure-symbol '#:remove-loop-path) (name)
-         (khazern:remove-iterator-path iterator-path ,parser-table name)))))
+         (khazern:remove-iterator-path ,parser-table name)))))
        

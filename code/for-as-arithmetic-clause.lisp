@@ -5,24 +5,26 @@
 ;;; Clause FOR-AS-ARITHMETIC.
 
 (defclass for-as-arithmetic (for-as-subclause)
-  (;; The order in which the forms are given.  This is a list of three
-   ;; elements FROM, TO, and BY in the order that they were given in
-   ;; the clause.
-   (%order :initarg :order :reader order)
-   ;; The form that was given after one of the LOOP keywords FROM,
-   ;; UPFROM, or DOWNFROM, or 0 if none of these LOOP keywords was
-   ;; given.
-   (%start-form :initform 0 :initarg :start-form :reader start-form)
-   (%start-var :initform (gensym) :reader start-var)
+  ((%order :reader order
+           :initarg :order
+           :documentation "The order in which the forms are given.  This is a list of three
+elements FROM, TO, and BY in the order that they were given in the
+clause.")
+   (%start-form :accessor start-form
+                :initarg :start-form
+                :initform 0
+                :documentation "The form that was given after one of the LOOP keywords FROM, UPFROM,
+or DOWNFROM, or 0 if none of these LOOP keywords was given.")
+   (%start-var :initform (gensym "START") :reader start-var)
    ;; The form that was after one of the LOOP keywords TO, UPTO,
    ;; DOWNTO, BELOW, or ABOVE, or NIL if none of these LOOP keywords
    ;; was given.
-   (%end-form :initform nil :initarg :end-form :reader end-form)
-   (%end-var :initform (gensym) :reader end-var)
+   (%end-form :initform nil :initarg :end-form :accessor end-form)
+   (%end-var :initform (gensym "END") :reader end-var)
    ;; The form that was after the LOOP keyword BY, or 0 if this
    ;; keyword was not given.
-   (%by-form :initform 1 :initarg :by-form :reader by-form)
-   (%by-var :initform (gensym) :reader by-var)
+   (%by-form :initform 1 :initarg :by-form :accessor by-form)
+   (%by-var :initform (gensym "BY") :reader by-var)
    ;; If termination is TO, UPTO, or DOWNTO, then this slot contains
    ;; the symbol <=.  If termination is ABOVE or BELOW, then this slot
    ;; contains the symbol <.  If there is TO/UPTO/DOWNTO/ABOVE/BELOW,
@@ -34,7 +36,8 @@
    ;; This variable is one step ahead of the iteration variable, and
    ;; when the iteration variable is NIL, the value of this variable
    ;; is never assigned to any iteration variable.
-   (%temp-var :initform (gensym) :reader temp-var)))
+   (%temp-var :reader temp-var :initform (gensym))
+   (%temp-type :accessor temp-type)))
 
 (defclass for-as-arithmetic-up (for-as-arithmetic) ())
 
@@ -310,7 +313,45 @@
                             'for-as-arithmetic-upto
                             'for-as-arithmetic-downto
                             'for-as-arithmetic-by)))
-  
+
+(defvar *numeric-types*
+  '(fixnum
+    integer
+    single-float
+    double-float
+    short-float
+    long-float
+    rational
+    (complex single-float)
+    (complex double-float)
+    (complex short-float)
+    (complex long-float)
+    number))
+
+(defmethod analyze ((clause for-as-arithmetic))
+  (with-accessors ((temp-type temp-type)
+                   (var var)
+                   (start-form start-form)
+                   (by-form by-form)
+                   (end-form end-form))
+      clause
+    (with-accessors ((type-spec type-spec))
+        var
+      (if (eq type-spec t)
+          (let ((val 0))
+            (when (numberp start-form)
+              (incf val start-form))
+            (when (numberp by-form)
+              (incf val by-form))
+            (setf temp-type (find val *numeric-types* :test #'cl:typep)
+                  type-spec temp-type))
+          (setf temp-type
+                (find type-spec *numeric-types* :test #'cl:subtypep)))
+      (when (numberp start-form)
+        (setf start-form (coerce start-form temp-type)))
+      (when (numberp by-form)
+        (setf by-form (coerce by-form temp-type))))))
+ 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the bindings.
@@ -354,6 +395,12 @@
              `((,(end-var clause) ,(end-form clause))))
        (,(start-var clause) ,(start-form clause))))))
 
+(defmethod initial-declarations ((clause for-as-arithmetic))
+  (unless (eq (type-spec (var clause)) t)
+    `((cl:type ,(temp-type clause)
+               ,(start-var clause)
+               ,(by-var clause)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute subclause wrapping.
@@ -361,11 +408,14 @@
 (defmethod wrap-subclause ((subclause for-as-arithmetic) inner-form)
   (if (null (var-spec (var subclause)))
       (wrap-let `((,(temp-var subclause) ,(start-var subclause)))
-                '()
+                `((cl:type ,(temp-type subclause)
+                           ,(temp-var subclause)))
                 inner-form)
       (wrap-let `((,(temp-var subclause) ,(start-var subclause))
                   ,@(d-spec-outer-bindings (var subclause)))
-                (d-spec-outer-declarations (var subclause))
+                (nconc `((cl:type ,(temp-type subclause)
+                                  ,(temp-var subclause)))
+                       (d-spec-outer-declarations (var subclause)))
                 inner-form)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

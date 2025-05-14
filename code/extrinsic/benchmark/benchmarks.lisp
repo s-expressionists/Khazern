@@ -28,3 +28,7 @@
   (loop for (a b (c d) . e) = *random-trees*
         repeat 100
         do (nothing)))
+
+(define-benchmark for-as-arithmetic
+  (loop for i below 100
+        do (nothing)))
