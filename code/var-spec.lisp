@@ -146,3 +146,27 @@
                      (push `(,var nil) result))
                    d-spec)
     (nreverse result)))
+
+(defun d-spec-simple-declarations (d-spec
+                                   &key ((:ignorable ignorablep) nil)
+                                        ((:nullable nullablep) nil))
+  (with-accessors ((var-spec var-spec)
+                   (type-spec type-spec))
+      d-spec
+    (let (decl)
+      (unless (eq type-spec t)
+        (push `(cl:type ,(if nullablep
+                             (type-or-null type-spec)
+                             type-spec)
+                        ,var-spec)
+              decl))
+      (when ignorablep
+        (push `(ignorable ,var-spec) decl))
+      decl)))
+
+(defun d-spec-simple-bindings (d-spec &optional form)
+  (with-accessors ((var-spec var-spec)
+                   (type-spec type-spec))
+      d-spec
+    (when var-spec
+      `((,var-spec ,form)))))

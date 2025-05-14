@@ -111,3 +111,23 @@
 (defun normalize-keyword (x choices)
   (car (find x choices
              :test (lambda (x y) (find x y :test #'symbol-equal)))))
+
+(defvar *numeric-types*
+  '(fixnum
+    integer
+    single-float
+    double-float
+    short-float
+    long-float
+    rational
+    (complex single-float)
+    (complex double-float)
+    (complex short-float)
+    (complex long-float)
+    number))
+
+(defun numeric-type-of (value)
+  (find value *numeric-types* :test #'cl:typep))
+
+(defun numeric-super-type (type)
+  (find type *numeric-types* :test #'cl:subtypep))

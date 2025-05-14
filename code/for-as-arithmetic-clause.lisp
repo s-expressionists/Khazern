@@ -15,7 +15,7 @@ clause.")
                 :initform 0
                 :documentation "The form that was given after one of the LOOP keywords FROM, UPFROM,
 or DOWNFROM, or 0 if none of these LOOP keywords was given.")
-   (%start-var :initform (gensym "START") :reader start-var)
+   (%next-var :initform (gensym "NEXT") :reader next-var)
    ;; The form that was after one of the LOOP keywords TO, UPTO,
    ;; DOWNTO, BELOW, or ABOVE, or NIL if none of these LOOP keywords
    ;; was given.
@@ -37,7 +37,7 @@ or DOWNFROM, or 0 if none of these LOOP keywords was given.")
    ;; when the iteration variable is NIL, the value of this variable
    ;; is never assigned to any iteration variable.
    (%temp-var :reader temp-var :initform (gensym))
-   (%temp-type :accessor temp-type)))
+   (%temp-type :accessor temp-type :initform 'number)))
 
 (defclass for-as-arithmetic-up (for-as-arithmetic) ())
 
@@ -45,41 +45,6 @@ or DOWNFROM, or 0 if none of these LOOP keywords was given.")
 
 (defmethod map-variables (function (clause for-as-arithmetic))
   (map-variables function (var clause)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; From a TYPE-SPEC determine a value used for variable
-;;; initialization and a type to use in a declaration, and return them
-;;; as two values.  The type returned may be different from the
-;;; TYPE-SPEC argument because we may not be able to determine a
-;;; initialization value that would conform to the TYPE-SPEC, and in
-;;; that case, we must modify the type so that it covers the
-;;; initialization value that we give.
-;;;
-;;; Perhaps this code should be moved to the code utilities module.
-
-(defun arithmetic-value-and-type (type-spec)
-  (cond ((eq type-spec 'fixnum)
-         (values 0 type-spec))
-        ((eq type-spec 'float)
-         (values 0.0 type-spec))
-        ((eq type-spec 'short-float)
-         (values 0s0 type-spec))
-        ((eq type-spec 'single-float)
-         (values 0f0 type-spec))
-        ((eq type-spec 'double-float)
-         (values 0d0 type-spec))
-        ((eq type-spec 'long-float)
-         (values 0l0 type-spec))
-        ((and (consp type-spec)
-              (eq (car type-spec) 'integer)
-              (consp (cdr type-spec))
-              (integerp (cadr type-spec)))
-         (values (cadr type-spec) type-spec))
-        ;; We could add some more here, for instance intervals
-        ;; of floats.
-        (t
-         (values 0 't))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -148,27 +113,27 @@ or DOWNFROM, or 0 if none of these LOOP keywords was given.")
   `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y)))
 
 (defun from-to-by (x y)
-  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order :from-to-by))
+  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order (:from :to :by)))
 
 (defun from-by-to (x y)
-  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order :from-by-to))
+  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order (:from :by :to)))
 
 (defun to-from-by (x y)
-  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order :to-from-by))
+  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order (:to :from :by)))
 
 (defun to-by-from (x y)
-  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order :to-by-from))
+  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order (:to :by :from)))
 
 (defun by-from-to (x y)
-  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order :by-from-to))
+  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order (:by :from :to)))
 
 (defun by-to-from (x y)
-  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order :by-to-from))
+  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order (:by :to :from)))
 
 (define-parser for-as-arithmetic-from ()
   (consecutive #'splice
                'from-parser
-               (optional '(nil :order :from-to-by)
+               (optional '(nil :order (:from :to :by))
                          (alternative (consecutive #'from-to-by
                                                    (alternative 'to-parser
                                                                 'upto-parser
@@ -185,7 +150,7 @@ or DOWNFROM, or 0 if none of these LOOP keywords was given.")
 (define-parser for-as-arithmetic-upfrom ()
   (consecutive #'splice
                'upfrom-parser
-               (optional '(nil :order :from-to-by)
+               (optional '(nil :order (:from :to :by))
                          (alternative (consecutive #'from-to-by
                                                    (alternative 'to-parser
                                                                 'upto-parser)
@@ -200,7 +165,7 @@ or DOWNFROM, or 0 if none of these LOOP keywords was given.")
 (define-parser for-as-arithmetic-downfrom ()
   (consecutive #'splice
                'downfrom-parser
-               (optional '(nil :order :from-to-by)
+               (optional '(nil :order (:from :to :by))
                          (alternative (consecutive #'from-to-by
                                                    (alternative 'to-parser
                                                                 'downto-parser)
@@ -215,7 +180,7 @@ or DOWNFROM, or 0 if none of these LOOP keywords was given.")
 (define-parser for-as-arithmetic-to ()
   (consecutive #'splice
                'to-parser
-               (optional '(nil :order :to-from-by)
+               (optional '(nil :order (:to :from :by))
                          (alternative (consecutive #'to-from-by
                                                    (alternative 'from-parser
                                                                 'upfrom-parser
@@ -232,7 +197,7 @@ or DOWNFROM, or 0 if none of these LOOP keywords was given.")
 (define-parser for-as-arithmetic-upto ()
   (consecutive #'splice
                'upto-parser
-               (optional '(nil :order :to-from-by)
+               (optional '(nil :order (:to :from :by))
                          (alternative (consecutive #'to-from-by
                                                    (alternative 'from-parser
                                                                 'upfrom-parser)
@@ -247,7 +212,7 @@ or DOWNFROM, or 0 if none of these LOOP keywords was given.")
 (define-parser for-as-arithmetic-downto ()
   (consecutive #'splice
                'downto-parser
-               (optional '(nil :order :to-from-by)
+               (optional '(nil :order (:to :from :by))
                          (alternative (consecutive #'to-from-by
                                                    (alternative 'from-parser
                                                                 'downfrom-parser)
@@ -262,7 +227,7 @@ or DOWNFROM, or 0 if none of these LOOP keywords was given.")
 (define-parser for-as-arithmetic-by ()
   (consecutive #'splice
                'by-parser
-               (optional '(nil :order :by-from-to)
+               (optional '(nil :order (:by :from :to))
                          (alternative (consecutive #'by-from-to
                                                    'from-parser
                                                    (optional nil
@@ -314,20 +279,6 @@ or DOWNFROM, or 0 if none of these LOOP keywords was given.")
                             'for-as-arithmetic-downto
                             'for-as-arithmetic-by)))
 
-(defvar *numeric-types*
-  '(fixnum
-    integer
-    single-float
-    double-float
-    short-float
-    long-float
-    rational
-    (complex single-float)
-    (complex double-float)
-    (complex short-float)
-    (complex long-float)
-    number))
-
 (defmethod analyze ((clause for-as-arithmetic))
   (with-accessors ((temp-type temp-type)
                    (var var)
@@ -337,86 +288,48 @@ or DOWNFROM, or 0 if none of these LOOP keywords was given.")
       clause
     (with-accessors ((type-spec type-spec))
         var
-      (if (eq type-spec t)
-          (let ((val 0))
-            (when (numberp start-form)
-              (incf val start-form))
-            (when (numberp by-form)
-              (incf val by-form))
-            (setf temp-type (find val *numeric-types* :test #'cl:typep)
-                  type-spec temp-type))
-          (setf temp-type
-                (find type-spec *numeric-types* :test #'cl:subtypep)))
-      (when (numberp start-form)
-        (setf start-form (coerce start-form temp-type)))
-      (when (numberp by-form)
-        (setf by-form (coerce by-form temp-type))))))
+      (cond ((not (eq type-spec t))
+             (setf temp-type (numeric-super-type type-spec))
+             (when (numberp start-form)
+               (setf start-form (coerce start-form temp-type)))
+             (when (numberp by-form)
+               (setf by-form (coerce by-form temp-type))))
+            ((numberp start-form)
+             (let ((val start-form))
+               (when (numberp by-form)
+                 (incf val by-form))
+               (setf temp-type (numeric-type-of val)
+                     type-spec temp-type))
+             (setf start-form (coerce start-form temp-type))
+             (when (numberp by-form)
+               (setf by-form (coerce by-form temp-type))))))))
  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the bindings.
 
 (defmethod initial-bindings ((clause for-as-arithmetic))
-  (case (order clause)
-    (:from-to-by
-     `((,(start-var clause) ,(start-form clause))
-       ,@(if (null (end-form clause))
-             '()
-             `((,(end-var clause) ,(end-form clause))))
-       (,(by-var clause) ,(by-form clause))))
-    (:from-by-to
-     `((,(start-var clause) ,(start-form clause))
-       (,(by-var clause) ,(by-form clause))
-       ,@(if (null (end-form clause))
-             '()
-             `((,(end-var clause) ,(end-form clause))))))
-    (:to-from-by
-     `(,@(if (null (end-form clause))
-             '()
-             `((,(end-var clause) ,(end-form clause))))
-       (,(start-var clause) ,(start-form clause))
-       (,(by-var clause) ,(by-form clause))))
-    (:to-by-from
-     `(,@(if (null (end-form clause))
-             '()
-             `((,(end-var clause) ,(end-form clause))))
-       (,(by-var clause) ,(by-form clause))
-       (,(start-var clause) ,(start-form clause))))
-    (:by-from-to
-     `((,(by-var clause) ,(by-form clause))
-       (,(start-var clause) ,(start-form clause))
-       ,@(if (null (end-form clause))
-             '()
-             `((,(end-var clause) ,(end-form clause))))))
-    (:by-to-from
-     `((,(by-var clause) ,(by-form clause))
-       ,@(if (null (end-form clause))
-             '()
-             `((,(end-var clause) ,(end-form clause))))
-       (,(start-var clause) ,(start-form clause))))))
+  (nconc (mapcan (lambda (name)
+                   (ecase name
+                     (:from `((,(next-var clause) ,(start-form clause))))
+                     (:to (when (and (end-form clause)
+                                     (not (numberp (end-form clause))))
+                            `((,(end-var clause) ,(end-form clause)))))
+                     (:by (unless (numberp (by-form clause))
+                            `((,(by-var clause) ,(by-form clause)))))))
+                 (order clause))
+         (d-spec-outer-bindings (var clause))))
 
 (defmethod initial-declarations ((clause for-as-arithmetic))
-  (unless (eq (type-spec (var clause)) t)
-    `((cl:type ,(temp-type clause)
-               ,(start-var clause)
-               ,(by-var clause)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute subclause wrapping.
-
-(defmethod wrap-subclause ((subclause for-as-arithmetic) inner-form)
-  (if (null (var-spec (var subclause)))
-      (wrap-let `((,(temp-var subclause) ,(start-var subclause)))
-                `((cl:type ,(temp-type subclause)
-                           ,(temp-var subclause)))
-                inner-form)
-      (wrap-let `((,(temp-var subclause) ,(start-var subclause))
-                  ,@(d-spec-outer-bindings (var subclause)))
-                (nconc `((cl:type ,(temp-type subclause)
-                                  ,(temp-var subclause)))
-                       (d-spec-outer-declarations (var subclause)))
-                inner-form)))
+  (nconc (unless (eq (type-spec (var clause)) t)
+           `((cl:type ,(temp-type clause)
+                      ,(next-var clause)
+                      ,@(unless (numberp (by-form clause))
+                          (cl:list (by-var clause))))))
+         (when (and (end-form clause)
+                    (not (numberp (end-form clause))))
+           `((cl:type number ,(end-var clause))))
+         (d-spec-outer-declarations (var clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -425,41 +338,53 @@ or DOWNFROM, or 0 if none of these LOOP keywords was given.")
 (defmethod initial-step-forms ((clause for-as-arithmetic-up))
   (nconc (when (termination-test clause)
            `((unless (,(termination-test clause)
-                      ,(temp-var clause)
-                      ,(end-var clause))
+                      ,(next-var clause)
+                      ,(if (numberp (end-form clause))
+                           (end-form clause)
+                           (end-var clause)))
                (go ,*epilogue-tag*))))
          (when (var-spec (var clause))
-           `((setq ,(var-spec (var clause)) ,(temp-var clause))))))
+           `((setq ,(var-spec (var clause)) ,(next-var clause))))))
 
 (defmethod initial-step-forms ((clause for-as-arithmetic-down))
   (nconc (when (termination-test clause)
            `((unless (,(termination-test clause)
-                      ,(end-var clause)
-                      ,(temp-var clause))
+                      ,(if (numberp (end-form clause))
+                           (end-form clause)
+                           (end-var clause))
+                      ,(next-var clause))
                (go ,*epilogue-tag*))))
          (when (var-spec (var clause))
-           `((setq ,(var-spec (var clause)) ,(temp-var clause))))))
+           `((setq ,(var-spec (var clause)) ,(next-var clause))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the subsequent-step-forms.
 
 (defmethod subsequent-step-forms ((clause for-as-arithmetic-up))
-  (nconc `((incf ,(temp-var clause) ,(by-var clause)))
+  (nconc `((incf ,(next-var clause) ,(if (numberp (by-form clause))
+                                         (by-form clause)
+                                         (by-var clause))))
          (when (termination-test clause)
            `((unless (,(termination-test clause)
-                      ,(temp-var clause)
-                      ,(end-var clause))
+                      ,(next-var clause)
+                      ,(if (numberp (end-form clause))
+                           (end-form clause)
+                           (end-var clause)))
                (go ,*epilogue-tag*))))
          (when (var-spec (var clause))
-           `((setq ,(var-spec (var clause)) ,(temp-var clause))))))
+           `((setq ,(var-spec (var clause)) ,(next-var clause))))))
 
 (defmethod subsequent-step-forms ((clause for-as-arithmetic-down))
-  (nconc `((decf ,(temp-var clause) ,(by-var clause)))
+  (nconc `((decf ,(next-var clause) ,(if (numberp (by-form clause))
+                                         (by-form clause)
+                                         (by-var clause))))
          (when (termination-test clause)
            `((unless (,(termination-test clause)
-                      ,(end-var clause)
-                      ,(temp-var clause))
+                      ,(if (numberp (end-form clause))
+                           (end-form clause)
+                           (end-var clause))
+                      ,(next-var clause))
                (go ,*epilogue-tag*))))
          (when (var-spec (var clause))
-           `((setq ,(var-spec (var clause)) ,(temp-var clause))))))
+           `((setq ,(var-spec (var clause)) ,(next-var clause))))))
