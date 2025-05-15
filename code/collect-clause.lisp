@@ -11,7 +11,8 @@
   (consecutive (lambda (form var)
                  (make-instance 'collect-clause
                                 :form form
-                                :into-var var))
+                                :var (make-instance 'd-spec
+                                                    :var-spec var)))
                (keyword :collect :collecting)
                'terminal
                'anything
@@ -23,7 +24,7 @@
 
 (defmethod body-forms ((clause collect-clause))
   (let* ((form (form clause))
-         (into-var (into-var clause))
+         (into-var (var-spec (var clause)))
          (tail-var (tail-variable into-var)))
     (when (and *it-var* (it-keyword-p form))
       (setf form *it-var*))

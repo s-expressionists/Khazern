@@ -11,7 +11,8 @@
   (consecutive (lambda (form var)
                  (make-instance 'append-clause
                                 :form form
-                                :into-var var))
+                                :var (make-instance 'd-spec
+                                                    :var-spec var)))
                (keyword :append :appending)
                'terminal
                'anything
@@ -24,7 +25,7 @@
 (defmethod body-forms ((clause append-clause))
   (let* ((head-var (gensym))
          (form (form clause))
-         (into-var (into-var clause))
+         (into-var (var-spec (var clause)))
          (tail-var (tail-variable into-var)))
     (when (and *it-var* (it-keyword-p form))
       (setf form *it-var*))

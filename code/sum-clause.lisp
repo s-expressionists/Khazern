@@ -11,8 +11,9 @@
   (consecutive (lambda (form var type-spec)
                  (make-instance 'sum-clause
                                 :form form
-                                :into-var var
-                                :type-spec type-spec))
+                                :var (make-instance 'd-spec
+                                                    :var-spec var
+                                                    :type-spec type-spec)))
                (keyword :sum :summing)
                'terminal
                'anything
@@ -25,7 +26,7 @@
 
 (defmethod body-forms ((clause sum-clause))
   (let ((form (form clause)))
-    `((incf ,(into-var clause)
+    `((incf ,(var-spec (var clause))
             ,(if (and *it-var* (it-keyword-p form))
                  *it-var*
                  form)))))

@@ -10,7 +10,8 @@
   (consecutive (lambda (form var)
                  (make-instance 'nconc-clause
                                 :form form
-                                :into-var var))
+                                :var (make-instance 'd-spec
+                                                    :var-spec var)))
                (keyword :nconc :nconcing)
                'terminal
                'anything
@@ -22,7 +23,7 @@
 
 (defmethod body-forms ((clause nconc-clause))
   (let* ((form (form clause))
-         (into-var (into-var clause))
+         (into-var (var-spec (var clause)))
          (tail-var (tail-variable into-var))
          (next-tag (gensym "NEXT")))
     (when (and *it-var* (it-keyword-p form))

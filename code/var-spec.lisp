@@ -27,7 +27,7 @@
               :initarg :var-spec)
    (%type-spec :accessor type-spec
                :initarg :type-spec
-               :initform nil)
+               :initform t)
    (%temps :accessor temps)))
 
 (defun set-d-spec-temps (d-spec &optional temp-var-p)

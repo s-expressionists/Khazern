@@ -1,7 +1,6 @@
 (cl:in-package #:khazern)
 
-(defclass while-clause (termination-test-clause)
-  ((%form :initarg :form :reader form)))
+(defclass while-clause (termination-test-clause form-mixin) ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

@@ -17,5 +17,5 @@
 
 (defmethod map-variables (function (clause boolean-termination-test-clause))
   (funcall function
-           (default-accumulation-variable) 'boolean
+           (default-accumulation-variable) t
            (accumulation-category clause)))

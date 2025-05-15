@@ -11,8 +11,9 @@
   (consecutive (lambda (form var type-spec)
                  (make-instance 'minimize-clause
                                 :form form
-                                :into-var var
-                                :type-spec (type-or-null type-spec)))
+                                :var (make-instance 'd-spec
+                                                    :var-spec var
+                                                    :type-spec (type-or-null type-spec))))
                (keyword :minimize :minimizing)
                'terminal
                'anything
@@ -27,11 +28,11 @@
   (let ((form (form clause)))
     (when (and *it-var* (it-keyword-p form))
       (setf form *it-var*))
-    `((cond ((null ,(into-var clause))
-             (setq ,(into-var clause) ,form)
-             (unless (realp ,(into-var clause))
-               (error 'type-error :datum ,(into-var clause)
+    `((cond ((null ,(var-spec (var clause)))
+             (setq ,(var-spec (var clause)) ,form)
+             (unless (realp ,(var-spec (var clause)))
+               (error 'type-error :datum ,(var-spec (var clause))
                                   :expected-type 'real)))
             (t
-             (setq ,(into-var clause)
-                   (min ,(into-var clause) ,form)))))))
+             (setq ,(var-spec (var clause))
+                   (min ,(var-spec (var clause)) ,form)))))))

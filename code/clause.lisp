@@ -64,17 +64,6 @@
 (defmethod epilogue-forms ((clause subclauses-mixin))
   (mapcan #'epilogue-forms (subclauses clause)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Step a FOR-AS clause.
-
-;;; Mixin for clauses and subclauses that take
-;;; a VAR-SPEC and a TYPE-SPEC.
-(defclass var-and-type-spec-mixin ()
-  ((%var-spec :initarg :var-spec :accessor var-spec)
-   (%type-spec :initarg :type-spec :accessor type-spec)
-   (%temps :initarg :temps :accessor temps)))
-
 (defclass var-mixin ()
   ((%var :initarg :var :accessor var)))
 

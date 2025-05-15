@@ -4,15 +4,15 @@
 ;;;
 ;;; Accumulation clauses
 
-(defclass accumulation-clause (selectable-clause)
-  ((%into-var :accessor into-var
-              :initarg :into-var
-              :initform (default-accumulation-variable))))
+(defclass accumulation-clause (selectable-clause var-mixin)
+  ()
+  (:default-initargs :var (make-instance 'd-spec
+                                         :var-spec (default-accumulation-variable))))
 
 (defmethod initialize-instance :after ((instance accumulation-clause) &rest initargs &key)
   (declare (ignore initargs))
-  (unless (into-var instance)
-    (setf (into-var instance) (default-accumulation-variable))))
+  (unless (var-spec (var instance))
+    (setf (var-spec (var instance)) (default-accumulation-variable))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -27,20 +27,11 @@
 (defmethod accumulation-category ((clause list-accumulation-clause))
   'list)
 
-;;; The methods on ACCUMULATION-VARIABLES call the function TYPE-SPEC
-;;; on the clause in order to obtain the third element of each
-;;; accumulation variable descriptor.  For the numeric accumulation
-;;; clauses, the type is stored in a slot.  For the list accumulation
-;;; clauses, we always want to return the type LIST.
-(defmethod type-spec ((clause list-accumulation-clause))
-  'cl:list)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; NUMERIC-ACCUMULATION-CLAUSE.
 
-(defclass numeric-accumulation-clause (accumulation-clause)
-  ((%type-spec :initform T :initarg :type-spec :reader type-spec)))
+(defclass numeric-accumulation-clause (accumulation-clause) ())
 
 (defclass count/sum-accumulation-clause (numeric-accumulation-clause) ())
 
@@ -59,5 +50,5 @@
 
 (defmethod map-variables (function (clause accumulation-clause))
   (funcall function
-           (into-var clause) (type-spec clause)
+           (var-spec (var clause)) (type-spec (var clause))
            (accumulation-category clause)))

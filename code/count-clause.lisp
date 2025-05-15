@@ -11,8 +11,9 @@
   (consecutive (lambda (form var type-spec)
                  (make-instance 'count-clause
                                 :form form
-                                :into-var var
-                                :type-spec type-spec))
+                                :var (make-instance 'd-spec
+                                                    :var-spec var
+                                                    :type-spec type-spec)))
                (keyword :count :counting)
                'terminal
                'anything
@@ -25,7 +26,7 @@
 
 (defmethod body-forms ((clause count-clause))
   (let ((form (form clause))
-        (into-var (into-var clause)))
+        (into-var (var-spec (var clause))))
     `((when ,(if (and *it-var* (it-keyword-p form))
                  *it-var*
                  form)
