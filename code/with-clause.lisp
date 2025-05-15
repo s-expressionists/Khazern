@@ -36,19 +36,17 @@
 ;;; Class WITH-CLAUSE.
 ;;;
 
-(defclass with-clause (variable-clause subclauses-mixin) ())
+(defclass with-clause (variable-clause subclauses-mixin)
+  ())
 
-(defclass with-subclause (var-mixin) ())
+(defclass with-subclause (var-mixin)
+  ())
 
-(defclass with-subclause-no-form (with-subclause) ())
+(defclass with-subclause-no-form (with-subclause)
+  ())
 
-(defclass with-subclause-with-form (with-subclause)
-  ((%form :initarg :form :reader form)
-   (%form-var :initform (gensym) :reader form-var)))
-
-;;; The default form is NIL.
-(defmethod form ((subclause with-subclause))
-  nil)
+(defclass with-subclause-with-form (with-subclause form-mixin form-var-mixin)
+  ())
 
 (defmethod map-variables (function (clause with-clause))
   (map-variables function (subclauses clause)))
@@ -116,23 +114,9 @@
   (nconc (d-spec-inner-form (var subclause) (form-var subclause))
          inner-form))
 
-#+(or)(defmethod wrap-subclause ((subclause with-subclause-no-form) inner-form)
-  (wrap-let (map-variables (lambda (var type category)
-                             (declare (ignore category))
-                             `(,var ,(if (subtypep type 'number)
-                                         (coerce 0 type)
-                                         nil)))
-                           (var subclause))
-            '()
-            inner-form))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the declarations.
 
-(defmethod initial-declarations ((clause with-subclause-with-form))
+(defmethod initial-declarations ((clause with-subclause))
   (d-spec-outer-declarations (var clause)))
-
-(defmethod initial-declarations ((clause with-subclause-no-form))
-  (d-spec-outer-declarations (var clause)))
-

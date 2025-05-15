@@ -1,9 +1,12 @@
 (cl:in-package #:khazern)
 
 (defclass conditional-clause (selectable-clause)
-  ((%condition :initarg :condition :accessor condition)
-   (%then-clauses :initarg :then-clauses :reader then-clauses)
-   (%else-clauses :initarg :else-clauses :reader else-clauses)))
+  ((%condition :accessor condition
+               :initarg :condition)
+   (%then-clauses :reader then-clauses
+                  :initarg :then-clauses)
+   (%else-clauses :reader else-clauses
+                  :initarg :else-clauses)))
 
 (defmethod map-variables (function (clause conditional-clause))
   (map-variables function (then-clauses clause))

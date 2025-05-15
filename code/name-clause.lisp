@@ -16,7 +16,8 @@
 ;;; where name is a symbol.
 
 (defclass name-clause (clause)
-  ((%name :initarg :name :reader name)))
+  ((%name :reader name
+          :initarg :name)))
 
 (defmethod name-clause-p ((clause name-clause))
   t)

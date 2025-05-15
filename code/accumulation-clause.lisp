@@ -22,7 +22,8 @@
 ;;; COLLECT-CLAUSE, APPEND-CLAUSE, and NCONC-CLAUSE.
 ;;;
 
-(defclass list-accumulation-clause (accumulation-clause) ())
+(defclass list-accumulation-clause (accumulation-clause)
+  ())
 
 (defmethod accumulation-category ((clause list-accumulation-clause))
   'list)
@@ -31,14 +32,17 @@
 ;;;
 ;;; NUMERIC-ACCUMULATION-CLAUSE.
 
-(defclass numeric-accumulation-clause (accumulation-clause) ())
+(defclass numeric-accumulation-clause (accumulation-clause)
+  ())
 
-(defclass count/sum-accumulation-clause (numeric-accumulation-clause) ())
+(defclass count/sum-accumulation-clause (numeric-accumulation-clause)
+  ())
 
 (defmethod accumulation-category ((clause count/sum-accumulation-clause))
   'count/sum)
 
-(defclass max/min-accumulation-clause (numeric-accumulation-clause) ())
+(defclass max/min-accumulation-clause (numeric-accumulation-clause)
+  ())
 
 (defmethod accumulation-category ((clause max/min-accumulation-clause))
   'max/min)

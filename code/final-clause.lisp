@@ -11,8 +11,8 @@
 ;;;
 ;;;    final-clause ::= finally compound-form+
 
-(defclass final-clause (clause)
-  ((%forms :initarg :forms :reader forms)))
+(defclass final-clause (clause compound-forms-mixin)
+  ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

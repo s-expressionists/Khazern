@@ -23,7 +23,8 @@
 ;;;
 ;;;    main-clause ::= selectable-clause | termination-test
 
-(defclass selectable-clause (main-clause) ())
+(defclass selectable-clause (main-clause)
+  ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

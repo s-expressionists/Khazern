@@ -5,8 +5,10 @@
 ;;; Clause FOR-AS-EQUALS-THEN.
 
 (defclass for-as-equals-then (for-as-subclause)
-  ((%initial-form :initarg :initial-form :reader initial-form)
-   (%subsequent-form :initarg :subsequent-form :reader subsequent-form)))
+  ((%initial-form :reader initial-form
+                  :initarg :initial-form)
+   (%subsequent-form :reader subsequent-form
+                     :initarg :subsequent-form)))
 
 (defmethod map-variables (function (clause for-as-equals-then))
   (map-variables function (var clause)))

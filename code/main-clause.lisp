@@ -35,7 +35,8 @@
 ;;;
 ;;;    main-clause ::= selectable-clause | termination-test
 
-(defclass main-clause (clause) ())
+(defclass main-clause (clause)
+  ())
 
 (defmethod main-clause-p ((clause main-clause))
   t)

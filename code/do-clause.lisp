@@ -11,8 +11,8 @@
 ;;;
 ;;;    do-clause ::= do compound-form+
 
-(defclass do-clause (unconditional-clause)
-  ((%forms :initarg :forms :reader forms)))
+(defclass do-clause (unconditional-clause compound-forms-mixin)
+  ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

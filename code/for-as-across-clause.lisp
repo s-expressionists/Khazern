@@ -4,11 +4,11 @@
 ;;;
 ;;; Clause FOR-AS-ACROSS
 
-(defclass for-as-across (for-as-subclause)
-  ((%vector-form :initarg :vector-form :reader vector-form)
-   (%form-var :initform (gensym) :reader form-var)
-   (%length-var :initform (gensym) :reader length-var)
-   (%index-var :initform (gensym) :reader index-var)))
+(defclass for-as-across (for-as-subclause form-mixin form-var-mixin)
+  ((%length-var :reader length-var
+                :initform (gensym "LENGTH"))
+   (%index-var :reader index-var
+               :initform (gensym "INDEX"))))
 
 (defmethod map-variables (function (clause for-as-across))
   (map-variables function (var clause)))
@@ -18,12 +18,12 @@
 ;;; Parser
 
 (define-parser for-as-across (:for-as-subclause)
-  (consecutive (lambda (var-spec type-spec vector-form)
+  (consecutive (lambda (var-spec type-spec form)
                  (make-instance 'for-as-across
                                 :var (make-instance 'd-spec
                                                     :var-spec var-spec
                                                     :type-spec type-spec)
-                                :vector-form vector-form))
+                                :form form))
                'd-var-spec
                'optional-type-spec
                (keyword :across)
@@ -35,7 +35,7 @@
 ;;; Compute bindings.
 
 (defmethod initial-bindings ((clause for-as-across))
-  `((,(form-var clause) ,(vector-form clause))
+  `((,(form-var clause) ,(form clause))
     (,(index-var clause) 0)))
 
 (defmethod final-bindings ((clause for-as-across))

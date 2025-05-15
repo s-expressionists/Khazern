@@ -12,7 +12,7 @@
 ;;;    return-clause ::= return {form | it}
 
 (defclass return-clause (unconditional-clause form-mixin)
-  ((%form :initarg :form :reader form)))
+  ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

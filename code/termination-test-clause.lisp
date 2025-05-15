@@ -11,9 +11,11 @@
 ;;;                        never form |
 ;;;                        thereis form
 
-(defclass termination-test-clause (main-clause) ())
+(defclass termination-test-clause (main-clause)
+  ())
 
-(defclass boolean-termination-test-clause (termination-test-clause form-mixin) ())
+(defclass boolean-termination-test-clause (termination-test-clause form-mixin)
+  ())
 
 (defmethod map-variables (function (clause boolean-termination-test-clause))
   (funcall function

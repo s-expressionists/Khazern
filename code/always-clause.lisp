@@ -1,6 +1,7 @@
 (cl:in-package #:khazern)
 
-(defclass always-clause (boolean-termination-test-clause) ())
+(defclass always-clause (boolean-termination-test-clause)
+  ())
 
 (defmethod accumulation-category ((clause always-clause))
   'always/never)

@@ -4,13 +4,16 @@
 ;;;
 ;;; Clause FOR-AS-PACKAGE
 
-(defclass for-as-package (for-as-subclause)
-  ((%package-form :initarg :package-form :accessor package-form :initform '*package*)
-   (%package-var :initform (gensym) :reader package-var)
-   (%temp-entry-p-var :initform (gensym) :reader temp-entry-p-var)
-   (%temp-symbol-var :initform (gensym) :reader temp-symbol-var)
-   (%iterator-var :initform (gensym) :reader iterator-var)
-   (%iterator-keywords :initarg :iterator-keywords :reader iterator-keywords)))
+(defclass for-as-package (for-as-subclause form-mixin form-var-mixin)
+  ((%temp-entry-p-var :reader temp-entry-p-var
+                      :initform (gensym))
+   (%temp-symbol-var :reader temp-symbol-var
+                     :initform (gensym))
+   (%iterator-var :reader iterator-var
+                  :initform (gensym))
+   (%iterator-keywords :reader iterator-keywords
+                       :initarg :iterator-keywords))
+  (:default-initargs :form '*package*))
 
 (defmethod map-variables (function (clause for-as-package))
   (map-variables function (var clause)))
@@ -43,14 +46,14 @@
   '((:in . :in) (:of . :in)))
 
 (defmethod (setf path-preposition) (expression (instance for-as-package) (key (eql :in)))
-  (setf (package-form instance) expression))
+  (setf (form instance) expression))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the initial bindings.
 
 (defmethod initial-bindings ((clause for-as-package))
-  `((,(package-var clause) ,(package-form clause))))
+  `((,(form-var clause) ,(form clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -63,7 +66,7 @@
             (d-spec-outer-declarations (var subclause))
             `((with-package-iterator
                   (,(iterator-var subclause)
-                   ,(package-var subclause)
+                   ,(form-var subclause)
                    ,@(iterator-keywords subclause))
                 ,@inner-form))))
 

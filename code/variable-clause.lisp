@@ -20,7 +20,8 @@
 ;;;
 ;;;   variable-clause ::= with-clause | for-as-clause
 
-(defclass variable-clause (clause) ())
+(defclass variable-clause (clause)
+  ())
 
 (defmethod variable-clause-p ((clause variable-clause))
   t)

@@ -1,11 +1,12 @@
 (cl:in-package #:khazern)
 
-(defclass for-as-list (for-as-subclause)
-  ((%list-form :initarg :list-form :reader list-form)
-   (%list-var :initform (gensym) :reader list-var)
-   (%by-form :initarg :by-form :reader by-form)
-   (%by-var :initform (gensym) :reader by-var)
-   (%rest-var :initform (gensym) :reader rest-var)))
+(defclass for-as-list (for-as-subclause form-mixin form-var-mixin)
+  ((%by-form :reader by-form
+             :initarg :by-form)
+   (%by-var :reader by-var
+            :initform (gensym))
+   (%rest-var :reader rest-var
+              :initform (gensym))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -27,12 +28,12 @@
 ;;; Parsers.
 
 (define-parser for-as-in-list-parser (:for-as-subclause)
-  (consecutive (lambda (var type-spec list-form by-form)
+  (consecutive (lambda (var type-spec form by-form)
                  (make-instance 'for-as-in-list
                                 :var (make-instance 'd-spec
                                                     :var-spec var
                                                     :type-spec type-spec)
-                                :list-form list-form
+                                :form form
                                 :by-form by-form))
                'd-var-spec
                'optional-type-spec
@@ -49,12 +50,12 @@
 (defclass for-as-on-list (for-as-list) ())
 
 (define-parser for-as-on-list-parser (:for-as-subclause)
-  (consecutive (lambda (var type-spec list-form by-form)
+  (consecutive (lambda (var type-spec form by-form)
                  (make-instance 'for-as-on-list
                                 :var (make-instance 'd-spec
                                                     :var-spec var
                                                     :type-spec type-spec)
-                                :list-form list-form
+                                :form form
                                 :by-form by-form))
                'd-var-spec
                'optional-type-spec
@@ -68,13 +69,13 @@
 ;;; Compute the bindings.
 
 (defmethod initial-bindings ((clause for-as-list))
-  `((,(list-var clause) ,(list-form clause))
+  `((,(form-var clause) ,(form clause))
     ,@(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
           '()
           `((,(by-var clause) ,(by-form clause))))))
 
 (defmethod final-bindings ((clause for-as-list))
-  `((,(rest-var clause) ,(list-var clause))
+  `((,(rest-var clause) ,(form-var clause))
     ,.(d-spec-outer-bindings (var clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

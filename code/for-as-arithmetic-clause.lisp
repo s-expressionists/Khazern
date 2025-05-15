@@ -51,9 +51,11 @@
                       :initarg :termination-test
                       :initform nil)))
 
-(defclass for-as-arithmetic-up (for-as-arithmetic) ())
+(defclass for-as-arithmetic-up (for-as-arithmetic)
+  ())
 
-(defclass for-as-arithmetic-down (for-as-arithmetic) ())
+(defclass for-as-arithmetic-down (for-as-arithmetic)
+  ())
 
 (defmethod map-variables (function (clause for-as-arithmetic))
   (map-variables function (var clause)))

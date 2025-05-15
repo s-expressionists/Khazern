@@ -1,6 +1,7 @@
 (cl:in-package #:khazern)
 
-(defclass nconc-clause (list-accumulation-clause form-mixin) ())
+(defclass nconc-clause (list-accumulation-clause form-mixin)
+  ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

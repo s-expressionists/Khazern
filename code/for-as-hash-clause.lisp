@@ -4,12 +4,8 @@
 ;;;
 ;;; Clause FOR-AS-HASH
 
-(defclass for-as-hash (for-as-subclause)
-  ((%hash-table-form :accessor hash-table-form
-                     :initarg :hash-table-form)
-   (%hash-table-var :reader hash-table-var
-                    :initform (gensym))
-   (%temp-entry-p-var :reader temp-entry-p-var
+(defclass for-as-hash (for-as-subclause form-mixin form-var-mixin)
+  ((%temp-entry-p-var :reader temp-entry-p-var
                       :initform (gensym))
    (%temp-key-var :reader temp-key-var
                   :initform (gensym))
@@ -48,7 +44,7 @@
   '((:in . :in) (:of . :in)))
 
 (defmethod (setf path-preposition) (expression (instance for-as-hash) (key (eql :in)))
-  (setf (hash-table-form instance) expression))
+  (setf (form instance) expression))
 
 (defmethod path-using-names ((instance for-as-hash-key))
   '((:hash-value . :other) (:hash-values . :other)))
@@ -62,7 +58,7 @@
   value)
 
 (defmethod analyze ((clause for-as-hash))
-  (unless (slot-boundp clause '%hash-table-form)
+  (unless (slot-boundp clause '%form)
     (error "Missing IN/OF preposition")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -70,7 +66,7 @@
 ;;; Compute the initial bindings.
 
 (defmethod initial-bindings ((clause for-as-hash))
-  `((,(hash-table-var clause) ,(hash-table-form clause))))
+  `((,(form-var clause) ,(form clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -84,7 +80,7 @@
               ,.(d-spec-outer-bindings (other-var subclause)))
             (d-spec-outer-declarations (var subclause))
             `((with-hash-table-iterator
-                  (,(iterator-var subclause) ,(hash-table-var subclause))
+                  (,(iterator-var subclause) ,(form-var subclause))
                 ,@inner-form))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -9,7 +9,8 @@
 ;;; Common classes.
 
 ;;; The base class of all clauses.
-(defclass clause () ())
+(defclass clause ()
+  ())
 
 ;;; Mixin for clauses that accept `AND'.
 (defclass subclauses-mixin ()
@@ -65,27 +66,36 @@
   (mapcan #'epilogue-forms (subclauses clause)))
 
 (defclass var-mixin ()
-  ((%var :initarg :var :accessor var)))
+  ((%var :accessor var
+         :initarg :var)))
 
 ;;; Mixin for clauses that take a list of compound forms.
 (defclass compound-forms-mixin ()
-  ((%forms :initarg :forms :reader forms)))
+  ((%forms :accessor forms
+           :initarg :forms)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Mixin for clauses that make the loop return a value.
 
-(defclass loop-return-clause-mixin () ())
+(defclass loop-return-clause-mixin ()
+  ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Mixin for clauses that has an implicit IT argument.
 
-(defclass it-mixin () ())
+(defclass it-mixin ()
+  ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Mixin for clauses that has an explicit form argument.
 
 (defclass form-mixin ()
-  ((%form :initarg :form :reader form)))
+  ((%form :accessor form
+          :initarg :form)))
+
+(defclass form-var-mixin ()
+  ((%form-var :accessor form-var
+              :initform (gensym "FORM"))))

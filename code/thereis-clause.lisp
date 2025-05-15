@@ -1,6 +1,7 @@
 (cl:in-package #:khazern)
 
-(defclass thereis-clause (boolean-termination-test-clause) ())
+(defclass thereis-clause (boolean-termination-test-clause)
+  ())
 
 (defmethod accumulation-category ((clause thereis-clause))
   'thereis)

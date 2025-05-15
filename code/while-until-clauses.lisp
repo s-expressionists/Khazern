@@ -1,6 +1,7 @@
 (cl:in-package #:khazern)
 
-(defclass while-clause (termination-test-clause form-mixin) ())
+(defclass while-clause (termination-test-clause form-mixin)
+  ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
