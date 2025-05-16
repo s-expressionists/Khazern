@@ -28,6 +28,9 @@
    (%type-spec :accessor type-spec
                :initarg :type-spec
                :initform t)
+   (%accumulation-category :accessor accumulation-category
+                           :initarg :accumulation-category
+                           :initform t)
    (%temps :accessor temps)))
 
 (defun set-d-spec-temps (d-spec &optional temp-var-p)
@@ -110,7 +113,8 @@
   (labels ((traverse (var-spec type-spec)
              (cond ((null var-spec))
                    ((symbolp var-spec)
-                    (funcall function var-spec (or type-spec t) t))
+                    (funcall function var-spec (or type-spec t)
+                             (accumulation-category d-spec)))
                    ((not (consp var-spec))
                     (error 'expected-var-spec-but-found
                            :found var-spec))

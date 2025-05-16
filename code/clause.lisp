@@ -69,6 +69,9 @@
   ((%var :accessor var
          :initarg :var)))
 
+(defmethod map-variables (function (clause var-mixin))
+  (map-variables function (var clause)))
+
 ;;; Mixin for clauses that take a list of compound forms.
 (defclass compound-forms-mixin ()
   ((%forms :accessor forms
@@ -99,3 +102,115 @@
 (defclass form-var-mixin ()
   ((%form-var :accessor form-var
               :initform (gensym "FORM"))))
+
+(defclass accumulation-mixin (var-mixin)
+  ()
+  (:default-initargs :var (make-instance 'd-spec
+                                         :var-spec (default-accumulation-variable)
+                                         :accumulation-category nil)))
+
+(defmethod initialize-instance :after ((instance accumulation-mixin) &rest initargs &key)
+  (declare (ignore initargs))
+  (unless (var-spec (var instance))
+    (setf (var-spec (var instance)) (default-accumulation-variable))))
+
+
+;;; In the dictionary entry for LOOP, the HyperSpec says:
+;;;
+;;;   main-clause ::= unconditional | 
+;;;                   accumulation |
+;;;                   conditional |
+;;;                   termination-test |
+;;;                   initial-final
+;;;
+;;; Here, we exclude initial-final.  The reason for that is that
+;;; initial-final is also one of the possibilities for a
+;;; variable-clause, and the reason for this "multiple inheritance" is
+;;; so that the LOOP macro syntax can be defined to have the syntax:
+;;;
+;;;   loop [name-clause] {variable-clause}* {main-clause}*
+;;;
+;;; which then allows for INITIALLY and FINALLY clauses to occur
+;;; anywhere after the name-clause.
+;;;
+;;; What we do here is to treat INITIALLY and FINALLY specially, so
+;;; that they are neither main clauses nor variable clauses.
+;;; Therefore, here, we have:
+;;;
+;;;   main-clause ::= unconditional | 
+;;;                   accumulation |
+;;;                   conditional |
+;;;                   termination-test
+;;;
+;;; Furthermore, the HyperSpec defines selectable-clause like this:
+;;;
+;;;   selectable-clause ::= unconditional | accumulation | conditional 
+;;;
+;;; so we can say:
+;;;
+;;;    main-clause ::= selectable-clause | termination-test
+
+(defclass main-clause (clause)
+  ())
+
+(defmethod main-clause-p ((clause main-clause))
+  t)
+
+;;; In the dictionary entry for LOOP, the HyperSpec says:
+;;;
+;;;   variable-clause ::= with-clause | initial-final | for-as-clause
+;;;
+;;; Here, we exclude initial-final.  The reason for that is that
+;;; initial-final is also one of the possibilities for a
+;;; main-clause, and the reason for this "multiple inheritance" is
+;;; so that the LOOP macro syntax can be defined to have the syntax:
+;;;
+;;;   loop [name-clause] {variable-clause}* {main-clause}*
+;;;
+;;; which then allows for INITIALLY and FINALLY clauses to occur
+;;; anywhere after the name-clause.
+;;;
+;;; What we do here is to treat INITIALLY and FINALLY specially, so
+;;; that they are neither main clauses nor variable clauses.
+;;; Therefore, here, we have:
+;;;
+;;;   variable-clause ::= with-clause | for-as-clause
+
+(defclass variable-clause (clause)
+  ())
+
+(defmethod variable-clause-p ((clause variable-clause))
+  t)
+
+;;; Recall that in the dictionary entry for LOOP, the HyperSpec says:
+;;;
+;;;   main-clause ::= unconditional | 
+;;;                   accumulation |
+;;;                   conditional |
+;;;                   termination-test |
+;;;                   initial-final
+;;;
+;;; Though here, we exclude initial-final so that we have:
+;;;
+;;;   main-clause ::= unconditional | 
+;;;                   accumulation |
+;;;                   conditional |
+;;;                   termination-test
+;;;
+;;; Furthermore, the HyperSpec defines selectable-clause like this:
+;;;
+;;;   selectable-clause ::= unconditional | accumulation | conditional 
+;;;
+;;; so we can say:
+;;;
+;;;    main-clause ::= selectable-clause | termination-test
+
+(defclass selectable-clause (main-clause)
+  ())
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Parsers.
+
+(define-parser selectable-clause+ ()
+  (delimited-list-by-category :selectable-clause nil 'and))
