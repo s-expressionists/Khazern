@@ -112,19 +112,28 @@
   (car (find x choices
              :test (lambda (x y) (find x y :test #'symbol-equal)))))
 
-(defvar *numeric-types*
-  '(fixnum
-    integer
-    single-float
-    double-float
-    short-float
-    long-float
-    rational
-    (complex single-float)
-    (complex double-float)
-    (complex short-float)
-    (complex long-float)
-    number))
+;;; This is very hacky
+(defun numeric-types ()
+  (let ((types (cl:list 'complex 'number)))
+    (mapc (lambda (type)
+            (pushnew (type-of (coerce 1 type)) types :test #'equalp))
+          '((complex long-float)
+            (complex double-float)
+            (complex single-float)
+            (complex short-float)))
+    (push 'real types)
+    (push 'rational types)
+    (mapc (lambda (type)
+            (pushnew (type-of (coerce 1 type)) types :test #'equalp))
+          '(long-float
+            double-float
+            single-float
+            short-float))
+    (push 'integer types)
+    (push 'fixnum types)
+    types))
+
+(defvar *numeric-types* (numeric-types))
 
 (defun numeric-type-of (value)
   (find value *numeric-types* :test #'cl:typep))
@@ -303,3 +312,11 @@
       d-spec
     (when var-spec
       `((,var-spec ,form)))))
+
+(defun function-operator-p (value)
+  (and (consp value)
+       (eq (first value) 'cl:function)
+       (cdr value)
+       (symbolp (second value))
+       (null (cddr value))))
+

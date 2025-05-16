@@ -1,8 +1,6 @@
 (cl:in-package #:khazern)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Clause FOR-AS-CLAUSE.
+;;; 6.1.2.1 FOR-AS-CLAUSE clause
 ;;;
 ;;; The HyperSpec says that a FOR-AS-CLAUSE has the following syntax:
 ;;;
@@ -47,12 +45,7 @@
 (defclass for-as-subclause (var-mixin)
   ())
 
-(defmethod map-variables (function (clause for-as-clause))
-  (map-variables function (subclauses clause)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parse a FOR-AS clause.
+;;; FOR-AS-CLAUSE parsers
 
 (define-parser for-as-subclause+ ()
   (delimited-list-by-category :for-as-subclause nil 'and))
@@ -63,10 +56,12 @@
                (keyword :for :as)
                'for-as-subclause+))
 
+;;; FOR-AS-CLAUSE expansion methods
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Clause FOR-AS-ARITHMETIC.
+(defmethod map-variables (function (clause for-as-clause))
+  (map-variables function (subclauses clause)))
+
+;;; 6.1.2.1.1 FOR-AS-ARITHMETIC sublause
 
 (defclass for-as-arithmetic (for-as-subclause)
   (;; The order in which the forms are given.  This is a list of three
@@ -121,16 +116,9 @@
 (defclass for-as-arithmetic-down (for-as-arithmetic)
   ())
 
-(defmethod map-variables (function (clause for-as-arithmetic))
-  (map-variables function (var clause)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Parsers for individual keywords.
+;;; FOR-AS-ARITHMETIC parsers
 
 (define-parser from-parser ()
   (consecutive (lambda (form)
@@ -357,6 +345,11 @@
                             'for-as-arithmetic-downto
                             'for-as-arithmetic-by)))
 
+;;; FOR-AS-ARITHMETIC expansion methods
+
+(defmethod map-variables (function (clause for-as-arithmetic))
+  (map-variables function (var clause)))
+
 (defmethod analyze ((clause for-as-arithmetic))
   (with-accessors ((next-var next-var)
                    (by-var by-var)
@@ -389,10 +382,6 @@
                  (when (numberp by-form)
                    (setf by-form (coerce by-form by-type))))))))))
  
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the bindings.
-
 (defmethod initial-bindings ((clause for-as-arithmetic))
   (nconc (mapcan (lambda (name)
                    (ecase name
@@ -417,10 +406,6 @@
            (d-spec-simple-declarations (end-var clause)))
          (d-spec-simple-declarations (var clause) :ignorable t :nullable t)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the initial-step-form.
-
 (defmethod initial-step-forms ((clause for-as-arithmetic-up))
   (nconc (when (termination-test clause)
            `((unless (,(termination-test clause)
@@ -443,63 +428,43 @@
          (when (var-spec (var clause))
            `((setq ,(var-spec (var clause)) ,(var-spec (next-var clause)))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the subsequent-step-forms.
-
 (defmethod subsequent-step-forms ((clause for-as-arithmetic-up))
   (nconc `((incf ,(var-spec (next-var clause))
                  ,(if (numberp (by-form clause))
                       (by-form clause)
                       (var-spec (by-var clause)))))
-         (when (termination-test clause)
-           `((unless (,(termination-test clause)
-                      ,(var-spec (next-var clause))
-                      ,(if (numberp (end-form clause))
-                           (end-form clause)
-                           (var-spec (end-var clause))))
-               (go ,*epilogue-tag*))))
-         (when (var-spec (var clause))
-           `((setq ,(var-spec (var clause)) ,(var-spec (next-var clause)))))))
+         (initial-step-forms clause)))
 
 (defmethod subsequent-step-forms ((clause for-as-arithmetic-down))
   (nconc `((decf ,(var-spec (next-var clause))
                  ,(if (numberp (by-form clause))
                       (by-form clause)
                       (var-spec (by-var clause)))))
-         (when (termination-test clause)
-           `((unless (,(termination-test clause)
-                      ,(if (numberp (end-form clause))
-                           (end-form clause)
-                           (var-spec (end-var clause)))
-                      ,(var-spec (next-var clause)))
-               (go ,*epilogue-tag*))))
-         (when (var-spec (var clause))
-           `((setq ,(var-spec (var clause)) ,(var-spec (next-var clause)))))))
+         (initial-step-forms clause)))
+
+;;; 6.1.2.1.2/6.1.2.1.3 FOR-AS-IN-LIST/FOR-AS-ON-LIST subclauses
 
 (defclass for-as-list (for-as-subclause form-mixin form-var-mixin)
   ((%by-form :reader by-form
              :initarg :by-form)
    (%by-var :reader by-var
-            :initform (gensym))
+            :initform (gensym "BY"))
    (%rest-var :reader rest-var
-              :initform (gensym))))
+              :initform (gensym "REST"))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Clause FOR-AS-IN-LIST.
+(defclass for-as-in-list (for-as-list)
+  ())
 
-(defclass for-as-in-list (for-as-list) ())
+(defclass for-as-on-list (for-as-list)
+  ())
+
+;;; FOR-AS-IN-LIST/FOR-AS-ON-LIST parsers
 
 (define-parser for-as-list-by-parser ()
   (optional '#'cdr
             (consecutive #'identity
                          (keyword :by)
                          'anything)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
 
 (define-parser for-as-in-list-parser (:for-as-subclause)
   (consecutive (lambda (var type-spec form by-form)
@@ -516,13 +481,6 @@
                'anything
                'for-as-list-by-parser))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Clause FOR-AS-ON-LIST.
-
-(defclass for-as-on-list (for-as-list) ())
-
 (define-parser for-as-on-list-parser (:for-as-subclause)
   (consecutive (lambda (var type-spec form by-form)
                  (make-instance 'for-as-on-list
@@ -538,30 +496,19 @@
                'anything
                'for-as-list-by-parser))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the bindings.
+;;; FOR-AS-IN-LIST/FOR-AS-ON-LIST expansion methods
 
 (defmethod initial-bindings ((clause for-as-list))
   `((,(form-var clause) ,(form clause))
-    ,@(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
-          '()
-          `((,(by-var clause) ,(by-form clause))))))
+    ,@(unless (function-operator-p (by-form clause))
+        `((,(by-var clause) ,(by-form clause))))))
 
 (defmethod final-bindings ((clause for-as-list))
   `((,(rest-var clause) ,(form-var clause))
     ,.(d-spec-outer-bindings (var clause))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the declarations.
-
 (defmethod final-declarations ((clause for-as-list))
   (d-spec-outer-declarations (var clause)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the initial step forms.
 
 (defmethod initial-step-forms ((clause for-as-in-list))
   `((when (endp ,(rest-var clause))
@@ -573,33 +520,14 @@
       (go ,*epilogue-tag*))
     ,@(d-spec-inner-form (var clause) (rest-var clause))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the subsequent step forms.
+(defmethod subsequent-step-forms ((clause for-as-list))
+  `((setq ,(rest-var clause)
+          ,(if (function-operator-p (by-form clause))
+               `(,(second (by-form clause)) ,(rest-var clause))
+               `(funcall ,(by-var clause) ,(rest-var clause))))
+    ,@(initial-step-forms clause)))
 
-(defmethod subsequent-step-forms ((clause for-as-in-list))
-  `(,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
-         `(setq ,(rest-var clause)
-                (,(cadr (by-form clause)) ,(rest-var clause)))
-         `(setq ,(rest-var clause)
-                (funcall ,(by-var clause) ,(rest-var clause))))
-    (when (endp ,(rest-var clause))
-      (go ,*epilogue-tag*))
-    ,@(d-spec-inner-form (var clause) `(car ,(rest-var clause)))))
-
-(defmethod subsequent-step-forms ((clause for-as-on-list))
-  `(,(if (member (by-form clause) '(#'cdr #'cddr) :test #'equal)
-         `(setq ,(rest-var clause)
-                (,(cadr (by-form clause)) ,(rest-var clause)))
-         `(setq ,(rest-var clause)
-                (funcall ,(by-var clause) ,(rest-var clause))))
-    (when (atom ,(rest-var clause))
-      (go ,*epilogue-tag*))
-    ,@(d-spec-inner-form (var clause) (rest-var clause))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Clause FOR-AS-EQUALS-THEN.
+;;; 6.1.2.1.4 FOR-AS-EQUALS-THEN subclause
 
 (defclass for-as-equals-then (for-as-subclause)
   ((%initial-form :reader initial-form
@@ -607,9 +535,7 @@
    (%subsequent-form :reader subsequent-form
                      :initarg :subsequent-form)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
+;;; FOR-AS-EQUALS-THEN parsers
 
 (define-parser for-as-equals-then-parser (:for-as-subclause)
   (consecutive (lambda (var-spec type-spec form1 initargs)
@@ -632,53 +558,27 @@
                                       'terminal
                                       'anything))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the bindings.
+;;; FOR-AS-EQUALS-THEN expansion methods
 
 (defmethod initial-bindings ((clause for-as-equals-then))
   (d-spec-outer-bindings (var clause)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the declarations.
-
 (defmethod initial-declarations ((clause for-as-equals-then))
   (d-spec-outer-declarations (var clause)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the prologue-bindings.
 
 (defmethod initial-step-bindings ((clause for-as-equals-then))
   (d-spec-inner-bindings (var clause) (initial-form clause)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the prologue-form.
-
 (defmethod initial-step-forms ((clause for-as-equals-then))
   `((setq ,@(d-spec-inner-assignments (var clause) (initial-form clause)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the step-bindings.
 
 (defmethod subsequent-step-bindings ((clause for-as-equals-then))
   (d-spec-inner-bindings (var clause) (subsequent-form clause)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the step-forms.
-
 (defmethod subsequent-step-forms ((clause for-as-equals-then))
   `((setq ,@(d-spec-inner-assignments (var clause) (subsequent-form clause)))))
 
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Clause FOR-AS-ACROSS
+;;; 6.1.2.1.5 FOR-AS-ACROSS subclause
 
 (defclass for-as-across (for-as-subclause form-mixin form-var-mixin)
   ((%length-var :reader length-var
@@ -686,9 +586,7 @@
    (%index-var :reader index-var
                :initform (gensym "INDEX"))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parser
+;;; FOR-AS-ACROSS parsers
 
 (define-parser for-as-across (:for-as-subclause)
   (consecutive (lambda (var-spec type-spec form)
@@ -703,9 +601,7 @@
                'terminal
                'anything))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute bindings.
+;;; FOR-AS-ACROSS expansion methods
 
 (defmethod initial-bindings ((clause for-as-across))
   `((,(form-var clause) ,(form clause))
@@ -715,16 +611,8 @@
   `((,(length-var clause) (length ,(form-var clause)))
     ,.(d-spec-outer-bindings (var clause))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute declarations.
-
 (defmethod final-declarations ((clause for-as-across))
   (d-spec-outer-declarations (var clause)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute prologue-form.
 
 (defmethod initial-step-forms ((clause for-as-across))
   `((when (>= ,(index-var clause) ,(length-var clause))
@@ -733,18 +621,12 @@
                          `(aref ,(form-var clause)
                                 ,(index-var clause)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute step-forms.
-
 (defmethod subsequent-step-forms ((clause for-as-across))
   `((when (>= (incf ,(index-var clause)) ,(length-var clause))
       (go ,*epilogue-tag*))
     ,@(d-spec-inner-form (var clause)
                          `(aref ,(form-var clause)
                                 ,(index-var clause)))))
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -847,10 +729,7 @@
                                                   'for-as-path-using)))
                tokens))))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Clause FOR-AS-HASH
+;;; 6.1.2.1.6 FOR-AS-HASH Subclause
 
 (defclass for-as-hash (for-as-subclause form-mixin form-var-mixin)
   ((%temp-entry-p-var :reader temp-entry-p-var
@@ -866,9 +745,13 @@
                :initform (make-instance 'd-spec
                                         :var-spec nil))))
 
-(defclass for-as-hash-key (for-as-hash) ())
+(defclass for-as-hash-key (for-as-hash)
+  ())
 
-(defclass for-as-hash-value (for-as-hash) ())
+(defclass for-as-hash-value (for-as-hash)
+  ())
+
+;;; FOR-AS-HASH path extension support
 
 (defmethod map-variables :after (function (clause for-as-hash))
   (map-variables function (other-var clause)))
@@ -890,7 +773,8 @@
 (defmethod path-preposition-names ((instance for-as-hash))
   '((:in . :in) (:of . :in)))
 
-(defmethod (setf path-preposition) (expression (instance for-as-hash) (key (eql :in)))
+(defmethod (setf path-preposition)
+    (expression (instance for-as-hash) (key (eql :in)))
   (setf (form instance) expression))
 
 (defmethod path-using-names ((instance for-as-hash-key))
@@ -899,97 +783,63 @@
 (defmethod path-using-names ((instance for-as-hash-value))
   '((:hash-key . :other) (:hash-keys . :other)))
 
-(defmethod (setf path-using) (value (instance for-as-hash) (key (eql :other)))
+(defmethod (setf path-using)
+    (value (instance for-as-hash) (key (eql :other)))
   (setf (other-var instance) (make-instance 'd-spec
                                             :var-spec value))
   value)
+
+;;; FOR-AS-HASH expansion methods
 
 (defmethod analyze ((clause for-as-hash))
   (unless (slot-boundp clause '%form)
     (error "Missing IN/OF preposition")))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the initial bindings.
-
 (defmethod initial-bindings ((clause for-as-hash))
   `((,(form-var clause) ,(form clause))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the subclause wrapper.
+(defmethod final-bindings ((clause for-as-hash))
+  `((,(temp-entry-p-var clause) nil)
+    (,(temp-key-var clause) nil)
+    (,(temp-value-var clause) nil)
+    ,.(d-spec-outer-bindings (var clause))
+    ,.(d-spec-outer-bindings (other-var clause))))
 
-(defmethod wrap-subclause ((subclause for-as-hash) inner-form)
-  (wrap-let `((,(temp-entry-p-var subclause) nil)
-              (,(temp-key-var subclause) nil)
-              (,(temp-value-var subclause) nil)
-              ,.(d-spec-outer-bindings (var subclause))
-              ,.(d-spec-outer-bindings (other-var subclause)))
-            (d-spec-outer-declarations (var subclause))
-            `((with-hash-table-iterator
-                  (,(iterator-var subclause) ,(form-var subclause))
-                ,@inner-form))))
+(defmethod final-declarations ((clause for-as-hash))
+  (d-spec-outer-declarations (var clause)))
+  
+(defmethod wrap-subclause :around ((subclause for-as-hash) inner-form)
+  (call-next-method subclause
+                    `((with-hash-table-iterator
+                          (,(iterator-var subclause) ,(form-var subclause))
+                        ,@inner-form))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the prologue form.
+(defmethod initial-step-forms ((clause for-as-hash))
+  `((multiple-value-setq (,(temp-entry-p-var clause)
+                          ,(temp-key-var clause)
+                          ,(temp-value-var clause))
+      (,(iterator-var clause)))
+    (unless ,(temp-entry-p-var clause)
+      (go ,*epilogue-tag*))))
 
-(defmethod initial-step-forms ((subclause for-as-hash-key))
-  `((multiple-value-setq (,(temp-entry-p-var subclause)
-                          ,(temp-key-var subclause)
-                          ,(temp-value-var subclause))
-      (,(iterator-var subclause)))
-    (unless ,(temp-entry-p-var subclause)
-      (go ,*epilogue-tag*))
-    ,@(d-spec-inner-form (var subclause)
-                         (temp-key-var subclause))
-    ,@(d-spec-inner-form (other-var subclause)
-                         (temp-value-var subclause))))
+(defmethod initial-step-forms :around ((clause for-as-hash-key))
+  (nconc (call-next-method)
+         (d-spec-inner-form (var clause)
+                            (temp-key-var clause))
+         (d-spec-inner-form (other-var clause)
+                            (temp-value-var clause))))
 
-(defmethod initial-step-forms ((subclause for-as-hash-value))
-  `((multiple-value-setq (,(temp-entry-p-var subclause)
-                          ,(temp-key-var subclause)
-                          ,(temp-value-var subclause))
-      (,(iterator-var subclause)))
-    (unless ,(temp-entry-p-var subclause)
-      (go ,*epilogue-tag*))
-    ,@(d-spec-inner-form (var subclause)
-                         (temp-value-var subclause))
-    ,@(d-spec-inner-form (other-var subclause)
-                         (temp-key-var subclause))))
+(defmethod initial-step-forms :around ((clause for-as-hash-value))
+  (nconc (call-next-method)
+         (d-spec-inner-form (var clause)
+                            (temp-value-var clause))
+         (d-spec-inner-form (other-var clause)
+                            (temp-key-var clause))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the step form.
+(defmethod subsequent-step-forms ((clause for-as-hash))
+  (initial-step-forms clause))
 
-(defmethod subsequent-step-forms ((subclause for-as-hash-key))
-  `((multiple-value-setq (,(temp-entry-p-var subclause)
-                          ,(temp-key-var subclause)
-                          ,(temp-value-var subclause))
-      (,(iterator-var subclause)))
-    (unless ,(temp-entry-p-var subclause)
-      (go ,*epilogue-tag*))
-    ,@(d-spec-inner-form (var subclause)
-                         (temp-key-var subclause))
-    ,@(d-spec-inner-form (other-var subclause)
-                         (temp-value-var subclause))))
-
-(defmethod subsequent-step-forms ((subclause for-as-hash-value))
-  `((multiple-value-setq (,(temp-entry-p-var subclause)
-                          ,(temp-key-var subclause)
-                          ,(temp-value-var subclause))
-      (,(iterator-var subclause)))
-    (unless ,(temp-entry-p-var subclause)
-      (go ,*epilogue-tag*))
-    ,@(d-spec-inner-form (var subclause)
-                         (temp-value-var subclause))
-    ,@(d-spec-inner-form (other-var subclause)
-                         (temp-key-var subclause))))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Clause FOR-AS-PACKAGE
+;;; 6.1.2.1.7 FOR-AS-PACKAGE Subclause
 
 (defclass for-as-package (for-as-subclause form-mixin form-var-mixin)
   ((%temp-entry-p-var :reader temp-entry-p-var
@@ -1001,6 +851,8 @@
    (%iterator-keywords :reader iterator-keywords
                        :initarg :iterator-keywords))
   (:default-initargs :form '*package*))
+
+;;; FOR-AS-PACKAGE path protocol support
 
 (defun make-for-as-package-symbol (name var-spec type-spec)
   (declare (ignore name))
@@ -1029,62 +881,46 @@
 (defmethod path-preposition-names ((instance for-as-package))
   '((:in . :in) (:of . :in)))
 
-(defmethod (setf path-preposition) (expression (instance for-as-package) (key (eql :in)))
+(defmethod (setf path-preposition)
+    (expression (instance for-as-package) (key (eql :in)))
   (setf (form instance) expression))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the initial bindings.
+;;; FOR-AS-PACKAGE expansion methods
 
 (defmethod initial-bindings ((clause for-as-package))
   `((,(form-var clause) ,(form clause))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the subclause wrapper.
+(defmethod final-bindings ((clause for-as-package))
+  `((,(temp-entry-p-var clause) nil)
+    (,(temp-symbol-var clause) nil)
+    ,.(d-spec-outer-bindings (var clause))))
 
-(defmethod wrap-subclause ((subclause for-as-package) inner-form)
-  (wrap-let `((,(temp-entry-p-var subclause) nil)
-              (,(temp-symbol-var subclause) nil)
-              ,.(d-spec-outer-bindings (var subclause)))
-            (d-spec-outer-declarations (var subclause))
-            `((with-package-iterator
-                  (,(iterator-var subclause)
-                   ,(form-var subclause)
-                   ,@(iterator-keywords subclause))
-                ,@inner-form))))
+(defmethod final-declarations ((clause for-as-package))
+  (d-spec-outer-declarations (var clause)))
+  
+(defmethod wrap-subclause :around ((subclause for-as-package) inner-form)
+  (call-next-method subclause
+                    `((with-package-iterator
+                          (,(iterator-var subclause)
+                            ,(form-var subclause)
+                            ,@(iterator-keywords subclause))
+                        ,@inner-form))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the prologue form.
-
-(defmethod initial-step-forms ((subclause for-as-package))
-  `((multiple-value-setq (,(temp-entry-p-var subclause)
-                          ,(temp-symbol-var subclause))
-      (,(iterator-var subclause)))
-    (unless ,(temp-entry-p-var subclause)
+(defmethod initial-step-forms ((clause for-as-package))
+  `((multiple-value-setq (,(temp-entry-p-var clause)
+                          ,(temp-symbol-var clause))
+      (,(iterator-var clause)))
+    (unless ,(temp-entry-p-var clause)
       (go ,*epilogue-tag*))
-    ,@(d-spec-inner-form (var subclause)
-                         (temp-symbol-var subclause))))
+    ,@(d-spec-inner-form (var clause)
+                         (temp-symbol-var clause))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmethod subsequent-step-forms ((clause for-as-package))
+  (initial-step-forms clause))
+
+;;; 6.1.2.2 WITH clause
 ;;;
-;;; Compute the step form.
-
-(defmethod subsequent-step-forms ((subclause for-as-package))
-  `((multiple-value-setq (,(temp-entry-p-var subclause)
-                          ,(temp-symbol-var subclause))
-      (,(iterator-var subclause)))
-    (unless ,(temp-entry-p-var subclause)
-      (go ,*epilogue-tag*))
-    ,@(d-spec-inner-form (var subclause)
-                         (temp-symbol-var subclause))))
-
-
-
-;;; Clause WITH-CLAUSE.
-;;;
-;;; A WITH-CLAUSE allows the creation of local variables.  It is
+;;; A WITH clause allows the creation of local variables.  It is
 ;;; executed once.
 ;;;
 ;;; The syntax of a with-clause is:
@@ -1113,11 +949,6 @@
 ;;; type number, the value is 0, and for the type float, the value is
 ;;; 0.0.
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Class WITH-CLAUSE.
-;;;
-
 (defclass with-clause (variable-clause subclauses-mixin)
   ())
 
@@ -1127,15 +958,11 @@
 (defclass with-subclause-no-form (with-subclause)
   ())
 
-(defclass with-subclause-with-form (with-subclause form-mixin form-var-mixin)
+(defclass with-subclause-with-form
+    (with-subclause form-mixin form-var-mixin)
   ())
 
-(defmethod map-variables (function (clause with-clause))
-  (map-variables function (subclauses clause)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
+;;; WITH Parsers
 
 (define-parser with-subclause ()
   (consecutive (lambda (var-spec type-spec initargs)
@@ -1167,9 +994,10 @@
                                      'terminal
                                      'with-subclause))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the bindings.
+;;; WITH expansion methods
+
+(defmethod map-variables (function (clause with-clause))
+  (map-variables function (subclauses clause)))
 
 (defmethod initial-bindings ((clause with-subclause-with-form))
   (list* `(,(form-var clause) ,(form clause))
@@ -1185,17 +1013,9 @@
                    (var clause))
     (nreverse result)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the subclause wrapper.
-
 (defmethod wrap-subclause ((subclause with-subclause-with-form) inner-form)
   (nconc (d-spec-inner-form (var subclause) (form-var subclause))
          inner-form))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the declarations.
 
 (defmethod initial-declarations ((clause with-subclause))
   (d-spec-outer-declarations (var clause)))
