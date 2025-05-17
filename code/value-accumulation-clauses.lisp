@@ -1,22 +1,16 @@
 (cl:in-package #:khazern)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; 6.1.3 Value Accumulation Clauses
 
 (defclass accumulation-clause (selectable-clause accumulation-mixin form-mixin)
   ())
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; COLLECT clause
 
 (defclass collect-clause (accumulation-clause)
   ())
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
+;;; COLLECT parsers
 
 (define-parser collect-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form var)
@@ -30,9 +24,7 @@
                'anything
                'optional-into-phrase))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute body-forms.
+;;; COLLECT expansion methods
 
 (defmethod body-forms ((clause collect-clause))
   (let* ((form (form clause))
@@ -40,23 +32,17 @@
          (tail-var (tail-variable into-var)))
     (when (and *it-var* (it-keyword-p form))
       (setf form *it-var*))
-    `((cond ((null ,into-var)
-             (setq ,tail-var (cons ,form nil)
-                   ,into-var ,tail-var))
-            (t
-             (rplacd ,tail-var (cons ,form nil))
-             (setq ,tail-var (cdr ,tail-var)))))))
+    `((if (consp ,tail-var)
+          (rplacd ,tail-var (setq ,tail-var (cons ,form nil)))
+          (setq ,tail-var (cons ,form nil)
+                ,into-var ,tail-var)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; APPEND clause
 
 (defclass append-clause (accumulation-clause)
   ())
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
+;;; APPEND parsers
 
 (define-parser append-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form var)
@@ -70,9 +56,7 @@
                'anything
                'optional-into-phrase))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute body-forms.
+;;; APPEND expansion methods
 
 (defmethod body-forms ((clause append-clause))
   (let* ((head-var (gensym))
@@ -102,16 +86,12 @@
                   (rplacd ,tail-var ,head-var)
                   (setq ,tail-var (cdr ,tail-var)))))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; NCONC clause
 
 (defclass nconc-clause (accumulation-clause)
   ())
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
+;;; NCONC parsers
 
 (define-parser nconc-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form var)
@@ -125,9 +105,7 @@
                'anything
                'optional-into-phrase))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute body-forms.
+;;; NCONC expansion methods
 
 (defmethod body-forms ((clause nconc-clause))
   (let* ((form (form clause))
@@ -147,13 +125,12 @@
            (setq ,tail-var (cdr ,tail-var))
            (go ,next-tag))))))
 
+;;; COUNT clause
 
 (defclass count-clause (accumulation-clause)
   ())
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
+;;; COUNT parsers
 
 (define-parser count-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form var type-spec)
@@ -169,9 +146,7 @@
                'optional-into-phrase
                'optional-type-spec))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the BODY-FORM.
+;;; COUNT expansion methods
 
 (defmethod body-forms ((clause count-clause))
   (let ((form (form clause))
@@ -182,13 +157,12 @@
         (setq ,into-var
               (1+ ,into-var))))))
 
+;;; MAXIMIZE clause
 
 (defclass maximize-clause (accumulation-clause)
   ())
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
+;;; MAXIMIZE parsers
 
 (define-parser maximize-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form var type-spec)
@@ -204,9 +178,7 @@
                'optional-into-phrase
                'optional-type-spec))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the BODY-FORM.
+;;; MAXIMIZE expansion methods
 
 (defmethod body-forms ((clause maximize-clause))
   (let ((form (form clause)))
@@ -222,12 +194,12 @@
                    (max ,(var-spec (var clause)) ,form)))))))
 
 
+;;; MINIMIZE clause
+
 (defclass minimize-clause (accumulation-clause)
   ())
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
+;;; MINIMIZE parsers
 
 (define-parser minimize-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form var type-spec)
@@ -243,9 +215,7 @@
                'optional-into-phrase
                'optional-type-spec))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the BODY-FORM.
+;;; MINIMIZE expansion methods
 
 (defmethod body-forms ((clause minimize-clause))
   (let ((form (form clause)))
@@ -260,14 +230,12 @@
              (setq ,(var-spec (var clause))
                    (min ,(var-spec (var clause)) ,form)))))))
 
-
+;;; SUM clause
 
 (defclass sum-clause (accumulation-clause)
   ())
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
+;;; SUM parsers
 
 (define-parser sum-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form var type-spec)
@@ -283,9 +251,7 @@
                'optional-into-phrase
                'optional-type-spec))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the BODY-FORM.
+;;; SUM expansion methods
 
 (defmethod body-forms ((clause sum-clause))
   (let ((form (form clause)))

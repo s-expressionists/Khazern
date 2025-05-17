@@ -20,6 +20,10 @@
   (loop repeat 100
         collect 1))
 
+(define-benchmark repeat/nconc
+  (loop repeat 100
+        nconc (list 1 2 3)))
+
 (define-benchmark for-as-list/destructure
   (loop for (a b (c d) . e) in *random-trees*
         do (nothing)))
