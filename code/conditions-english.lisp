@@ -159,3 +159,19 @@
   (format stream
           "Inclusive iteration is not possible with the ~a LOOP iteration path."
           (path condition)))
+
+(defmethod acclimation:report-condition
+    ((condition unknown-data-type)
+     stream
+     (language acclimation:english))
+  (format stream
+          "Cannot verify that ~s is a subtype of the required type ~s."
+          (subtype condition) (supertype condition)))
+
+(defmethod acclimation:report-condition
+    ((condition invalid-data-type)
+     stream
+     (language acclimation:english))
+  (format stream
+          "Specified type ~s is not a subtype of ~s."
+          (subtype condition) (supertype condition)))

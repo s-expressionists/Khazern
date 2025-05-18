@@ -12,6 +12,15 @@
   (loop repeat 100
         collect (random-tree 5)))
 
+(defun random-double-floats (count)
+  (loop repeat count
+        collect (if (zerop (random 2))
+                    (- (random 1000d0))
+                    (random 1000d0))))
+
+(defvar *random-double-floats*
+  (random-double-floats 100))
+
 (define-benchmark repeat
   (loop repeat 100
         do (nothing)))
@@ -24,7 +33,19 @@
   (loop repeat 100
         nconc (list 1 2 3)))
 
-(define-benchmark for-as-list/destructure
+(define-benchmark for-as-in-list/maximize
+  (loop for i in *random-double-floats*
+        maximize i))
+
+(define-benchmark for-as-in-list/minximize
+  (loop for i in *random-double-floats*
+        maximize i))
+
+(define-benchmark for-as-in-list/sum
+  (loop for i in *random-double-floats*
+        sum i))
+
+(define-benchmark for-as-in-list/destructure
   (loop for (a b (c d) . e) in *random-trees*
         do (nothing)))
 

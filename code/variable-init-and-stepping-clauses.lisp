@@ -336,7 +336,7 @@
                                             :type-spec type-spec)
                         (cdr g)))
                'd-var-spec
-               'optional-type-spec
+               'optional-type-spec/placeholder
                (alternative 'for-as-arithmetic-from
                             'for-as-arithmetic-upfrom
                             'for-as-arithmetic-downfrom
@@ -364,7 +364,8 @@
           next-var
         (with-accessors ((by-type type-spec))
             by-var
-          (cond ((not (eq var-type t))
+          (cond ((not (eq var-type *placeholder-result*))
+                 (check-subtype var-type 'number)
                  (setf next-type (numeric-super-type var-type)
                        by-type next-type)
                  (when (numberp start-form)
@@ -475,7 +476,7 @@
                                 :form form
                                 :by-form by-form))
                'd-var-spec
-               'optional-type-spec
+               'optional-type-spec/t
                (keyword :in)
                'terminal
                'anything
@@ -490,7 +491,7 @@
                                 :form form
                                 :by-form by-form))
                'd-var-spec
-               'optional-type-spec
+               'optional-type-spec/t
                (keyword :on)
                'terminal
                'anything
@@ -547,7 +548,7 @@
                         :initial-form form1
                         (or initargs (cl:list :subsequent-form form1))))
                'd-var-spec
-               'optional-type-spec
+               'optional-type-spec/t
                (keyword :=)
                'terminal
                'anything
@@ -596,7 +597,7 @@
                                                     :type-spec type-spec)
                                 :form form))
                'd-var-spec
-               'optional-type-spec
+               'optional-type-spec/t
                (keyword :across)
                'terminal
                'anything))
@@ -659,7 +660,7 @@
                          (path-inclusive-p instance) t))
                  *current-path*)
                'd-var-spec
-               'optional-type-spec
+               'optional-type-spec/t
                (keyword :being)
                'terminal
                (alternative (consecutive (lambda (path)
@@ -974,7 +975,7 @@
                                             :type-spec type-spec)
                         initargs))
                'anything
-               'optional-type-spec
+               'optional-type-spec/t
                (optional nil
                          (consecutive (lambda (form)
                                         `(:form ,form))

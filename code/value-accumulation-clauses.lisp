@@ -144,9 +144,12 @@
                'terminal
                'anything
                'optional-into-phrase
-               'optional-type-spec))
+               'optional-type-spec/fixnum))
 
 ;;; COUNT expansion methods
+
+(defmethod analyze ((clause count-clause))
+  (check-subtype (type-spec (var clause)) 'number))
 
 (defmethod body-forms ((clause count-clause))
   (let ((form (form clause))
@@ -176,9 +179,12 @@
                'terminal
                'anything
                'optional-into-phrase
-               'optional-type-spec))
+               'optional-type-spec/real))
 
 ;;; MAXIMIZE expansion methods
+
+(defmethod analyze ((clause maximize-clause))
+  (check-subtype (type-spec (var clause)) '(or null real)))
 
 (defmethod body-forms ((clause maximize-clause))
   (let ((form (form clause)))
@@ -213,9 +219,12 @@
                'terminal
                'anything
                'optional-into-phrase
-               'optional-type-spec))
+               'optional-type-spec/real))
 
 ;;; MINIMIZE expansion methods
+
+(defmethod analyze ((clause minimize-clause))
+  (check-subtype (type-spec (var clause)) '(or null real)))
 
 (defmethod body-forms ((clause minimize-clause))
   (let ((form (form clause)))
@@ -249,9 +258,12 @@
                'terminal
                'anything
                'optional-into-phrase
-               'optional-type-spec))
+               'optional-type-spec/number))
 
 ;;; SUM expansion methods
+
+(defmethod analyze ((clause sum-clause))
+  (check-subtype (type-spec (var clause)) 'number))
 
 (defmethod body-forms ((clause sum-clause))
   (let ((form (form clause)))

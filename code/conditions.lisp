@@ -126,6 +126,18 @@
   ((%path :reader path
           :initarg :path)))
 
+(define-condition invalid-data-type (loop-semantic-error)
+  ((%subtype :reader subtype
+             :initarg :subtype)
+   (%supertype :reader supertype
+               :initarg :supertype)))
+
+(define-condition unknown-data-type (loop-semantic-error)
+  ((%subtype :reader subtype
+             :initarg :subtype)
+   (%supertype :reader supertype
+               :initarg :supertype)))
+
 ;;; Run Time Conditions
 
 (define-condition loop-runtime-error (error acclimation:condition)
@@ -142,3 +154,13 @@
 
 (define-condition value-must-be-list (type-error loop-runtime-error)
   ())
+
+(defun check-subtype (subtype supertype)
+  (multiple-value-bind (subtype-p valid-p)
+      (subtypep subtype supertype)
+    (cond ((not valid-p)
+	   (warn 'unknown-data-type
+                 :subtype subtype :supertype supertype))
+	  ((not subtype-p)
+	   (error 'invalid-data-type
+                  :subtype subtype :supertype supertype)))))

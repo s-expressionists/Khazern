@@ -65,6 +65,8 @@
 
 (defparameter *empty-result* (cons nil nil))
 
+(defparameter *placeholder-result* (cons nil nil))
+
 (defvar *categories* (make-hash-table :test #'eq))
 
 (defun parse-trace-output (format-control &rest arguments)
@@ -457,5 +459,17 @@
 (define-parser type-spec-parser ()
   (alternative 'simple-type-spec-parser 'destructured-type-spec-parser))
 
-(define-parser optional-type-spec ()
+(define-parser optional-type-spec/t ()
   (optional t 'type-spec-parser))
+
+(define-parser optional-type-spec/placeholder ()
+  (optional *placeholder-result* 'type-spec-parser))
+
+(define-parser optional-type-spec/number ()
+  (optional 'number 'type-spec-parser))
+
+(define-parser optional-type-spec/real ()
+  (optional 'real 'type-spec-parser))
+
+(define-parser optional-type-spec/fixnum ()
+  (optional 'fixnum 'type-spec-parser))
