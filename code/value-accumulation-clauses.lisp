@@ -160,16 +160,18 @@
         (setq ,into-var
               (1+ ,into-var))))))
 
-;;; MAXIMIZE clause
+;;; MINIMIZE/MAXIMIZE clause
 
-(defclass maximize-clause (accumulation-clause)
-  ())
+(defclass extremum-clause (accumulation-clause)
+  ((%reduce-function :reader reduce-function
+                     :initarg :reduce-function)))
 
-;;; MAXIMIZE parsers
+;;; MINIMIZE/MAXIMIZE parsers
 
 (define-parser maximize-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form var type-spec)
-                 (make-instance 'maximize-clause
+                 (make-instance 'extremum-clause
+                                :reduce-function 'max
                                 :form form
                                 :var (make-instance 'd-spec
                                                     :var-spec var
@@ -181,35 +183,10 @@
                'optional-into-phrase
                'optional-type-spec/real))
 
-;;; MAXIMIZE expansion methods
-
-(defmethod analyze ((clause maximize-clause))
-  (check-subtype (type-spec (var clause)) '(or null real)))
-
-(defmethod body-forms ((clause maximize-clause))
-  (let ((form (form clause)))
-    (when (and *it-var* (it-keyword-p form))
-      (setf form *it-var*))
-    `((cond ((null ,(var-spec (var clause)))
-             (setq ,(var-spec (var clause)) ,form)
-             (unless (realp ,(var-spec (var clause)))
-               (error 'type-error :datum ,(var-spec (var clause))
-                                  :expected-type 'real)))
-            (t
-             (setq ,(var-spec (var clause))
-                   (max ,(var-spec (var clause)) ,form)))))))
-
-
-;;; MINIMIZE clause
-
-(defclass minimize-clause (accumulation-clause)
-  ())
-
-;;; MINIMIZE parsers
-
 (define-parser minimize-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form var type-spec)
-                 (make-instance 'minimize-clause
+                 (make-instance 'extremum-clause
+                                :reduce-function 'min
                                 :form form
                                 :var (make-instance 'd-spec
                                                     :var-spec var
@@ -221,23 +198,20 @@
                'optional-into-phrase
                'optional-type-spec/real))
 
-;;; MINIMIZE expansion methods
+;;; MINIMIZE/MAXIMIZE expansion methods
 
-(defmethod analyze ((clause minimize-clause))
+(defmethod analyze ((clause extremum-clause))
   (check-subtype (type-spec (var clause)) '(or null real)))
 
-(defmethod body-forms ((clause minimize-clause))
-  (let ((form (form clause)))
+(defmethod body-forms ((clause extremum-clause))
+  (let ((form (form clause))
+        (var (var-spec (var clause))))
     (when (and *it-var* (it-keyword-p form))
       (setf form *it-var*))
-    `((cond ((null ,(var-spec (var clause)))
-             (setq ,(var-spec (var clause)) ,form)
-             (unless (realp ,(var-spec (var clause)))
-               (error 'type-error :datum ,(var-spec (var clause))
-                                  :expected-type 'real)))
-            (t
-             (setq ,(var-spec (var clause))
-                   (min ,(var-spec (var clause)) ,form)))))))
+    `((setq ,var
+            (if ,var
+                (,(reduce-function clause) ,var ,form)
+                ,form)))))
 
 ;;; SUM clause
 

@@ -118,6 +118,9 @@
    (%first-clause :initarg :first-clause :reader first-clause)
    (%second-clause :initarg :second-clause :reader second-clause)))
 
+(define-condition non-nullable-simple-d-var-spec (loop-syntax-error)
+  ((%var-spec :initarg :var-spec :reader var-spec)))
+
 ;;; The root of all semantic errors.
 (define-condition loop-semantic-error (program-error acclimation:condition)
   ())
@@ -164,3 +167,9 @@
 	  ((not subtype-p)
 	   (error 'invalid-data-type
                   :subtype subtype :supertype supertype)))))
+
+(defun check-nullable-simple-var-spec (d-spec)
+  (unless (and (symbolp (var-spec d-spec))
+               (or (not (constantp (var-spec d-spec)))
+                   (null (var-spec d-spec))))
+    (error 'non-nullable-simple-d-var-spec :var-spec (var-spec d-spec))))

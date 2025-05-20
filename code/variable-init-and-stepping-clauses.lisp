@@ -364,6 +364,7 @@
           next-var
         (with-accessors ((by-type type-spec))
             by-var
+          (check-nullable-simple-var-spec (var clause))
           (cond ((not (eq var-type *placeholder-result*))
                  (check-subtype var-type 'number)
                  (setf next-type (numeric-super-type var-type)
@@ -381,7 +382,10 @@
                          var-type next-type))
                  (setf start-form (coerce start-form next-type))
                  (when (numberp by-form)
-                   (setf by-form (coerce by-form by-type))))))))))
+                   (setf by-form (coerce by-form by-type))))
+                (t
+                 (setf var-type 'number
+                       by-type 'number))))))))
  
 (defmethod initial-bindings ((clause for-as-arithmetic))
   (nconc (mapcan (lambda (name)
@@ -608,12 +612,17 @@
   `((,(form-var clause) ,(form clause))
     (,(index-var clause) 0)))
 
+(defmethod initial-declarations ((clause for-as-across))
+  `((cl:type vector ,(form-var clause))
+    (cl:type fixnum ,(index-var clause))))
+  
 (defmethod final-bindings ((clause for-as-across))
   `((,(length-var clause) (length ,(form-var clause)))
     ,.(d-spec-outer-bindings (var clause))))
 
 (defmethod final-declarations ((clause for-as-across))
-  (d-spec-outer-declarations (var clause)))
+  (list* `(cl:type fixnum ,(length-var clause))
+         (d-spec-outer-declarations (var clause))))
 
 (defmethod initial-step-forms ((clause for-as-across))
   `((when (>= ,(index-var clause) ,(length-var clause))

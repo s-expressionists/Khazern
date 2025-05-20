@@ -175,3 +175,11 @@
   (format stream
           "Specified type ~s is not a subtype of ~s."
           (subtype condition) (supertype condition)))
+
+(defmethod acclimation:report-condition
+    ((condition non-nullable-simple-d-var-spec)
+     stream
+     (language acclimation:english))
+  (format stream
+          "Specified d-var-spec ~s is not a simple-var or NIL."
+          (var-spec condition)))

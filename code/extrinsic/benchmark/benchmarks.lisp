@@ -37,7 +37,7 @@
   (loop for i in *random-double-floats*
         maximize i))
 
-(define-benchmark for-as-in-list/minximize
+(define-benchmark for-as-in-list/minimize
   (loop for i in *random-double-floats*
         maximize i))
 
@@ -56,4 +56,8 @@
 
 (define-benchmark for-as-arithmetic
   (loop for i below 100
+        do (nothing)))
+
+(define-benchmark for-as-across
+  (loop for i across #(0 1 2 3 4 5 6 7 8 9)
         do (nothing)))
