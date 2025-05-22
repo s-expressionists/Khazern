@@ -1,4 +1,4 @@
-(cl:in-package #:khazern)
+(in-package #:khazern)
 
 (defclass token-stream ()
   ((%index :accessor index
@@ -11,7 +11,7 @@
   (when (null (tokens token-stream))
     (error "No more tokens"))
   (when (and expected-type-p
-             (not (cl:typep (normalize-token client scope (car (tokens token-stream)))
+             (not (typep (normalize-token client scope (car (tokens token-stream)))
                          expected-type)))
     (error 'type-error :datum (car (tokens token-stream)) :expected-type expected-type))
   (incf (index token-stream))
@@ -21,7 +21,7 @@
                   &optional (expected-type nil expected-type-p))
   (cond ((or (null (tokens token-stream))
              (and expected-type-p
-                  (not (cl:typep (normalize-token client scope (car (tokens token-stream)))
+                  (not (typep (normalize-token client scope (car (tokens token-stream)))
                               expected-type))))
          (values nil nil))
         (t

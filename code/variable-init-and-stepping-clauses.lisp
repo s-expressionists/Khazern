@@ -178,14 +178,14 @@
                ;; set the direction
                (case keyword
                  ((:upto :upfrom :below)
-                  (cond ((cl:typep instance 'for-as-arithmetic-down)
+                  (cond ((typep instance 'for-as-arithmetic-down)
                          (error "Incompatible directions"))
-                        ((not (cl:typep instance 'for-as-arithmetic-up))
+                        ((not (typep instance 'for-as-arithmetic-up))
                          (change-class instance 'for-as-arithmetic-up))))
                  ((:downto :downfrom :above)
-                  (cond ((cl:typep instance 'for-as-arithmetic-up)
+                  (cond ((typep instance 'for-as-arithmetic-up)
                          (error "Incompatible directions"))
-                        ((not (cl:typep instance 'for-as-arithmetic-down))
+                        ((not (typep instance 'for-as-arithmetic-down))
                          (change-class instance 'for-as-arithmetic-down))))))
              (parse-preposition (type)
                (multiple-value-bind (foundp token)
@@ -202,7 +202,7 @@
     (pushnew :to (order instance))
     (pushnew :from (order instance))
     (setf (order instance) (nreverse (order instance)))
-    (unless (cl:typep instance '(or for-as-arithmetic-down for-as-arithmetic-up))
+    (unless (typep instance '(or for-as-arithmetic-down for-as-arithmetic-up))
       (change-class instance 'for-as-arithmetic-up))
     instance))
   
@@ -481,15 +481,15 @@
     (,(index-var clause) 0)))
 
 (defmethod initial-declarations ((clause for-as-across))
-  `((cl:type vector ,(form-var clause))
-    (cl:type fixnum ,(index-var clause))))
+  `((type vector ,(form-var clause))
+    (type fixnum ,(index-var clause))))
   
 (defmethod final-bindings ((clause for-as-across))
   `((,(length-var clause) (length ,(form-var clause)))
     ,.(d-spec-outer-bindings (var clause))))
 
 (defmethod final-declarations ((clause for-as-across))
-  (list* `(cl:type fixnum ,(length-var clause))
+  (list* `(type fixnum ,(length-var clause))
          (d-spec-outer-declarations (var clause))))
 
 (defmethod initial-step-forms ((clause for-as-across))

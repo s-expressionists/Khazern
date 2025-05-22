@@ -1,4 +1,4 @@
-(cl:in-package #:khazern)
+(in-package #:khazern)
 
 ;;; We define a class that is the root class of all termination-test
 ;;; clauses.  Recall that a termination-test clause is a main clause,
@@ -44,7 +44,7 @@
 ;;; Compute the declarations.
 
 (defmethod initial-declarations ((clause repeat-clause))
-  `((cl:type ,(type-spec (var clause)) ,(var-spec (var clause)))))
+  `((type ,(type-spec (var clause)) ,(var-spec (var clause)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

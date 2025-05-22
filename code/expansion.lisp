@@ -49,8 +49,8 @@
                      (unless (or (eq category t)
                                  (member name variables))
                        (push name variables)
-                       (push `(cl:type ,(if (or (not (eq category 'count/sum))
-                                                (cl:typep (coerce 0 type) type))
+                       (push `(type ,(if (or (not (eq category 'count/sum))
+                                                (typep (coerce 0 type) type))
                                             type
                                             `(or (integer 0 0) ,type))
                                        ,name)

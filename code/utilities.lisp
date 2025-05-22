@@ -1,7 +1,7 @@
 (cl:in-package #:khazern)
 
 (defun type-or-null (type)
-  (if (cl:typep nil type)
+  (if (typep nil type)
       type
       `(or null ,type)))
 
@@ -115,7 +115,7 @@
 
 ;;; This is very hacky
 (defun numeric-types ()
-  (let ((types (cl:list 'complex 'number)))
+  (let ((types (list 'complex 'number)))
     (mapc (lambda (type)
             (pushnew (type-of (coerce 1 type)) types :test #'equalp))
           '((complex long-float)
@@ -274,7 +274,7 @@
     (map-variables (lambda (var type category)
                      (declare (ignore category))
                      (unless (eq type t)
-                       (push `(cl:type ,(type-or-null type) ,var)
+                       (push `(type ,(type-or-null type) ,var)
                              result))
                      (push var ignorables))
                    d-spec)
@@ -298,7 +298,7 @@
     (let (decl)
       (when var-spec
         (unless (eq type-spec t)
-          (push `(cl:type ,(if nullablep
+          (push `(type ,(if nullablep
                              (type-or-null type-spec)
                              type-spec)
                           ,var-spec)
