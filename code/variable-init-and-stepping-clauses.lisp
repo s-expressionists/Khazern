@@ -70,7 +70,8 @@
          subclauses
          var)
    next
-     (setf var (parse-d-spec client scope tokens))
+     (setf var (parse-d-spec client scope tokens
+                             :type-spec *placeholder-result*))
      (push (do-parse-tokens client instance tokens)
            subclauses)
      (setf (var (car subclauses)) var)
@@ -99,8 +100,9 @@
   (;; The order in which the forms are given.  This is a list of three
    ;; elements FROM, TO, and BY in the order that they were given in
    ;; the clause.
-   (%order :reader order
-           :initarg :order)
+   (%order :accessor order
+           :initarg :order
+           :initform nil)
    ;; The form that was given after one of the LOOP keywords FROM,
    ;; UPFROM, or DOWNFROM, or 0 if none of these LOOP keywords was
    ;; given.
@@ -138,7 +140,7 @@
    ;; contains the symbol <.  If there is TO/UPTO/DOWNTO/ABOVE/BELOW,
    ;; then the loop does not terminate because of this clause, and
    ;; then this slot contains NIL.
-   (%termination-test :reader termination-test
+   (%termination-test :accessor termination-test
                       :initarg :termination-test
                       :initform nil)))
 
@@ -244,6 +246,102 @@
                                                              (alternative 'to-parser
                                                                           'upto-parser
                                                                           'downto-parser)))))))
+
+(defun parse-for-as-arithmetic (client scope tokens keyword type1 type2)
+  (let ((instance (make-instance 'for-as-arithmetic)))
+    (labels ((handle-preposition (keyword)
+               ;; parse the form
+               (ecase keyword
+                 ((:to :upto :downto :above :below)
+                  (setf (end-form instance) (pop-token client scope tokens))
+                  (push :to (order instance)))
+                 ((:from :downfrom :upfrom)
+                  (setf (start-form instance) (pop-token client scope tokens))
+                  (push :from (order instance)))
+                 (:by
+                  (setf (by-form instance) (pop-token client scope tokens))
+                  (push :by (order instance))))
+               ;; set the termination test
+               (case keyword
+                 ((:to :upto :downto)
+                  (setf (termination-test instance) '<=))
+                 ((:above :below)
+                  (setf (termination-test instnace) '<)))
+               ;; set the direction
+               (case keyword
+                 ((:upto :upfrom :below)
+                  (cond ((cl:typep instance 'for-as-arithmetic-down)
+                         (error "Incompatible directions"))
+                        ((not (cl:typep instance 'for-as-arithmetic-up))
+                         (change-class instance 'for-as-arithmetic-up))))
+                 ((:downto :downfrom :above)
+                  (cond ((cl:typep instance 'for-as-arithmetic-up)
+                         (error "Incompatible directions"))
+                        ((not (cl:typep instance 'for-as-arithmetic-down))
+                         (change-class instance 'for-as-arithmetic-down))))))
+             (parse-preposition (type)
+               (multiple-value-bind (foundp token)
+                   (pop-token? client scope tokens type)
+                 (when foundp
+                   (handle-preposition (normalize-token client scope token)))
+                 foundp)))
+      (handle-preposition keyword)
+      (let ((type1-p (parse-preposition type1)))
+        (parse-preposition type2)
+        (unless type1-p
+          (parse-preposition type1))))
+    (pushnew :by (order instance))
+    (pushnew :to (order instance))
+    (pushnew :from (order instance))
+    (setf (order instance) (nreverse (order instance)))
+    (unless (cl:typep instance '(or for-as-arithmetic-down for-as-arithmetic-up))
+      (change-class instance 'for-as-arithmetic-up))
+    instance))
+  
+(defun parse-for-as-arithmetic/from-to-by (client scope keyword tokens)
+  (parse-for-as-arithmetic client scope tokens
+                           keyword
+                           '(member :to :upto :downto :above :below)
+                           '(eql :by)))
+
+(defun parse-for-as-arithmetic/to-from-by (client scope keyword tokens)
+  (parse-for-as-arithmetic client scope tokens
+                           keyword
+                           '(member :from :upfrom :downfrom)
+                           '(eql :by)))
+  
+(defun parse-for-as-arithmetic/by-from-to (client scope keyword tokens)
+  (parse-for-as-arithmetic client scope tokens
+                           keyword
+                           '(member :from :upfrom :downfrom)
+                           '(member :to :upto :downto :above :below)))
+  
+(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :up)) tokens)
+  (parse-for-as-arithmetic/from-to-by client scope keyword tokens))
+
+(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :upfrom)) tokens)
+  (parse-for-as-arithmetic/from-to-by client scope keyword tokens))
+
+(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :downfrom)) tokens)
+  (parse-for-as-arithmetic/from-to-by client scope keyword tokens))
+
+(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :to)) tokens)
+  (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
+
+(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :upto)) tokens)
+  (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
+
+(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :downto)) tokens)
+  (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
+
+(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :above)) tokens)
+  (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
+
+(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :below)) tokens)
+  (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
+
+(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :by)) tokens)
+  (parse-for-as-arithmetic/by-from-ro client scope keyword tokens))
 
 (define-parser for-as-arithmetic-upfrom ()
   (consecutive #'splice
