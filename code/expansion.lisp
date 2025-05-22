@@ -115,7 +115,7 @@
             (accumulation-declarations all-clauses)
             (do-clauses all-clauses)))
 
-(defun expand-body (loop-body epilogue-tag parser-table)
+(defun expand-body (loop-body epilogue-tag)
   (cond ((notevery #'listp loop-body)
          (let* ((*accumulation-variable* nil)
                 (*epilogue-tag* epilogue-tag)

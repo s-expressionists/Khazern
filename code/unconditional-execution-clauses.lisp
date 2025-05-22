@@ -26,13 +26,6 @@
   (make-instance 'do-clause
                  :forms (parse-compound-form+ client scope tokens)))
 
-(define-parser do-clause (:body-clause :selectable-clause)
-  (consecutive (lambda (forms)
-                 (make-instance 'do-clause :forms forms))
-               (keyword :do :doing)
-               'terminal
-               'compound-form+))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the body-forms.

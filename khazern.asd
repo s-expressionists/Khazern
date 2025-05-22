@@ -23,5 +23,4 @@
                              (:file "termination-test-clauses")
                              (:file "unconditional-execution-clauses")
                              (:file "conditional-execution-clauses")
-                             (:file "miscellaneous-clauses")
-                             (:file "default-parser-table")))))
+                             (:file "miscellaneous-clauses")))))

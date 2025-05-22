@@ -90,16 +90,7 @@
      (setf (subclauses instance) (nreverse subclauses))
      (return instance)))
 
-(define-parser for-as-subclause+ ()
-  (delimited-list-by-category :for-as-subclause nil 'and))
-  
-(define-parser for-as-clause (:body-clause)
-  (consecutive (lambda (subclauses)
-                 (make-instance 'for-as-clause :subclauses subclauses))
-               (keyword :for :as)
-               'for-as-subclause+))
-
-;;; FOR-AS-CLAUSE expansion methods
+;; FOR-AS-CLAUSE expansion methods
 
 (defmethod map-variables (function (clause for-as-clause))
   (map-variables function (subclauses clause)))
@@ -163,99 +154,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; FOR-AS-ARITHMETIC parsers
-
-(define-parser from-parser ()
-  (consecutive (lambda (form)
-                 `(nil :start-form ,form))
-               (keyword :from)
-               'terminal
-               'anything))
-
-(define-parser upfrom-parser ()
-  (consecutive (lambda (form)
-                 `(for-as-arithmetic-up :start-form ,form))
-               (keyword :upfrom)
-               'terminal
-               'anything))
-
-(define-parser downfrom-parser ()
-  (consecutive (lambda (form)
-                 `(for-as-arithmetic-down :start-form ,form))
-               (keyword :downfrom)
-               'terminal
-               'anything))
-
-(define-parser to-parser ()
-  (consecutive (lambda (form)
-                 `(nil :termination-test <= :end-form ,form))
-               (keyword :to)
-               'terminal
-               'anything))
-
-(define-parser upto-parser ()
-  (consecutive (lambda (test form)
-                 `(for-as-arithmetic-up :termination-test ,test :end-form ,form))
-               (alternative (consecutive (constantly '<=)
-                                         (keyword :upto))
-                            (consecutive (constantly '<)
-                                         (keyword :below)))
-               'terminal
-               'anything))
-
-(define-parser downto-parser ()
-  (consecutive (lambda (test form)
-                 `(for-as-arithmetic-down :termination-test ,test :end-form ,form))
-               (alternative (consecutive (constantly '<=)
-                                         (keyword :downto))
-                            (consecutive (constantly '<)
-                                         (keyword :above)))
-               'terminal
-               'anything))
-
-(define-parser by-parser ()
-  (consecutive (lambda (form)
-                 `(nil :by-form ,form))
-               (keyword :by)
-               'terminal
-               'anything))
-
-(defun splice (x y)
-  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y)))
-
-(defun from-to-by (x y)
-  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order (:from :to :by)))
-
-(defun from-by-to (x y)
-  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order (:from :by :to)))
-
-(defun to-from-by (x y)
-  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order (:to :from :by)))
-
-(defun to-by-from (x y)
-  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order (:to :by :from)))
-
-(defun by-from-to (x y)
-  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order (:by :from :to)))
-
-(defun by-to-from (x y)
-  `(,(or (car x) (car y)) ,@(cdr x) ,@(cdr y) :order (:by :to :from)))
-
-(define-parser for-as-arithmetic-from ()
-  (consecutive #'splice
-               'from-parser
-               (optional '(nil :order (:from :to :by))
-                         (alternative (consecutive #'from-to-by
-                                                   (alternative 'to-parser
-                                                                'upto-parser
-                                                                'downto-parser)
-                                                   (optional nil
-                                                             'by-parser))
-                                      (consecutive #'from-by-to
-                                                   'by-parser
-                                                   (optional nil
-                                                             (alternative 'to-parser
-                                                                          'upto-parser
-                                                                          'downto-parser)))))))
 
 (defun parse-for-as-arithmetic (client scope tokens keyword type1 type2)
   (let ((instance (make-instance 'for-as-arithmetic)))
@@ -352,138 +250,6 @@
 
 (defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :by)) tokens)
   (parse-for-as-arithmetic/by-from-to client scope keyword tokens))
-
-(define-parser for-as-arithmetic-upfrom ()
-  (consecutive #'splice
-               'upfrom-parser
-               (optional '(nil :order (:from :to :by))
-                         (alternative (consecutive #'from-to-by
-                                                   (alternative 'to-parser
-                                                                'upto-parser)
-                                                   (optional nil
-                                                             'by-parser))
-                                      (consecutive #'from-by-to
-                                                   'by-parser
-                                                   (optional nil
-                                                             (alternative 'to-parser
-                                                                          'upto-parser)))))))
-
-(define-parser for-as-arithmetic-downfrom ()
-  (consecutive #'splice
-               'downfrom-parser
-               (optional '(nil :order (:from :to :by))
-                         (alternative (consecutive #'from-to-by
-                                                   (alternative 'to-parser
-                                                                'downto-parser)
-                                                   (optional nil
-                                                             'by-parser))
-                                      (consecutive #'from-by-to
-                                                   'by-parser
-                                                   (optional nil
-                                                             (alternative 'to-parser
-                                                                          'downto-parser)))))))
-
-(define-parser for-as-arithmetic-to ()
-  (consecutive #'splice
-               'to-parser
-               (optional '(nil :order (:to :from :by))
-                         (alternative (consecutive #'to-from-by
-                                                   (alternative 'from-parser
-                                                                'upfrom-parser
-                                                                'downfrom-parser)
-                                                   (optional nil
-                                                             'by-parser))
-                                      (consecutive #'to-by-from
-                                                   'by-parser
-                                                   (optional nil
-                                                             (alternative 'from-parser
-                                                                          'upfrom-parser
-                                                                          'downfrom-parser)))))))
-
-(define-parser for-as-arithmetic-upto ()
-  (consecutive #'splice
-               'upto-parser
-               (optional '(nil :order (:to :from :by))
-                         (alternative (consecutive #'to-from-by
-                                                   (alternative 'from-parser
-                                                                'upfrom-parser)
-                                                   (optional nil
-                                                             'by-parser))
-                                      (consecutive #'to-by-from
-                                                   'by-parser
-                                                   (optional nil
-                                                             (alternative 'from-parser
-                                                                          'upfrom-parser)))))))
-
-(define-parser for-as-arithmetic-downto ()
-  (consecutive #'splice
-               'downto-parser
-               (optional '(nil :order (:to :from :by))
-                         (alternative (consecutive #'to-from-by
-                                                   (alternative 'from-parser
-                                                                'downfrom-parser)
-                                                   (optional nil
-                                                             'by-parser))
-                                      (consecutive #'to-by-from
-                                                   'by-parser
-                                                   (optional nil
-                                                             (alternative 'from-parser
-                                                                          'downfrom-parser)))))))
-
-(define-parser for-as-arithmetic-by ()
-  (consecutive #'splice
-               'by-parser
-               (optional '(nil :order (:by :from :to))
-                         (alternative (consecutive #'by-from-to
-                                                   'from-parser
-                                                   (optional nil
-                                                             (alternative 'to-parser
-                                                                          'upto-parser
-                                                                          'downto-parser)))
-                                      (consecutive #'by-from-to
-                                                   'upfrom-parser
-                                                   (optional nil
-                                                             (alternative 'to-parser
-                                                                          'upto-parser)))
-                                      (consecutive #'by-from-to
-                                                   'downfrom-parser
-                                                   (optional nil
-                                                             (alternative 'to-parser
-                                                                          'downto-parser)))
-                                      (consecutive #'by-to-from
-                                                   'to-parser
-                                                   (optional nil
-                                                             (alternative 'from-parser
-                                                                          'upfrom-parser
-                                                                          'downfrom-parser)))
-                                      (consecutive #'by-to-from
-                                                   'upto-parser
-                                                   (optional nil
-                                                             (alternative 'from-parser
-                                                                          'upfrom-parser)))
-                                      (consecutive #'by-to-from
-                                                   'downto-parser
-                                                   (optional nil
-                                                             (alternative 'from-parser
-                                                                          'downfrom-parser)))))))
-
-(define-parser for-as-arithmetic-parser (:for-as-subclause)
-  (consecutive (lambda (var-spec type-spec g)
-                 (apply #'make-instance
-                        (or (car g) 'for-as-arithmetic-up)
-                        :var (make-instance 'd-spec
-                                            :var-spec var-spec
-                                            :type-spec type-spec)
-                        (cdr g)))
-               'd-var-spec
-               'optional-type-spec/placeholder
-               (alternative 'for-as-arithmetic-from
-                            'for-as-arithmetic-upfrom
-                            'for-as-arithmetic-downfrom
-                            'for-as-arithmetic-to
-                            'for-as-arithmetic-upto
-                            'for-as-arithmetic-downto
-                            'for-as-arithmetic-by)))
 
 ;;; FOR-AS-ARITHMETIC expansion methods
 
@@ -620,42 +386,6 @@
       (setf (by-form instance) (pop-token client scope tokens)))
     instance))
 
-(define-parser for-as-list-by-parser ()
-  (optional '#'cdr
-            (consecutive #'identity
-                         (keyword :by)
-                         'anything)))
-
-(define-parser for-as-in-list-parser (:for-as-subclause)
-  (consecutive (lambda (var type-spec form by-form)
-                 (make-instance 'for-as-in-list
-                                :var (make-instance 'd-spec
-                                                    :var-spec var
-                                                    :type-spec type-spec)
-                                :form form
-                                :by-form by-form))
-               'd-var-spec
-               'optional-type-spec/t
-               (keyword :in)
-               'terminal
-               'anything
-               'for-as-list-by-parser))
-
-(define-parser for-as-on-list-parser (:for-as-subclause)
-  (consecutive (lambda (var type-spec form by-form)
-                 (make-instance 'for-as-on-list
-                                :var (make-instance 'd-spec
-                                                    :var-spec var
-                                                    :type-spec type-spec)
-                                :form form
-                                :by-form by-form))
-               'd-var-spec
-               'optional-type-spec/t
-               (keyword :on)
-               'terminal
-               'anything
-               'for-as-list-by-parser))
-
 ;;; FOR-AS-IN-LIST/FOR-AS-ON-LIST expansion methods
 
 (defmethod initial-bindings ((clause for-as-list))
@@ -710,27 +440,6 @@
     (setf (type-spec (var clause)) t))
   (set-d-spec-temps (var clause) t))
 
-(define-parser for-as-equals-then-parser (:for-as-subclause)
-  (consecutive (lambda (var-spec type-spec form1 initargs)
-                 (apply #'make-instance 'for-as-equals-then
-                        :var (make-instance 'd-spec
-                                            :var-spec var-spec
-                                            :type-spec type-spec
-                                            :temp-var t)
-                        :initial-form form1
-                        (or initargs (cl:list :subsequent-form form1))))
-               'd-var-spec
-               'optional-type-spec/t
-               (keyword :=)
-               'terminal
-               'anything
-               (optional nil
-                         (consecutive (lambda (form)
-                                        (cl:list :subsequent-form form))
-                                      (keyword :then)
-                                      'terminal
-                                      'anything))))
-
 ;;; FOR-AS-EQUALS-THEN expansion methods
 
 (defmethod initial-bindings ((clause for-as-equals-then))
@@ -764,19 +473,6 @@
 (defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :across)) tokens)
   (make-instance 'for-as-across
                  :form (pop-token client scope tokens)))
-
-(define-parser for-as-across (:for-as-subclause)
-  (consecutive (lambda (var-spec type-spec form)
-                 (make-instance 'for-as-across
-                                :var (make-instance 'd-spec
-                                                    :var-spec var-spec
-                                                    :type-spec type-spec)
-                                :form form))
-               'd-var-spec
-               'optional-type-spec/t
-               (keyword :across)
-               'terminal
-               'anything))
 
 ;;; FOR-AS-ACROSS expansion methods
 
@@ -885,75 +581,6 @@
      (when using
        (go next-using))
      (go next-preposition)))
-
-(define-parser for-as-path-intro ()
-  (consecutive (lambda (var-spec type-spec args)
-                 (setf *current-path*
-                       (funcall (iterator-path *parser-table* (car args))
-                                (car args) var-spec type-spec))
-                 (when (cdr args)
-                   (unless (path-inclusive-permitted-p *current-path*)
-                     (error 'loop-path-non-inclusive :path (car args)))
-                   (setf (path-preposition instance
-                                           (symbol-lookup (path-preposition-names instance :of)))
-                         (second args)
-                         (path-inclusive-p instance) t))
-                 *current-path*)
-               'd-var-spec
-               'optional-type-spec/t
-               (keyword :being)
-               'terminal
-               (alternative (consecutive (lambda (path)
-                                           (cl:list path))
-                                         (keyword :each :the)
-                                         'terminal
-                                         (typep '(satisfies loop-path-p)))
-                            (consecutive (lambda (expression path)
-                                           (cl:list path expression))
-                                         'anything
-                                         (keyword :and)
-                                         (keyword :its :each :his :her)
-                                         'terminal
-                                         (typep '(satisfies loop-path-p))))))
- 
-(define-parser for-as-path-preposition ()
-  (consecutive (lambda (name expression)
-                 (let ((key (symbol-lookup name (path-preposition-names *current-path*))))
-                   (setf (path-preposition *current-path* key) expression)
-                   (push key *current-path-prepositions*))
-                 nil)
-               (typep '(satisfies current-path-preposition-p))
-               'anything))
-
-(define-parser for-as-path-using ()
-  (consecutive (lambda (&rest args)
-                 (push :using *current-path-prepositions*)
-                 args)
-               (keyword :using)
-               (list (lambda (&rest args)
-                       args)
-                     (repeat+ (lambda (&rest args)
-                                args)
-                              (consecutive (lambda (name expression)
-                                             (let ((key (symbol-lookup name (path-using-names *current-path*))))
-                                               (setf (path-using *current-path* key) expression)
-                                               (push key *current-path-usings*)))
-                                           (typep '(satisfies current-path-using-p))
-                                           'anything)))))
-
-(define-parser for-as-path-parser (:for-as-subclause)
-  (lambda (tokens)
-    (let ((*current-path* nil)
-          (*current-path-prepositions* nil)
-          (*current-path-usings* nil))
-      (funcall (consecutive (lambda (path preps)
-                              path)
-                            'for-as-path-intro
-                            (repeat* (lambda (&rest args)
-                                       args)
-                                     (alternative 'for-as-path-preposition
-                                                  'for-as-path-using)))
-               tokens))))
 
 ;;; 6.1.2.1.6 FOR-AS-HASH Subclause
 
@@ -1279,36 +906,6 @@
        (go next))
      (setf (subclauses instance) (nreverse subclauses))
      (return instance)))  
-
-(define-parser with-subclause ()
-  (consecutive (lambda (var-spec type-spec initargs)
-                 (apply #'make-instance (if initargs
-                                            'with-subclause-with-form
-                                            'with-subclause-no-form)
-                        :var (make-instance 'd-spec
-                                            :var-spec var-spec
-                                            :type-spec type-spec)
-                        initargs))
-               'anything
-               'optional-type-spec/t
-               (optional nil
-                         (consecutive (lambda (form)
-                                        `(:form ,form))
-                                      (keyword :=)
-                                      'anything))))
-
-(define-parser with-clause (:body-clause)
-  (consecutive (lambda (first rest)
-                 (make-instance 'with-clause
-                                :subclauses (cons first rest)))
-               (keyword :with)
-               'terminal
-               'with-subclause
-               (repeat* #'cl:list
-                        (consecutive #'identity
-                                     (keyword :and)
-                                     'terminal
-                                     'with-subclause))))
 
 ;;; WITH expansion methods
 

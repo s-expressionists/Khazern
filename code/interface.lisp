@@ -188,20 +188,6 @@
   (:method :before (clause-or-clauses)
     (mapc #'analyze (subclauses clause-or-clauses))))
 
-;;; Parser Table interface
-
-(defgeneric copy-parser-table (table))
-
-(defgeneric parser-enabled-p (table name))
-
-(defgeneric (setf parser-enabled-p) (value table name))
-
-(defgeneric iterator-path (table name))
-
-(defgeneric (setf iterator-path) (new-function table name))
-
-(defgeneric remove-iterator-path (table name))
-
 ;;; Interface declaration
 
 (defun ensure-symbol (name &optional (package *package*))
@@ -209,23 +195,10 @@
 
 (defmacro define-interface (&optional intrinsic)
   (let* ((intrinsic-pkg (if intrinsic (find-package '#:common-lisp) *package*))
-         (epilogue-tag (ensure-symbol '#:epilogue))
-         (parser-table (ensure-symbol '#:*parser-table*)))
+         (epilogue-tag (ensure-symbol '#:epilogue)))
     `(progn
-       (defparameter ,parser-table (khazern:copy-parser-table nil))
-
        (defmacro ,(ensure-symbol '#:loop-finish intrinsic-pkg) ()
          '(go ,epilogue-tag))
 
        (defmacro ,(ensure-symbol '#:loop intrinsic-pkg) (&rest forms)
-         (khazern:expand-body forms ',epilogue-tag ,parser-table))
-
-       (defun ,(ensure-symbol '#:set-loop-path) (name func)
-         (setf (khazern:iterator-path ,parser-table name) func))
-
-       (defun ,(ensure-symbol '#:get-loop-path) (name)
-         (khazern:iterator-path ,parser-table name))
-       
-       (defun ,(ensure-symbol '#:remove-loop-path) (name)
-         (khazern:remove-iterator-path ,parser-table name)))))
-       
+         (khazern:expand-body forms ',epilogue-tag)))))

@@ -32,13 +32,6 @@
     (client (scope body-clauses) (keyword (eql :repeat)) tokens)
   (make-instance 'repeat-clause :form (pop-token client scope tokens)))
 
-(define-parser repeat-clause (:body-clause)
-  (consecutive (lambda (form)
-                 (make-instance 'repeat-clause :form form))
-               (keyword :repeat)
-               'terminal
-               'anything))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the bindings.
@@ -85,14 +78,6 @@
     (client (scope body-clauses) (keyword (eql :always)) tokens)
   (make-instance 'always-clause :form (pop-token client scope tokens)))
 
-(define-parser always-clause (:body-clause)
-  (consecutive (lambda (form)
-                 (make-instance 'always-clause
-                   :form form))
-               (keyword :always)
-               'terminal
-               'anything))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the body-forms
@@ -117,13 +102,6 @@
     (client (scope body-clauses) (keyword (eql :never)) tokens)
   (make-instance 'never-clause :form (pop-token client scope tokens)))
 
-(define-parser never-clause (:body-clause)
-  (consecutive (lambda (form)
-                 (make-instance 'never-clause :form form))
-               (keyword :never)
-               'terminal
-               'anything))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the body-forms
@@ -146,13 +124,6 @@
 (defmethod parse-tokens
     (client (scope body-clauses) (keyword (eql :thereis)) tokens)
   (make-instance 'thereis-clause :form (pop-token client scope tokens)))
-
-(define-parser thereis-clause (:body-clause)
-  (consecutive (lambda (form)
-                 (make-instance 'thereis-clause :form form))
-               (keyword :thereis)
-               'terminal
-               'anything))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -179,20 +150,6 @@
     (client (scope body-clauses) (keyword (eql :until)) tokens)
   (make-instance 'while-clause :form `(not ,(pop-token client scope tokens))))
 
-(define-parser while-clause (:body-clause)
-  (consecutive (lambda (form)
-                 (make-instance 'while-clause :form form))
-               (keyword :while)
-               'terminal
-               'anything))
-
-(define-parser until-clause (:body-clause)
-  (consecutive (lambda (form)
-                 (make-instance 'while-clause :form `(not ,form)))
-               (keyword :until)
-               'terminal
-               'anything))
-  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the body-forms

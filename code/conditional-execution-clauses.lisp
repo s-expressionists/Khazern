@@ -44,37 +44,6 @@
                                               :condition `(not ,(pop-token client scope tokens)))
                                tokens))
 
-(define-parser conditional-clause-tail ()
-  (consecutive (lambda (condition then-clauses else-clauses)
-                 (make-instance 'conditional-clause
-                                :condition condition
-                                :then-clauses then-clauses
-                                :else-clauses else-clauses))
-               'anything
-               'selectable-clause+
-               (optional nil
-                         (consecutive (lambda (else-clauses)
-                                        else-clauses)
-                                      (keyword :else)
-                                      'selectable-clause+))
-               (keyword? :end)))
-                         
-(define-parser if-when-clauses ()
-  (consecutive #'identity
-               (keyword :if :when)
-               'conditional-clause-tail))
-
-(define-parser unless-clauses ()
-  (consecutive (lambda (clause)
-                 (setf (condition clause) `(not ,(condition clause)))
-                 clause)
-               (keyword :unless)
-               'conditional-clause-tail))
-
-(define-parser conditional-clause (:body-clause :selectable-clause)
-  (alternative 'if-when-clauses
-               'unless-clauses))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute body-forms.

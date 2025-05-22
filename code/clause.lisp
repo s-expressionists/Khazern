@@ -281,10 +281,3 @@
 
 (defclass selectable-clause (main-clause)
   ())
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
-
-(define-parser selectable-clause+ ()
-  (delimited-list-by-category :selectable-clause nil 'and))

@@ -24,18 +24,6 @@
                                      :var-spec (parse-into client scope tokens)
                                      :accumulation-category 'list)))
 
-(define-parser collect-clause (:body-clause :selectable-clause)
-  (consecutive (lambda (form var)
-                 (make-instance 'collect-clause
-                                :form form
-                                :var (make-instance 'd-spec
-                                                    :var-spec var
-                                                    :accumulation-category 'list)))
-               (keyword :collect :collecting)
-               'terminal
-               'anything
-               'optional-into-phrase))
-
 ;;; COLLECT expansion methods
 
 (defmethod body-forms ((clause collect-clause))
@@ -62,18 +50,6 @@
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into client scope tokens)
                                      :accumulation-category 'list)))
-
-(define-parser append-clause (:body-clause :selectable-clause)
-  (consecutive (lambda (form var)
-                 (make-instance 'append-clause
-                                :form form
-                                :var (make-instance 'd-spec
-                                                    :var-spec var
-                                                    :accumulation-category 'list)))
-               (keyword :append :appending)
-               'terminal
-               'anything
-               'optional-into-phrase))
 
 ;;; APPEND expansion methods
 
@@ -119,18 +95,6 @@
                                      :var-spec (parse-into client scope tokens)
                                      :accumulation-category 'list)))
 
-(define-parser nconc-clause (:body-clause :selectable-clause)
-  (consecutive (lambda (form var)
-                 (make-instance 'nconc-clause
-                                :form form
-                                :var (make-instance 'd-spec
-                                                    :var-spec var
-                                                    :accumulation-category 'list)))
-               (keyword :nconc :nconcing)
-               'terminal
-               'anything
-               'optional-into-phrase))
-
 ;;; NCONC expansion methods
 
 (defmethod body-forms ((clause nconc-clause))
@@ -165,20 +129,6 @@
                                      :var-spec (parse-into client scope tokens)
                                      :type-spec (parse-type-spec client scope tokens 'fixnum)                          
                                      :accumulation-category 'count/sum)))
-
-(define-parser count-clause (:body-clause :selectable-clause)
-  (consecutive (lambda (form var type-spec)
-                 (make-instance 'count-clause
-                                :form form
-                                :var (make-instance 'd-spec
-                                                    :var-spec var
-                                                    :type-spec type-spec
-                                                    :accumulation-category 'count/sum)))
-               (keyword :count :counting)
-               'terminal
-               'anything
-               'optional-into-phrase
-               'optional-type-spec/fixnum))
 
 ;;; COUNT expansion methods
 
@@ -250,20 +200,6 @@
                                      :var-spec (parse-into client scope tokens)
                                      :type-spec (parse-type-spec client scope tokens 'number)                          
                                      :accumulation-category 'count/sum)))
-
-(define-parser sum-clause (:body-clause :selectable-clause)
-  (consecutive (lambda (form var type-spec)
-                 (make-instance 'sum-clause
-                                :form form
-                                :var (make-instance 'd-spec
-                                                    :var-spec var
-                                                    :type-spec type-spec
-                                                    :accumulation-category 'count/sum)))
-               (keyword :sum :summing)
-               'terminal
-               'anything
-               'optional-into-phrase
-               'optional-type-spec/number))
 
 ;;; SUM expansion methods
 
