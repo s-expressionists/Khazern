@@ -705,6 +705,11 @@
                                         (pop-token client scope tokens)
                                         initial-form))))
 
+(defmethod analyze ((clause for-as-equals-then))
+  (when (eq (type-spec (var clause)) *placeholder-result*)
+    (setf (type-spec (var clause)) t))
+  (set-d-spec-temps (var clause) t))
+
 (define-parser for-as-equals-then-parser (:for-as-subclause)
   (consecutive (lambda (var-spec type-spec form1 initargs)
                  (apply #'make-instance 'for-as-equals-then
