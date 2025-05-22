@@ -21,6 +21,11 @@
 ;;;
 ;;; Parser
 
+(defmethod parse-tokens
+    (client (scope selectable-clauses) (keyword (eql :do)) tokens)
+  (make-instance 'do-clause
+                 :forms (parse-compound-form+ client scope tokens)))
+
 (define-parser do-clause (:body-clause :selectable-clause)
   (consecutive (lambda (forms)
                  (make-instance 'do-clause :forms forms))

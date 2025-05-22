@@ -119,7 +119,9 @@
   (cond ((notevery #'listp loop-body)
          (let* ((*accumulation-variable* nil)
                 (*epilogue-tag* epilogue-tag)
-                (clauses (parse-loop-body loop-body parser-table)))
+                (clauses (do-parse-body nil
+                           (make-instance 'token-stream
+                                          :tokens loop-body))))
            (analyze clauses)
            (let* ((name (if (name-clause-p (car clauses))
                             (name (car clauses))

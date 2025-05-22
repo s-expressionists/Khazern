@@ -47,6 +47,38 @@
 
 ;;; FOR-AS-CLAUSE parsers
 
+(defmethod normalize-token (client (scope for-as-clause) (token symbol))
+  (symbol-lookup token
+                 '((:and . :and)
+                   (:in . :in)
+                   (:on . :on)
+                   (:from . :from)
+                   (:to . :to)
+                   (:downto . :downto)
+                   (:upfrom . :upfrom)
+                   (:upto . :upto)
+                   (:downfrom . :downfrom)
+                   (:by . :by)
+                   (:across . :across)
+                   (:being . :being)
+                   (:the . :the)
+                   (:each . :being))
+                 token))
+
+(defmethod parse-tokens (client (scope body-clauses) (keyword (eql :for)) tokens)
+  (prog ((instance (make-instance 'for-as-clause))
+         subclauses
+         var)
+   next
+     (setf var (parse-d-spec client scope tokens))
+     (push (do-parse-tokens client instance tokens)
+           subclauses)
+     (setf (var (car subclauses)) var)
+     (when (pop-token? client instance tokens '(eql :and))
+       (go next))
+     (setf (subclauses instance) (nreverse subclauses))
+     (return instance)))
+
 (define-parser for-as-subclause+ ()
   (delimited-list-by-category :for-as-subclause nil 'and))
   
@@ -450,8 +482,9 @@
 ;;; 6.1.2.1.2/6.1.2.1.3 FOR-AS-IN-LIST/FOR-AS-ON-LIST subclauses
 
 (defclass for-as-list (for-as-subclause form-mixin form-var-mixin)
-  ((%by-form :reader by-form
-             :initarg :by-form)
+  ((%by-form :accessor by-form
+             :initarg :by-form
+             :initform '#'cdr)
    (%by-var :reader by-var
             :initform (gensym "BY"))
    (%rest-var :reader rest-var
@@ -464,6 +497,20 @@
   ())
 
 ;;; FOR-AS-IN-LIST/FOR-AS-ON-LIST parsers
+
+(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :in)) tokens)
+  (let ((instance (make-instance 'for-as-in-list
+                                 :form (pop-token client scope tokens))))
+    (when (pop-token? client scope tokens '(eql :by))
+      (setf (by-form instance) (pop-token client scope tokens)))
+    instance))
+
+(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :on)) tokens)
+  (let ((instance (make-instance 'for-as-on-list
+                                 :form (pop-token client scope tokens))))
+    (when (pop-token? client scope tokens '(eql :by))
+      (setf (by-form instance) (pop-token client scope tokens)))
+    instance))
 
 (define-parser for-as-list-by-parser ()
   (optional '#'cdr
@@ -542,6 +589,14 @@
 
 ;;; FOR-AS-EQUALS-THEN parsers
 
+(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :=)) tokens)
+  (let ((initial-form (pop-token client scope tokens)))
+    (make-instance 'for-as-equals-then
+                   :inital-form initial-form
+                   :subsequent-form (if (pop-token? client scope tokens '(eql :then))
+                                        (pop-token client scope tokens)
+                                        initial-form))))
+
 (define-parser for-as-equals-then-parser (:for-as-subclause)
   (consecutive (lambda (var-spec type-spec form1 initargs)
                  (apply #'make-instance 'for-as-equals-then
@@ -592,6 +647,10 @@
                :initform (gensym "INDEX"))))
 
 ;;; FOR-AS-ACROSS parsers
+
+(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :across)) tokens)
+  (make-instance 'for-as-across
+                 :form (pop-token client scope tokens)))
 
 (define-parser for-as-across (:for-as-subclause)
   (consecutive (lambda (var-spec type-spec form)
@@ -973,6 +1032,31 @@
   ())
 
 ;;; WITH Parsers
+
+(defmethod normalize-token (client (scope with-clause) (token symbol))
+  (symbol-lookup token
+                 '((:= . :=)
+                   (:and . :and))))
+
+
+(defmethod parse-tokens (client (scope body-clauses) (keyword (eql :with)) tokens)
+  (prog ((instance (make-instance 'with-clause))
+         var
+         subclauses)
+   next
+     (setf var (parse-d-spec client scope tokens))
+     (if (pop-token? client instance tokens '(eql :=))
+         (push (make-instance 'with-subclause-with-form
+                              :var var
+                              :form (pop-token client scope tokens))
+               subclauses)
+         (push (make-instance 'with-subclause-no-form
+                              :var var)
+               subclauses))
+     (when (pop-token? client instance tokens '(eql :and))
+       (go next))
+     (setf (subclauses instance) (nreverse subclauses))
+     (return instance)))  
 
 (define-parser with-subclause ()
   (consecutive (lambda (var-spec type-spec initargs)

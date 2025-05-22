@@ -26,6 +26,10 @@
 ;;;
 ;;; Parser.
 
+(defmethod parse-tokens
+    (client (scope body-clauses) (keyword (eql :name)) tokens)
+  (make-instance 'name-clause :name (pop-token client scope tokens)))
+
 (define-parser name-clause (:body-clause)
   (consecutive (lambda (name)
                  (make-instance 'name-clause :name name))
@@ -48,6 +52,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parser
+
+(defmethod parse-tokens
+    (client (scope selectable-clauses) (keyword (eql :return)) tokens)
+  (make-instance 'return-clause :form (pop-token client scope tokens)))
 
 (define-parser return-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form)
@@ -87,6 +95,11 @@
 ;;;
 ;;; Parser
 
+(defmethod parse-tokens
+    (client (scope body-clauses) (keyword (eql :initially)) tokens)
+  (make-instance 'initial-clause
+                 :forms (parse-compound-form+ client scope tokens)))
+
 (define-parser initial-clause (:body-clause)
   (consecutive (lambda (forms)
                  (make-instance 'initial-clause
@@ -120,6 +133,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parser
+
+(defmethod parse-tokens
+    (client (scope body-clauses) (keyword (eql :finally)) tokens)
+  (make-instance 'final-clause
+                 :forms (parse-compound-form+ client scope tokens)))
 
 (define-parser final-clause (:body-clause)
   (consecutive (lambda (forms)

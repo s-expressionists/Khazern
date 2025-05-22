@@ -1,5 +1,12 @@
 (cl:in-package #:khazern)
 
+(defgeneric normalize-token (client scope symbol)
+  (:method (client scope symbol)
+    (declare (ignore client scope))
+    symbol))
+
+(defgeneric parse-tokens (client scope keyword tokens))
+
 (defgeneric map-variables (function clause)
   (:method (function clause)
     (declare (ignore function clause))

@@ -28,6 +28,10 @@
 ;;;
 ;;; Parsers.
 
+(defmethod parse-tokens
+    (client (scope body-clauses) (keyword (eql :repeat)) tokens)
+  (make-instance 'repeat-clause :form (pop-token client scope tokens)))
+
 (define-parser repeat-clause (:body-clause)
   (consecutive (lambda (form)
                  (make-instance 'repeat-clause :form form))
@@ -77,6 +81,10 @@
 ;;;
 ;;; Parsers.
 
+(defmethod parse-tokens
+    (client (scope body-clauses) (keyword (eql :always)) tokens)
+  (make-instance 'always-clause :form (pop-token client scope tokens)))
+
 (define-parser always-clause (:body-clause)
   (consecutive (lambda (form)
                  (make-instance 'always-clause
@@ -105,6 +113,10 @@
 ;;;
 ;;; Parsers.
 
+(defmethod parse-tokens
+    (client (scope body-clauses) (keyword (eql :never)) tokens)
+  (make-instance 'never-clause :form (pop-token client scope tokens)))
+
 (define-parser never-clause (:body-clause)
   (consecutive (lambda (form)
                  (make-instance 'never-clause :form form))
@@ -131,6 +143,10 @@
 ;;;
 ;;; Parsers.
 
+(defmethod parse-tokens
+    (client (scope body-clauses) (keyword (eql :thereis)) tokens)
+  (make-instance 'thereis-clause :form (pop-token client scope tokens)))
+
 (define-parser thereis-clause (:body-clause)
   (consecutive (lambda (form)
                  (make-instance 'thereis-clause :form form))
@@ -154,6 +170,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parsers.
+
+(defmethod parse-tokens
+    (client (scope body-clauses) (keyword (eql :while)) tokens)
+  (make-instance 'while-clause :form (pop-token client scope tokens)))
+
+(defmethod parse-tokens
+    (client (scope body-clauses) (keyword (eql :until)) tokens)
+  (make-instance 'while-clause :form `(not ,(pop-token client scope tokens))))
 
 (define-parser while-clause (:body-clause)
   (consecutive (lambda (form)

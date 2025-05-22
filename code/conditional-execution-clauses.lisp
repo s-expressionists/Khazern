@@ -1,12 +1,13 @@
 (cl:in-package #:khazern)
 
-(defclass conditional-clause (selectable-clause)
+(defclass conditional-clause (selectable-clauses)
   ((%condition :accessor condition
                :initarg :condition)
-   (%then-clauses :reader then-clauses
+   (%then-clauses :accessor then-clauses
                   :initarg :then-clauses)
-   (%else-clauses :reader else-clauses
-                  :initarg :else-clauses)))
+   (%else-clauses :accessor else-clauses
+                  :initarg :else-clauses
+                  :initform nil)))
 
 (defmethod map-variables (function (clause conditional-clause))
   (map-variables function (then-clauses clause))
@@ -15,6 +16,29 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parsers.
+
+(defun parse-conditional-clause-tail (client instance tokens)
+  (setf (then-clauses instance)
+        (parse-parallel-clauses client instance tokens))
+  (when (pop-token? client instance tokens '(eql :else))
+    (setf (else-clauses instance)
+          (parse-parallel-clauses client instance tokens)))
+  (pop-token? client instance tokens '(eql :end))
+  instance)
+
+(defmethod parse-tokens
+    (client (scope selectable-clauses) (keyword (eql :if)) tokens)
+  (parse-condition-clause-tail client
+                               (make-instance 'conditional-clause
+                                              :condition (pop-token client scope tokens))
+                               tokens))
+
+(defmethod parse-tokens
+    (client (scope selectable-clauses) (keyword (eql :unless)) tokens)
+  (parse-condition-clause-tail client
+                               (make-instance 'conditional-clause
+                                              :condition `(not ,(pop-token client scope tokens)))
+                               tokens))
 
 (define-parser conditional-clause-tail ()
   (consecutive (lambda (condition then-clauses else-clauses)
