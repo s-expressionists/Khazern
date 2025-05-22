@@ -45,6 +45,10 @@
 (defclass for-as-subclause (var-mixin)
   ())
 
+(defmethod analyze ((clause for-as-subclause))
+  (when (eq (type-spec (var clause)) *placeholder-result*)
+    (setf (type-spec (var clause)) t)))
+
 ;;; FOR-AS-CLAUSE parsers
 
 (defmethod normalize-token (client (scope for-as-clause) (token symbol))
@@ -54,6 +58,7 @@
                    (:on . :on)
                    (:from . :from)
                    (:to . :to)
+                   (:= . :=)
                    (:downto . :downto)
                    (:upfrom . :upfrom)
                    (:upto . :upto)
@@ -61,7 +66,12 @@
                    (:by . :by)
                    (:across . :across)
                    (:being . :being)
+                   (:below . :below)
+                   (:above . :above)
                    (:the . :the)
+                   (:each . :each)
+                   (:of . :of)
+                   (:then . :then)
                    (:each . :being))
                  token))
 
@@ -266,7 +276,7 @@
                  ((:to :upto :downto)
                   (setf (termination-test instance) '<=))
                  ((:above :below)
-                  (setf (termination-test instnace) '<)))
+                  (setf (termination-test instance) '<)))
                ;; set the direction
                (case keyword
                  ((:upto :upfrom :below)
@@ -316,7 +326,7 @@
                            '(member :from :upfrom :downfrom)
                            '(member :to :upto :downto :above :below)))
   
-(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :up)) tokens)
+(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :from)) tokens)
   (parse-for-as-arithmetic/from-to-by client scope keyword tokens))
 
 (defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :upfrom)) tokens)
@@ -341,7 +351,7 @@
   (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
 
 (defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :by)) tokens)
-  (parse-for-as-arithmetic/by-from-ro client scope keyword tokens))
+  (parse-for-as-arithmetic/by-from-to client scope keyword tokens))
 
 (define-parser for-as-arithmetic-upfrom ()
   (consecutive #'splice
@@ -690,7 +700,7 @@
 (defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :=)) tokens)
   (let ((initial-form (pop-token client scope tokens)))
     (make-instance 'for-as-equals-then
-                   :inital-form initial-form
+                   :initial-form initial-form
                    :subsequent-form (if (pop-token? client scope tokens '(eql :then))
                                         (pop-token client scope tokens)
                                         initial-form))))
@@ -812,6 +822,65 @@
 
 (defparameter *current-path-usings* nil)
 
+(defun current-path-preposition-p (name)
+  (and *current-path*
+       (or (let ((key (symbol-lookup name (path-preposition-names *current-path*))))
+             (and key
+                  (not (member key *current-path-prepositions*))))
+           (and (symbol-equal name :using)
+                (path-using-names *current-path*)))
+           
+       t))
+
+(defun current-path-using-p (name)
+  (and *current-path*
+       (not (member :using *current-path-prepositions*))
+       (let ((key (symbol-lookup name (path-using-names *current-path*))))
+         (and key
+              (not (member key *current-path-usings*))))
+       t))
+
+(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :being)) tokens)
+  (prog ((*current-path*
+          (if (pop-token? client scope tokens '(member :each :the))
+              (make-path-iterator client
+                                  (intern (symbol-name (pop-token client scope tokens 'symbol))
+                                          :keyword))
+              (let ((form (pop-token client scope tokens)))
+                (pop-token client scope tokens '(eql :and))
+                (pop-token client scope tokens '(member :its :each :his :her))
+                (make-path-iterator client
+                                    (intern (symbol-name (pop-token client scope tokens 'symbol))
+                                            :keyword)
+                                    form))))
+         (*current-path-prepositions* nil)
+         (*current-path-usings* nil)
+         (using nil)
+         (name nil))
+   next-preposition
+     (multiple-value-bind (foundp token)
+         (pop-token? client scope tokens '(satisfies current-path-preposition-p))
+       (unless foundp
+         (return *current-path*))
+       (unless (symbol-equal token :using)
+         (setf name (symbol-lookup token
+                                   (path-preposition-names *current-path*))
+               (path-preposition *current-path* name)
+               (pop-token client *current-path* tokens))
+         (push name *current-path-prepositions*)
+         (go next-preposition)))
+     (setf using (pop-token client scope tokens 'cons))
+   next-using
+     (unless (current-path-using-p (car using))
+       (error "fu"))
+     (setf name (symbol-lookup (car using)
+                               (path-using-names *current-path*))
+           (path-using *current-path* name) (cadr using)
+           using (cddr using))
+     (when using
+       (go next-using))
+     (go next-preposition)))
+
 (define-parser for-as-path-intro ()
   (consecutive (lambda (var-spec type-spec args)
                  (setf *current-path*
@@ -842,21 +911,6 @@
                                          'terminal
                                          (typep '(satisfies loop-path-p))))))
  
-(defun current-path-preposition-p (name)
-  (and *current-path*
-       (let ((key (symbol-lookup name (path-preposition-names *current-path*))))
-         (and key
-              (not (member key *current-path-prepositions*))))
-       t))
-
-(defun current-path-using-p (name)
-  (and *current-path*
-       (not (member :using *current-path-prepositions*))
-       (let ((key (symbol-lookup name (path-using-names *current-path*))))
-         (and key
-              (not (member key *current-path-usings*))))
-       t))
-
 (define-parser for-as-path-preposition ()
   (consecutive (lambda (name expression)
                  (let ((key (symbol-lookup name (path-preposition-names *current-path*))))
@@ -923,12 +977,29 @@
 (defmethod map-variables :after (function (clause for-as-hash))
   (map-variables function (other-var clause)))
 
-(defun make-for-as-hash-key (name var-spec type-spec)
-  (declare (ignore name))
-  (make-instance 'for-as-hash-key
-                 :var (make-instance 'd-spec
-                                     :var-spec var-spec
-                                     :type-spec type-spec)))
+(defmethod make-path-iterator (client (name (eql :hash-key)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore client inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-hash-key)))
+
+(defmethod make-path-iterator (client (name (eql :hash-keys)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore client inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-hash-key)))
+
+(defmethod make-path-iterator (client (name (eql :hash-value)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore client inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-hash-value)))
+
+(defmethod make-path-iterator (client (name (eql :hash-values)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore client inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-hash-value)))
 
 (defun make-for-as-hash-value (name var-spec type-spec)
   (declare (ignore name))
@@ -959,6 +1030,8 @@
 ;;; FOR-AS-HASH expansion methods
 
 (defmethod analyze ((clause for-as-hash))
+  (when (eq (type-spec (var clause)) *placeholder-result*)
+    (setf (type-spec (var clause)) t))
   (unless (slot-boundp clause '%form)
     (error "Missing IN/OF preposition")))
 
@@ -1021,6 +1094,48 @@
 
 ;;; FOR-AS-PACKAGE path protocol support
 
+(defmethod make-path-iterator (client (name (eql :symbol)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore client inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-package
+                      :iterator-keywords '(:internal :external :inherited))))
+
+(defmethod make-path-iterator (client (name (eql :symbols)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore client inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-package
+                      :iterator-keywords '(:internal :external :inherited))))
+
+(defmethod make-path-iterator (client (name (eql :present-symbol)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore client inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-package
+                      :iterator-keywords '(:internal :external))))
+
+(defmethod make-path-iterator (client (name (eql :present-symbols)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore client inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-package
+                      :iterator-keywords '(:internal :external))))
+
+(defmethod make-path-iterator (client (name (eql :external-symbol)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore client inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-package
+                      :iterator-keywords '(:external))))
+
+(defmethod make-path-iterator (client (name (eql :external-symbols)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore client inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-package
+                      :iterator-keywords '(:external))))
+
 (defun make-for-as-package-symbol (name var-spec type-spec)
   (declare (ignore name))
   (make-instance 'for-as-package
@@ -1053,6 +1168,10 @@
   (setf (form instance) expression))
 
 ;;; FOR-AS-PACKAGE expansion methods
+
+(defmethod analyze ((clause for-as-package))
+  (when (eq (type-spec (var clause)) *placeholder-result*)
+    (setf (type-spec (var clause)) t)))
 
 (defmethod initial-bindings ((clause for-as-package))
   `((,(form-var clause) ,(form clause))))

@@ -13,6 +13,10 @@
   (map-variables function (then-clauses clause))
   (map-variables function (else-clauses clause)))
 
+(defmethod analyze ((clause conditional-clause))
+  (mapc #'analyze (then-clauses clause))
+  (mapc #'analyze (else-clauses clause)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parsers.
@@ -28,14 +32,14 @@
 
 (defmethod parse-tokens
     (client (scope selectable-clauses) (keyword (eql :if)) tokens)
-  (parse-condition-clause-tail client
+  (parse-conditional-clause-tail client
                                (make-instance 'conditional-clause
                                               :condition (pop-token client scope tokens))
                                tokens))
 
 (defmethod parse-tokens
     (client (scope selectable-clauses) (keyword (eql :unless)) tokens)
-  (parse-condition-clause-tail client
+  (parse-conditional-clause-tail client
                                (make-instance 'conditional-clause
                                               :condition `(not ,(pop-token client scope tokens)))
                                tokens))

@@ -31,18 +31,20 @@
 (defun do-parse-tokens (client scope tokens)
   (parse-tokens client scope (normalize-token client scope (pop-token client scope tokens)) tokens))
 
+(defun parse-type-spec (client scope tokens &optional (default-type-spec t))
+  (if (pop-token? client scope tokens '(eql :of-type))
+      (pop-token client scope tokens)
+      (multiple-value-bind (foundp type-spec)
+          (pop-token? client scope tokens '(member fixnum float t null))
+        (if foundp
+            type-spec
+            default-type-spec))))
+
 (defun parse-d-spec (client scope tokens &key (type-spec t) (accumulation-category t))
-  (let ((instance (make-instance 'd-spec
-                                 :var-spec (pop-token client scope tokens)
-                                 :type-spec type-spec
-                                 :accumulation-category accumulation-category)))
-    (if (pop-token? client scope tokens '(eql :of-type))
-        (setf (type-spec instance) (pop-token client scope tokens))
-        (multiple-value-bind (foundp type)
-            (pop-token? client scope tokens '(member fixnum float t null))
-          (when foundp
-            (setf (type-spec instance) type))))
-    instance))
+  (make-instance 'd-spec
+                 :var-spec (pop-token client scope tokens)
+                 :type-spec (parse-type-spec client scope tokens type-spec)
+                 :accumulation-category accumulation-category))
 
 (defun parse-compound-form+ (client scope tokens)
   (prog (forms)

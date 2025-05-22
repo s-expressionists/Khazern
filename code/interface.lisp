@@ -148,6 +148,8 @@
 ;;; function takes an accumulation clause and returns the category.
 (defgeneric accumulation-category (clause))
 
+(defgeneric make-path-iterator (client name &optional inclusive-form))
+
 (defgeneric path-inclusive-permitted-p (instance)
   (:method (instance)
     (declare (ignore instance))

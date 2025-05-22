@@ -27,7 +27,7 @@
 ;;; Parser.
 
 (defmethod parse-tokens
-    (client (scope body-clauses) (keyword (eql :name)) tokens)
+    (client (scope body-clauses) (keyword (eql :named)) tokens)
   (make-instance 'name-clause :name (pop-token client scope tokens)))
 
 (define-parser name-clause (:body-clause)

@@ -5,21 +5,24 @@
 (defclass accumulation-clause (selectable-clause accumulation-mixin form-mixin)
   ())
 
+(defun parse-into (client scope tokens)
+  (if (pop-token? client scope tokens '(eql :into))
+      (pop-token client scope tokens 'symbol)
+      (default-accumulation-variable)))
+
 ;;; COLLECT clause
 
 (defclass collect-clause (accumulation-clause)
-  ()
-  (:default-initargs :var (make-instance 'd-spec
-                                         :var-spec (default-accumulation-variable)
-                                         :accumulation-category 'list)))
+  ())
 
 ;;; COLLECT parsers
 
 (defmethod parse-tokens (client (scope selectable-clauses) (keyword (eql :collect)) tokens)
-  (let ((instance (make-instance 'collect-clause :form (pop-token client scope tokens))))
-    (when (pop-token? client scope tokens '(eql :into))
-      (setf (var-spec (var instance)) (pop-token client scope tokens)))
-    instance))
+  (make-instance 'collect-clause
+                 :form (pop-token client scope tokens)
+                 :var (make-instance 'd-spec
+                                     :var-spec (parse-into client scope tokens)
+                                     :accumulation-category 'list)))
 
 (define-parser collect-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form var)
@@ -49,18 +52,16 @@
 ;;; APPEND clause
 
 (defclass append-clause (accumulation-clause)
-  ()
-  (:default-initargs :var (make-instance 'd-spec
-                                         :var-spec (default-accumulation-variable)
-                                         :accumulation-category 'list)))
+  ())
 
 ;;; APPEND parsers
 
 (defmethod parse-tokens (client (scope selectable-clauses) (keyword (eql :append)) tokens)
-  (let ((instance (make-instance 'append-clause :form (pop-token client scope tokens))))
-    (when (pop-token? client scope tokens '(eql :into))
-      (setf (var-spec (var instance)) (pop-token client scope tokens)))
-    instance))
+  (make-instance 'append-clause
+                 :form (pop-token client scope tokens)
+                 :var (make-instance 'd-spec
+                                     :var-spec (parse-into client scope tokens)
+                                     :accumulation-category 'list)))
 
 (define-parser append-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form var)
@@ -107,18 +108,16 @@
 ;;; NCONC clause
 
 (defclass nconc-clause (accumulation-clause)
-  ()
-  (:default-initargs :var (make-instance 'd-spec
-                                         :var-spec (default-accumulation-variable)
-                                         :accumulation-category 'list)))
+  ())
 
 ;;; NCONC parsers
 
 (defmethod parse-tokens (client (scope selectable-clauses) (keyword (eql :nconc)) tokens)
-  (let ((instance (make-instance 'nconc-clause :form (pop-token client scope tokens))))
-    (when (pop-token? client scope tokens '(eql :into))
-      (setf (var-spec (var instance)) (pop-token client scope tokens)))
-    instance))
+  (make-instance 'nconc-clause
+                 :form (pop-token client scope tokens)
+                 :var (make-instance 'd-spec
+                                     :var-spec (parse-into client scope tokens)
+                                     :accumulation-category 'list)))
 
 (define-parser nconc-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form var)
@@ -155,21 +154,17 @@
 ;;; COUNT clause
 
 (defclass count-clause (accumulation-clause)
-  ()
-  (:default-initargs :var (make-instance 'd-spec
-                                         :var-spec (default-accumulation-variable)
-                                         :type-spec 'fixnum
-                                         :accumulation-category 'count/sum)))
+  ())
 
 ;;; COUNT parsers
 
 (defmethod parse-tokens (client (scope selectable-clauses) (keyword (eql :count)) tokens)
-  (let ((instance (make-instance 'count-clause :form (pop-token client scope tokens))))
-    (when (pop-token? client scope tokens '(eql :into))
-      (setf (var-spec (var instance)) (parse-d-spec client scope tokens
-                                                    :type-spec 'fixnum
-                                                    :accumulation-category 'count/sum)))
-    instance))
+  (make-instance 'count-clause
+                 :form (pop-token client scope tokens)
+                 :var (make-instance 'd-spec
+                                     :var-spec (parse-into client scope tokens)
+                                     :type-spec (parse-type-spec client scope tokens 'fixnum)                          
+                                     :accumulation-category 'count/sum)))
 
 (define-parser count-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form var type-spec)
@@ -203,67 +198,32 @@
 
 (defclass extremum-clause (accumulation-clause)
   ((%reduce-function :reader reduce-function
-                     :initarg :reduce-function))
-  (:default-initargs :var (make-instance 'd-spec
-                                         :var-spec (default-accumulation-variable)
-                                         :type-spec 'real
-                                         :accumulation-category 'max/min)))
+                     :initarg :reduce-function)))
 
 ;;; MINIMIZE/MAXIMIZE parsers
 
 (defmethod parse-tokens (client (scope selectable-clauses) (keyword (eql :minimize)) tokens)
-  (let ((instance (make-instance 'extremum-clause
-                                 :form (pop-token client scope tokens)
-                                 :reduce-function 'min)))
-    (when (pop-token? client scope tokens '(eql :into))
-      (setf (var-spec (var instance)) (parse-d-spec client scope tokens
-                                                    :type-spec 'real
-                                                    :accumulation-category 'max/min)))
-    instance))
+  (make-instance 'extremum-clause
+                 :form (pop-token client scope tokens)
+                 :reduce-function 'min
+                 :var (make-instance 'd-spec
+                                     :var-spec (parse-into client scope tokens)
+                                     :type-spec (parse-type-spec client scope tokens 'real)                          
+                                     :accumulation-category 'max/min)))
 
 (defmethod parse-tokens (client (scope selectable-clauses) (keyword (eql :maximize)) tokens)
-  (let ((instance (make-instance 'extremum-clause
-                                 :form (pop-token client scope tokens)
-                                 :reduce-function 'max)))
-    (when (pop-token? client scope tokens '(eql :into))
-      (setf (var-spec (var instance)) (parse-d-spec client scope tokens
-                                                    :type-spec 'real
-                                                    :accumulation-category 'max/min)))
-    instance))
-
-(define-parser maximize-clause (:body-clause :selectable-clause)
-  (consecutive (lambda (form var type-spec)
-                 (make-instance 'extremum-clause
-                                :reduce-function 'max
-                                :form form
-                                :var (make-instance 'd-spec
-                                                    :var-spec var
-                                                    :type-spec (type-or-null type-spec)
-                                                    :accumulation-category 'max/min)))
-               (keyword :maximize :maximizing)
-               'terminal
-               'anything
-               'optional-into-phrase
-               'optional-type-spec/real))
-
-(define-parser minimize-clause (:body-clause :selectable-clause)
-  (consecutive (lambda (form var type-spec)
-                 (make-instance 'extremum-clause
-                                :reduce-function 'min
-                                :form form
-                                :var (make-instance 'd-spec
-                                                    :var-spec var
-                                                    :type-spec (type-or-null type-spec)
-                                                    :accumulation-category 'max/min)))
-               (keyword :minimize :minimizing)
-               'terminal
-               'anything
-               'optional-into-phrase
-               'optional-type-spec/real))
+  (make-instance 'extremum-clause
+                 :form (pop-token client scope tokens)
+                 :reduce-function 'max
+                 :var (make-instance 'd-spec
+                                     :var-spec (parse-into client scope tokens)
+                                     :type-spec (parse-type-spec client scope tokens 'real)                          
+                                     :accumulation-category 'max/min)))
 
 ;;; MINIMIZE/MAXIMIZE expansion methods
 
 (defmethod analyze ((clause extremum-clause))
+  (setf (type-spec (var clause)) (type-or-null (type-spec (var clause))))
   (check-subtype (type-spec (var clause)) '(or null real)))
 
 (defmethod body-forms ((clause extremum-clause))
@@ -284,12 +244,12 @@
 ;;; SUM parsers
 
 (defmethod parse-tokens (client (scope selectable-clauses) (keyword (eql :sum)) tokens)
-  (let ((instance (make-instance 'sum-clause :form (pop-token client scope tokens))))
-    (when (pop-token? client scope tokens '(eql :into))
-      (setf (var-spec (var instance)) (parse-d-spec client scope tokens
-                                                    :type-spec 'fixnum
-                                                    :accumulation-category 'count/sum)))
-    instance))
+  (make-instance 'sum-clause
+                 :form (pop-token client scope tokens)
+                 :var (make-instance 'd-spec
+                                     :var-spec (parse-into client scope tokens)
+                                     :type-spec (parse-type-spec client scope tokens 'number)                          
+                                     :accumulation-category 'count/sum)))
 
 (define-parser sum-clause (:body-clause :selectable-clause)
   (consecutive (lambda (form var type-spec)
