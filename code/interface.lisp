@@ -1,5 +1,8 @@
 (cl:in-package #:khazern)
 
+(defclass standard-client ()
+  ())
+
 (defgeneric normalize-token (client scope symbol)
   (:method (client scope symbol)
     (declare (ignore client scope))
@@ -193,12 +196,14 @@
 (defun ensure-symbol (name &optional (package *package*))
   (intern (string name) package))
 
-(defmacro define-interface (&optional intrinsic)
+(defmacro define-interface (client-var client-class &optional intrinsic)
+  (declare (ignore client-class))
   (let* ((intrinsic-pkg (if intrinsic (find-package '#:common-lisp) *package*))
-         (epilogue-tag (ensure-symbol '#:epilogue)))
+         (epilogue-tag (ensure-symbol '#:epilogue))
+         (initialize-func (ensure-symbol '#:initialize-khazern)))
     `(progn
        (defmacro ,(ensure-symbol '#:loop-finish intrinsic-pkg) ()
          '(go ,epilogue-tag))
 
        (defmacro ,(ensure-symbol '#:loop intrinsic-pkg) (&rest forms)
-         (khazern:expand-body forms ',epilogue-tag)))))
+         (khazern:expand-body ,client-var forms ',epilogue-tag)))))

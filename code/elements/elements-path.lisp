@@ -31,8 +31,9 @@
 ;;;
 ;;; ELEMENTS Path
 
-(defclass for-as-elements (khazern::for-as-subclause)
+(defclass for-as-elements ()
   ((%var :accessor var
+         :accessor khazern:var
          :initarg :var)
    (%start-var :reader start-var
                :initform (gensym "START"))
@@ -71,13 +72,6 @@
   #+(or)(when (index-var clause)
     (funcall function (index-func) 'fixnum nil)))
 
-(defun make-elements-path (name var-spec type-spec)
-  (declare (ignore name))
-  (make-instance 'for-as-elements
-                 :var (make-instance 'khazern:d-spec
-                                     :var-spec var-spec
-                                     :type-spec type-spec)))
-
 (defmethod khazern:path-preposition-names ((instance for-as-elements))
   '((:in . :in)
     (:of . :in)
@@ -103,6 +97,10 @@
 
 (defmethod (setf khazern:path-using) (value (instance for-as-elements) (key (eql :index)))
   (setf (index-var instance) value))
+
+(defmethod khazern:analyze ((instance for-as-elements))
+  (when (eq (khazern::type-spec (var instance)) khazern::*placeholder-result*)
+    (setf (khazern::type-spec (var instance)) t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

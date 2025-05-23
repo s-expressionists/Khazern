@@ -2,5 +2,7 @@
   (:use #:common-lisp)
   (:shadow #:loop
            #:loop-finish)
-  (:export #:loop
+  (:export #:*client*
+           #:extrinsic-client
+           #:loop
            #:loop-finish))

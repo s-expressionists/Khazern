@@ -1,4 +1,7 @@
-(in-package #:khazern)
+(cl:in-package #:khazern)
+
+(deftype simple-type-spec ()
+  '(or null (member fixnum float t)))
 
 (defclass token-stream ()
   ((%index :accessor index
@@ -35,7 +38,7 @@
   (if (pop-token? client scope tokens '(eql :of-type))
       (pop-token client scope tokens)
       (multiple-value-bind (foundp type-spec)
-          (pop-token? client scope tokens '(member fixnum float t null))
+          (pop-token? client scope tokens 'simple-type-spec)
         (if foundp
             type-spec
             default-type-spec))))
@@ -66,7 +69,7 @@
        (go next))
      (return (nreverse clauses))))
 
-(defun do-parse-body (client tokens)
+(defun parse-body (client tokens)
   (prog ((scope (make-instance 'body-clauses))
          clauses)
    next
@@ -74,8 +77,6 @@
      (when (tokens tokens)
        (go next))
      (return (nreverse clauses))))
-
-(defparameter *empty-result* (cons nil nil))
 
 (defparameter *placeholder-result* (cons nil nil))
 

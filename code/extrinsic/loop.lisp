@@ -1,3 +1,8 @@
 (in-package #:khazern-extrinsic)
 
-(khazern:define-interface)
+(defclass extrinsic-client (khazern:standard-client)
+  ())
+
+(defvar *client* (make-instance 'extrinsic-client))
+
+(khazern:define-interface *client* extrinsic-client)

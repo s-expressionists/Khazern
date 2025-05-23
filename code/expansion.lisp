@@ -115,13 +115,13 @@
             (accumulation-declarations all-clauses)
             (do-clauses all-clauses)))
 
-(defun expand-body (loop-body epilogue-tag)
+(defun expand-body (client loop-body epilogue-tag)
   (cond ((notevery #'listp loop-body)
          (let* ((*accumulation-variable* nil)
                 (*epilogue-tag* epilogue-tag)
-                (clauses (do-parse-body nil
-                           (make-instance 'token-stream
-                                          :tokens loop-body))))
+                (clauses (parse-body client
+                                     (make-instance 'token-stream
+                                                    :tokens loop-body))))
            (analyze clauses)
            (let* ((name (if (name-clause-p (car clauses))
                             (name (car clauses))

@@ -17,7 +17,7 @@
 
 ;;; COLLECT parsers
 
-(defmethod parse-tokens (client (scope selectable-clauses) (keyword (eql :collect)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :collect)) tokens)
   (make-instance 'collect-clause
                  :form (pop-token client scope tokens)
                  :var (make-instance 'd-spec
@@ -44,7 +44,7 @@
 
 ;;; APPEND parsers
 
-(defmethod parse-tokens (client (scope selectable-clauses) (keyword (eql :append)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :append)) tokens)
   (make-instance 'append-clause
                  :form (pop-token client scope tokens)
                  :var (make-instance 'd-spec
@@ -88,7 +88,7 @@
 
 ;;; NCONC parsers
 
-(defmethod parse-tokens (client (scope selectable-clauses) (keyword (eql :nconc)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :nconc)) tokens)
   (make-instance 'nconc-clause
                  :form (pop-token client scope tokens)
                  :var (make-instance 'd-spec
@@ -122,7 +122,7 @@
 
 ;;; COUNT parsers
 
-(defmethod parse-tokens (client (scope selectable-clauses) (keyword (eql :count)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :count)) tokens)
   (make-instance 'count-clause
                  :form (pop-token client scope tokens)
                  :var (make-instance 'd-spec
@@ -152,7 +152,7 @@
 
 ;;; MINIMIZE/MAXIMIZE parsers
 
-(defmethod parse-tokens (client (scope selectable-clauses) (keyword (eql :minimize)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :minimize)) tokens)
   (make-instance 'extremum-clause
                  :form (pop-token client scope tokens)
                  :reduce-function 'min
@@ -161,7 +161,7 @@
                                      :type-spec (parse-type-spec client scope tokens 'real)                          
                                      :accumulation-category 'max/min)))
 
-(defmethod parse-tokens (client (scope selectable-clauses) (keyword (eql :maximize)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :maximize)) tokens)
   (make-instance 'extremum-clause
                  :form (pop-token client scope tokens)
                  :reduce-function 'max
@@ -193,7 +193,7 @@
 
 ;;; SUM parsers
 
-(defmethod parse-tokens (client (scope selectable-clauses) (keyword (eql :sum)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :sum)) tokens)
   (make-instance 'sum-clause
                  :form (pop-token client scope tokens)
                  :var (make-instance 'd-spec

@@ -51,7 +51,7 @@
 
 ;;; FOR-AS-CLAUSE parsers
 
-(defmethod normalize-token (client (scope for-as-clause) (token symbol))
+(defmethod normalize-token ((client standard-client) (scope for-as-clause) (token symbol))
   (symbol-lookup token
                  '((:and . :and)
                    (:in . :in)
@@ -75,7 +75,7 @@
                    (:each . :being))
                  token))
 
-(defmethod parse-tokens (client (scope body-clauses) (keyword (eql :for)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope body-clauses) (keyword (eql :for)) tokens)
   (prog ((instance (make-instance 'for-as-clause))
          subclauses
          var)
@@ -224,31 +224,31 @@
                            '(member :from :upfrom :downfrom)
                            '(member :to :upto :downto :above :below)))
   
-(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :from)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :from)) tokens)
   (parse-for-as-arithmetic/from-to-by client scope keyword tokens))
 
-(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :upfrom)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :upfrom)) tokens)
   (parse-for-as-arithmetic/from-to-by client scope keyword tokens))
 
-(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :downfrom)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :downfrom)) tokens)
   (parse-for-as-arithmetic/from-to-by client scope keyword tokens))
 
-(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :to)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :to)) tokens)
   (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
 
-(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :upto)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :upto)) tokens)
   (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
 
-(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :downto)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :downto)) tokens)
   (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
 
-(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :above)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :above)) tokens)
   (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
 
-(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :below)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :below)) tokens)
   (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
 
-(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :by)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :by)) tokens)
   (parse-for-as-arithmetic/by-from-to client scope keyword tokens))
 
 ;;; FOR-AS-ARITHMETIC expansion methods
@@ -372,14 +372,14 @@
 
 ;;; FOR-AS-IN-LIST/FOR-AS-ON-LIST parsers
 
-(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :in)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :in)) tokens)
   (let ((instance (make-instance 'for-as-in-list
                                  :form (pop-token client scope tokens))))
     (when (pop-token? client scope tokens '(eql :by))
       (setf (by-form instance) (pop-token client scope tokens)))
     instance))
 
-(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :on)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :on)) tokens)
   (let ((instance (make-instance 'for-as-on-list
                                  :form (pop-token client scope tokens))))
     (when (pop-token? client scope tokens '(eql :by))
@@ -427,7 +427,7 @@
 
 ;;; FOR-AS-EQUALS-THEN parsers
 
-(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :=)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :=)) tokens)
   (let ((initial-form (pop-token client scope tokens)))
     (make-instance 'for-as-equals-then
                    :initial-form initial-form
@@ -470,7 +470,7 @@
 
 ;;; FOR-AS-ACROSS parsers
 
-(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :across)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :across)) tokens)
   (make-instance 'for-as-across
                  :form (pop-token client scope tokens)))
 
@@ -541,7 +541,7 @@
               (not (member key *current-path-usings*))))
        t))
 
-(defmethod parse-tokens (client (scope for-as-clause) (keyword (eql :being)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :being)) tokens)
   (prog ((*current-path*
           (if (pop-token? client scope tokens '(member :each :the))
               (make-path-iterator client
@@ -609,36 +609,33 @@
 (defmethod map-variables :after (function (clause for-as-hash))
   (map-variables function (other-var clause)))
 
-(defmethod make-path-iterator (client (name (eql :hash-key)) &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore client inclusive-form))
+(defmethod make-path-iterator
+    ((client standard-client) (name (eql :hash-key)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-hash-key)))
 
-(defmethod make-path-iterator (client (name (eql :hash-keys)) &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore client inclusive-form))
+(defmethod make-path-iterator
+    ((client standard-client) (name (eql :hash-keys)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-hash-key)))
 
-(defmethod make-path-iterator (client (name (eql :hash-value)) &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore client inclusive-form))
+(defmethod make-path-iterator
+    ((client standard-client) (name (eql :hash-value)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-hash-value)))
 
-(defmethod make-path-iterator (client (name (eql :hash-values)) &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore client inclusive-form))
+(defmethod make-path-iterator
+    ((client standard-client) (name (eql :hash-values)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-hash-value)))
-
-(defun make-for-as-hash-value (name var-spec type-spec)
-  (declare (ignore name))
-  (make-instance 'for-as-hash-value
-                 :var (make-instance 'd-spec
-                                     :var-spec var-spec
-                                     :type-spec type-spec)))
 
 (defmethod path-preposition-names ((instance for-as-hash))
   '((:in . :in) (:of . :in)))
@@ -726,71 +723,53 @@
 
 ;;; FOR-AS-PACKAGE path protocol support
 
-(defmethod make-path-iterator (client (name (eql :symbol)) &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore client inclusive-form))
+(defmethod make-path-iterator
+    ((client standard-client) (name (eql :symbol)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-package
                       :iterator-keywords '(:internal :external :inherited))))
 
-(defmethod make-path-iterator (client (name (eql :symbols)) &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore client inclusive-form))
+(defmethod make-path-iterator
+    ((client standard-client) (name (eql :symbols)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-package
                       :iterator-keywords '(:internal :external :inherited))))
 
-(defmethod make-path-iterator (client (name (eql :present-symbol)) &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore client inclusive-form))
+(defmethod make-path-iterator
+    ((client standard-client) (name (eql :present-symbol)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-package
                       :iterator-keywords '(:internal :external))))
 
-(defmethod make-path-iterator (client (name (eql :present-symbols)) &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore client inclusive-form))
+(defmethod make-path-iterator
+    ((client standard-client) (name (eql :present-symbols)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-package
                       :iterator-keywords '(:internal :external))))
 
-(defmethod make-path-iterator (client (name (eql :external-symbol)) &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore client inclusive-form))
+(defmethod make-path-iterator
+    ((client standard-client) (name (eql :external-symbol)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-package
                       :iterator-keywords '(:external))))
 
-(defmethod make-path-iterator (client (name (eql :external-symbols)) &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore client inclusive-form))
+(defmethod make-path-iterator
+    ((client standard-client) (name (eql :external-symbols)) &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-package
                       :iterator-keywords '(:external))))
-
-(defun make-for-as-package-symbol (name var-spec type-spec)
-  (declare (ignore name))
-  (make-instance 'for-as-package
-                 :var (make-instance 'd-spec
-                                     :var-spec var-spec
-                                     :type-spec type-spec)
-                 :iterator-keywords '(:internal :external :inherited)))
-
-(defun make-for-as-package-present-symbol (name var-spec type-spec)
-  (declare (ignore name))
-  (make-instance 'for-as-package
-                 :var (make-instance 'd-spec
-                                     :var-spec var-spec
-                                     :type-spec type-spec)
-                 :iterator-keywords '(:internal :external)))
-
-(defun make-for-as-package-external-symbol (name var-spec type-spec)
-  (declare (ignore name))
-  (make-instance 'for-as-package
-                 :var (make-instance 'd-spec
-                                     :var-spec var-spec
-                                     :type-spec type-spec)
-                 :iterator-keywords '(:external)))
 
 (defmethod path-preposition-names ((instance for-as-package))
   '((:in . :in) (:of . :in)))
@@ -882,13 +861,13 @@
 
 ;;; WITH Parsers
 
-(defmethod normalize-token (client (scope with-clause) (token symbol))
+(defmethod normalize-token ((client standard-client) (scope with-clause) (token symbol))
   (symbol-lookup token
                  '((:= . :=)
                    (:and . :and))))
 
 
-(defmethod parse-tokens (client (scope body-clauses) (keyword (eql :with)) tokens)
+(defmethod parse-tokens ((client standard-client) (scope body-clauses) (keyword (eql :with)) tokens)
   (prog ((instance (make-instance 'with-clause))
          var
          subclauses)

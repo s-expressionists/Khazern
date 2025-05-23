@@ -1,4 +1,9 @@
 (cl:in-package #:khazern-intrinsic)
 
+(defclass intrinsic-client (khazern:intrinsic-client)
+  ())
+
+(defvar *client* (make-instance 'intrinsic-client))
+
 (trivial-package-locks:with-unlocked-system-packages
-  (khazern:define-interface t))
+  (khazern:define-interface *client* intrinsic-client t))

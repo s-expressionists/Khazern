@@ -2,4 +2,4 @@
 
 (defpackage #:khazern-elements
   (:use #:common-lisp)
-  (:export #:make-elements-path))
+  (:export #:for-as-elements))

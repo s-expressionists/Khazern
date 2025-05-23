@@ -1,4 +1,17 @@
 (cl:in-package #:khazern-elements)
 
-(khazern-extrinsic:set-loop-path :elements #'make-elements-path)
-(khazern-extrinsic:set-loop-path :element #'make-elements-path)
+(defmethod khazern:make-path-iterator
+    ((client khazern-extrinsic:extrinsic-client) (name (eql :element))
+     &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-elements)))
+
+(defmethod khazern:make-path-iterator
+    ((client khazern-extrinsic:extrinsic-client) (name (eql :elements))
+     &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-elements)))

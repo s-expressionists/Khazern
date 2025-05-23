@@ -18,7 +18,7 @@
 
 (defclass selectable-clauses () ())
 
-(defmethod normalize-token (client (scope selectable-clauses) (token symbol))
+(defmethod normalize-token ((client standard-client) (scope selectable-clauses) (token symbol))
   (symbol-lookup token
                  '((:and . :and)
                    (:append . :append)
@@ -49,7 +49,7 @@
 
 (defclass body-clauses (selectable-clauses) ())
 
-(defmethod normalize-token (client (scope body-clauses) (token symbol))
+(defmethod normalize-token ((client standard-client) (scope body-clauses) (token symbol))
   (symbol-lookup token
                  '((:and . :and)
                    (:always . :always)

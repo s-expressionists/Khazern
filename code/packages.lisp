@@ -29,6 +29,7 @@
            #:initial-step-declarations
            #:initial-step-forms
            #:main-clause-p
+           #:make-path-iterator
            #:map-variables
            #:name-clause-p
            #:path-preposition
@@ -36,6 +37,7 @@
            #:path-using
            #:path-using-names
            #:prologue-forms
+           #:standard-client
            #:subclauses
            #:subsequent-step-bindings
            #:subsequent-step-declarations

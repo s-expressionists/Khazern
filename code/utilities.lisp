@@ -137,10 +137,10 @@
 (defvar *numeric-types* (numeric-types))
 
 (defun numeric-type-of (value)
-  (find value *numeric-types* :test #'cl:typep))
+  (find value *numeric-types* :test #'typep))
 
 (defun numeric-super-type (type)
-  (find type *numeric-types* :test #'cl:subtypep))
+  (find type *numeric-types* :test #'subtypep))
 
 ;;; A d-var-spec is a is a destructuring variable specifier: 
 ;;; 
