@@ -26,6 +26,11 @@
   (make-instance 'do-clause
                  :forms (parse-compound-form+ client scope tokens)))
 
+(defmethod parse-tokens
+    (client (scope selectable-clauses) (keyword (eql :doing)) tokens)
+  (make-instance 'do-clause
+                 :forms (parse-compound-form+ client scope tokens)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the body-forms.

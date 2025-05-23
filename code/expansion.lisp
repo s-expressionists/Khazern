@@ -116,29 +116,30 @@
             (do-clauses all-clauses)))
 
 (defun expand-body (client loop-body epilogue-tag)
-  (cond ((notevery #'listp loop-body)
-         (let* ((*accumulation-variable* nil)
-                (*epilogue-tag* epilogue-tag)
-                (clauses (parse-body client
-                                     (make-instance 'token-stream
-                                                    :tokens loop-body))))
-           (analyze clauses)
-           (let* ((name (if (name-clause-p (car clauses))
-                            (name (car clauses))
-                            nil))
-                  (*loop-name* name)
-                  (*tail-variables* (make-hash-table :test #'eq)))
-             `(block ,name
-                ,@(expand-clauses clauses)))))
-        ((some #'null loop-body)
-         (error 'non-compound-form))
-        (t
-         (let ((tag (gensym)))
-            `(block nil
-               (tagbody
-                ,tag
-                 ,@loop-body
-                 (go ,tag)))))))
+  (trivial-with-current-source-form:with-current-source-form (loop-body)
+    (cond ((notevery #'listp loop-body)
+           (let* ((*accumulation-variable* nil)
+                  (*epilogue-tag* epilogue-tag)
+                  (clauses (parse-body client
+                                       (make-instance 'token-stream
+                                                      :tokens loop-body))))
+             (analyze clauses)
+             (let* ((name (if (name-clause-p (car clauses))
+                              (name (car clauses))
+                              nil))
+                    (*loop-name* name)
+                    (*tail-variables* (make-hash-table :test #'eq)))
+               `(block ,name
+                  ,@(expand-clauses clauses)))))
+          ((some #'null loop-body)
+           (error 'non-compound-form))
+          (t
+           (let ((tag (gensym)))
+             `(block nil
+                (tagbody
+                   ,tag
+                   ,@loop-body
+                   (go ,tag))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

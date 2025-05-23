@@ -5,8 +5,22 @@
 ;;; Condition reporters for parse errors.
 
 (defmethod acclimation:report-condition
-    ((condition expected-token-but-end)
-     stream
+    ((condition unknown-parser) stream (language acclimation:english))
+  (format stream
+          "Unknown parser ~a with client ~a and scope ~a."
+          (name condition) (class-name (class-of (client condition)))
+          (class-name (class-of (scope condition)))))
+
+(defmethod acclimation:report-condition
+    ((condition unknown-path-iterator) stream (language acclimation:english))
+  (format stream
+          "Unknown ~:[~;inclusive ~]path iterator ~a with client ~a and scope ~a."
+          (inclusivep condition) (name condition)
+          (class-name (class-of (client condition)))
+          (class-name (class-of (scope condition)))))
+
+(defmethod acclimation:report-condition
+    ((condition expected-token-but-end) stream
      (language acclimation:english))
   (format stream
           "Expected a token~:[~; either~]~

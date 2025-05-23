@@ -3,12 +3,7 @@
 (defclass standard-client ()
   ())
 
-(defgeneric normalize-token (client scope symbol)
-  (:method (client scope symbol)
-    (declare (ignore client scope))
-    symbol))
-
-(defgeneric parse-tokens (client scope keyword tokens))
+(defgeneric parse-tokens (client scope name tokens))
 
 (defgeneric map-variables (function clause)
   (:method (function clause)
@@ -151,7 +146,7 @@
 ;;; function takes an accumulation clause and returns the category.
 (defgeneric accumulation-category (clause))
 
-(defgeneric make-path-iterator (client name &optional inclusive-form))
+(defgeneric make-path-iterator (client scope name &optional inclusive-form))
 
 (defgeneric path-inclusive-permitted-p (instance)
   (:method (instance)

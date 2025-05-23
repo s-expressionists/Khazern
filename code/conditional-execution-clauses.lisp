@@ -24,14 +24,21 @@
 (defun parse-conditional-clause-tail (client instance tokens)
   (setf (then-clauses instance)
         (parse-parallel-clauses client instance tokens))
-  (when (pop-token? client instance tokens '(eql :else))
+  (when (pop-token? client instance tokens :keywords '(:else))
     (setf (else-clauses instance)
           (parse-parallel-clauses client instance tokens)))
-  (pop-token? client instance tokens '(eql :end))
+  (pop-token? client instance tokens :keywords '(:end))
   instance)
 
 (defmethod parse-tokens
     (client (scope selectable-clauses) (keyword (eql :if)) tokens)
+  (parse-conditional-clause-tail client
+                               (make-instance 'conditional-clause
+                                              :condition (pop-token client scope tokens))
+                               tokens))
+
+(defmethod parse-tokens
+    (client (scope selectable-clauses) (keyword (eql :when)) tokens)
   (parse-conditional-clause-tail client
                                (make-instance 'conditional-clause
                                               :condition (pop-token client scope tokens))

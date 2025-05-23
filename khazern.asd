@@ -1,4 +1,4 @@
-(asdf:defsystem :khazern
+(asdf:defsystem "khazern"
   :description "A portable and extensible Common Lisp LOOP implementation"
   :license "BSD"
   :author ("Robert Strandh"
@@ -7,7 +7,8 @@
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
-  :depends-on (:acclimation)
+  :depends-on ("acclimation"
+               "trivial-with-current-source-form")
   :components ((:module code
                 :serial t
                 :components ((:file "packages")

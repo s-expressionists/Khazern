@@ -17,6 +17,25 @@
   ((%found :reader found
            :initarg :found)))
 
+(define-condition unknown-parser (loop-parse-error)
+  ((%client :reader client
+            :initarg :client)
+   (%scope :reader scope
+           :initarg :scope)
+   (%name :reader name
+          :initarg :name)))
+
+(define-condition unknown-path-iterator (loop-parse-error)
+  ((%client :reader client
+            :initarg :client)
+   (%scope :reader scope
+           :initarg :scope)
+   (%name :reader name
+          :initarg :name)
+   (%inclusive :reader inclusivep
+               :initarg :inclusive
+               :initform nil)))
+
 (define-condition expected-var-spec-but-end (loop-parse-error)
   ())
 
