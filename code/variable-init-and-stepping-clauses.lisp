@@ -512,8 +512,6 @@
 
 (defparameter *current-path-prepositions* nil)
 
-(defparameter *current-path-usings* nil)
-
 (defun current-path-preposition-p (name)
   (and *current-path*
        (or (let ((key (symbol-lookup name (path-preposition-names *current-path*))))
@@ -522,14 +520,6 @@
            (and (symbol-equal name :using)
                 (path-using-names *current-path*)))
            
-       t))
-
-(defun current-path-using-p (name)
-  (and *current-path*
-       (not (member :using *current-path-prepositions*))
-       (let ((key (symbol-lookup name (path-using-names *current-path*))))
-         (and key
-              (not (member key *current-path-usings*))))
        t))
 
 (defun make-iteration-path-name (client scope token)
@@ -551,56 +541,64 @@
          :name token
          :inclusive inclusive-form-p))
 
-(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :being)) tokens)
-  (prog ((*current-path*
-          (if (pop-token? client scope tokens :keywords '(:each :the))
-              (make-iteration-path client scope
-                                  (make-iteration-path-name client scope
-                                                           (pop-token client scope tokens)))
-              (let ((form (pop-token client scope tokens)))
-                (pop-token client scope tokens :keywords '(:and))
-                (pop-token client scope tokens :keywords '(:its :each :his :her))
-                (make-iteration-path client scope
-                                    (make-iteration-path-name client scope
-                                                             (pop-token client scope tokens))
-                                    form))))
-         (*current-path-prepositions* nil)
-         (*current-path-usings* nil)
-         (using nil)
-         (name nil))
-   next-preposition
-     (multiple-value-bind (foundp token)
-         (pop-token? client scope tokens :type '(satisfies current-path-preposition-p))
-       (unless foundp
-         (return *current-path*))
-       (unless (symbol-equal token :using)
-         (setf name (symbol-lookup token
-                                   (path-preposition-names *current-path*))
-               (path-preposition *current-path* name)
-               (pop-token client *current-path* tokens))
-         (push name *current-path-prepositions*)
-         (go next-preposition)))
-     (setf using (pop-token client scope tokens :type 'cons))
+(defun parse-iteration-path-using (scope using)
+  (prog ((using-names (path-using-names scope))
+         (current-names nil)
+         key value name)
    next-using
-     (unless (current-path-using-p (car using))
+     (setf key (first using)
+           value (second using) 
+           name (symbol-lookup key using-names))
+     (when (or (null name)
+               (member name current-names))
        (let ((keywords (mapcan (lambda (pair)
-                                 (unless (member (cdr pair) *current-path-usings*)
+                                 (unless (member (cdr pair) current-names)
                                    (list (car pair))))
-                               (path-using-names *current-path*))))
+                               preposition-names)))
          (if keywords
              (error 'expected-token-but-found
-                    :found (car using)
+                    :found key
                     :expected-keywords keywords)
              (error 'unexpected-token-found
-                    :found (car using)))))
-     (setf name (symbol-lookup (car using)
-                               (path-using-names *current-path*))
-           (path-using *current-path* name) (cadr using)
+                    :found key))))
+     (setf (path-using scope name) value
            using (cddr using))
-     (push name *current-path-usings*)
+     (push name current-names)
      (when using
-       (go next-using))
-     (go next-preposition)))
+       (go next-using))))
+
+(defun parse-iteration-path-prepositions (client scope tokens)
+  (prog ((preposition-names (path-preposition-names scope))
+         (*current-path* scope)
+         (*current-path-prepositions* nil)
+         (name nil)
+         (foundp nil)
+         (token nil))
+   next-preposition
+     (multiple-value-setq (foundp token)
+       (pop-token? client scope tokens :type '(satisfies current-path-preposition-p)))
+     (when foundp
+       (if (symbol-equal token :using)
+           (parse-iteration-path-using scope (pop-token client scope tokens :type 'cons))
+           (setf name (symbol-lookup token preposition-names)
+                 (path-preposition scope name) (pop-token client scope tokens)))
+       (push name *current-path-prepositions*)
+       (go next-preposition))))
+
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :being)) tokens)
+  (let ((instance (if (pop-token? client scope tokens :keywords '(:each :the))
+                      (make-iteration-path client scope
+                                           (make-iteration-path-name client scope
+                                                                     (pop-token client scope tokens)))
+                      (let ((form (pop-token client scope tokens)))
+                        (pop-token client scope tokens :keywords '(:and))
+                        (pop-token client scope tokens :keywords '(:its :each :his :her))
+                        (make-iteration-path client scope
+                                             (make-iteration-path-name client scope
+                                                                       (pop-token client scope tokens))
+                                             form)))))
+    (parse-iteration-path-prepositions client instance tokens)
+    instance))
 
 ;;; 6.1.2.1.6 FOR-AS-HASH Subclause
 
