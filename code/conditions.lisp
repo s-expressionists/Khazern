@@ -25,7 +25,7 @@
    (%name :reader name
           :initarg :name)))
 
-(define-condition unknown-path-iterator (loop-parse-error)
+(define-condition unknown-iteration-path (loop-parse-error)
   ((%client :reader client
             :initarg :client)
    (%scope :reader scope
@@ -35,6 +35,27 @@
    (%inclusive :reader inclusivep
                :initarg :inclusive
                :initform nil)))
+
+(define-condition missing-iteration-path-prepositions (loop-parse-error)
+  ((%name :reader name
+          :initarg :name)
+   (%inclusive :reader inclusivep
+               :initarg :inclusive
+               :initform nil)
+   (%names :reader names
+           :initarg :names)))
+
+(define-condition invalid-iteration-path-preposition-order
+    (style-warning acclimation:condition)
+  ((%name :reader name
+          :initarg :name)
+   (%inclusive :reader inclusivep
+               :initarg :inclusive
+               :initform nil)
+   (%first-preposition :reader first-preposition
+                       :initarg :first-preposition)
+   (%second-preposition :reader second-preposition
+                        :initarg :second-preposition)))
 
 (define-condition expected-var-spec-but-end (loop-parse-error)
   ())
@@ -57,7 +78,7 @@
 (define-condition expected-token-but-end (expected-token)
   ())
 
-(define-condition unexpected-tokens-found (loop-parse-error-found)
+(define-condition unexpected-token-found (loop-parse-error-found)
   ())
 
 (define-condition too-many-prepositions-from-one-group (loop-parse-error)

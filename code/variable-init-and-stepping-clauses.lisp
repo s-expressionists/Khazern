@@ -146,7 +146,7 @@
 ;;;
 ;;; FOR-AS-ARITHMETIC parsers
 
-(defun parse-for-as-arithmetic (client scope tokens keyword keywords1 keywords2)
+(defun parse-for-as-arithmetic (client scope tokens keyword1 keywords2 keywords3)
   (let ((instance (make-instance 'for-as-arithmetic)))
     (labels ((handle-preposition (keyword)
                ;; parse the form
@@ -170,12 +170,12 @@
                (case keyword
                  ((:upto :upfrom :below)
                   (cond ((typep instance 'for-as-arithmetic-down)
-                         (error "Incompatible directions"))
+                         (error 'conflicting-stepping-directions))
                         ((not (typep instance 'for-as-arithmetic-up))
                          (change-class instance 'for-as-arithmetic-up))))
                  ((:downto :downfrom :above)
                   (cond ((typep instance 'for-as-arithmetic-up)
-                         (error "Incompatible directions"))
+                         (error 'conflicting-stepping-directions))
                         ((not (typep instance 'for-as-arithmetic-down))
                          (change-class instance 'for-as-arithmetic-down))))))
              (parse-preposition (keywords)
@@ -184,11 +184,11 @@
                  (when foundp
                    (handle-preposition (intern (symbol-name token) :keyword)))
                  foundp)))
-      (handle-preposition keyword)
-      (let ((keywords1-p (parse-preposition keywords1)))
-        (parse-preposition keywords2)
-        (unless keywords1-p
-          (parse-preposition keywords1))))
+      (handle-preposition keyword1)
+      (let ((keywords2-p (parse-preposition keywords2)))
+        (parse-preposition keywords3)
+        (unless keywords2-p
+          (parse-preposition keywords2))))
     (pushnew :by (order instance))
     (pushnew :to (order instance))
     (pushnew :from (order instance))
@@ -532,20 +532,20 @@
               (not (member key *current-path-usings*))))
        t))
 
-(defun make-path-iterator-name (client scope token)
+(defun make-iteration-path-name (client scope token)
   (when (symbolp token)
     (multiple-value-bind (name status)
         (find-symbol (symbol-name token) :keyword)
       (when status
-        (return-from make-path-iterator-name name))))
-  (error 'unknown-path-iterator
+        (return-from make-iteration-path-name name))))
+  (error 'unknown-iteration-path
          :client client
          :scope scope
          :name token))
 
-(defmethod make-path-iterator (client scope name &optional (inclusive-form nil inclusive-form-p))
+(defmethod make-iteration-path (client scope name &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
-  (error 'unknown-path-iterator
+  (error 'unknown-iteration-path
          :client client
          :scope scope
          :name token
@@ -554,14 +554,14 @@
 (defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :being)) tokens)
   (prog ((*current-path*
           (if (pop-token? client scope tokens :keywords '(:each :the))
-              (make-path-iterator client scope
-                                  (make-path-iterator-name client scope
+              (make-iteration-path client scope
+                                  (make-iteration-path-name client scope
                                                            (pop-token client scope tokens)))
               (let ((form (pop-token client scope tokens)))
                 (pop-token client scope tokens :keywords '(:and))
                 (pop-token client scope tokens :keywords '(:its :each :his :her))
-                (make-path-iterator client scope
-                                    (make-path-iterator-name client scope
+                (make-iteration-path client scope
+                                    (make-iteration-path-name client scope
                                                              (pop-token client scope tokens))
                                     form))))
          (*current-path-prepositions* nil)
@@ -583,11 +583,21 @@
      (setf using (pop-token client scope tokens :type 'cons))
    next-using
      (unless (current-path-using-p (car using))
-       (error "fu"))
+       (let ((keywords (mapcan (lambda (pair)
+                                 (unless (member (cdr pair) *current-path-usings*)
+                                   (list (car pair))))
+                               (path-using-names *current-path*))))
+         (if keywords
+             (error 'expected-token-but-found
+                    :found (car using)
+                    :expected-keywords keywords)
+             (error 'unexpected-token-found
+                    :found (car using)))))
      (setf name (symbol-lookup (car using)
                                (path-using-names *current-path*))
            (path-using *current-path* name) (cadr using)
            using (cddr using))
+     (push name *current-path-usings*)
      (when using
        (go next-using))
      (go next-preposition)))
@@ -619,28 +629,28 @@
 (defmethod map-variables :after (function (clause for-as-hash))
   (map-variables function (other-var clause)))
 
-(defmethod make-path-iterator
+(defmethod make-iteration-path
     ((client standard-client) scope (name (eql :hash-key)) &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore scope inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-hash-key)))
 
-(defmethod make-path-iterator
+(defmethod make-iteration-path
     ((client standard-client) scope (name (eql :hash-keys)) &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore scope inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-hash-key)))
 
-(defmethod make-path-iterator
+(defmethod make-iteration-path
     ((client standard-client) scope (name (eql :hash-value)) &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore scope inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-hash-value)))
 
-(defmethod make-path-iterator
+(defmethod make-iteration-path
     ((client standard-client) scope (name (eql :hash-values)) &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore scope inclusive-form))
   (if inclusive-form-p
@@ -652,13 +662,20 @@
 
 (defmethod (setf path-preposition)
     (expression (instance for-as-hash) (key (eql :in)))
+  (when (var-spec (other-var instance))
+    (warn 'invalid-iteration-path-preposition-order
+          :first-preposition :using
+          :second-preposition :in
+          :name (if (typep instance 'for-as-hash-key)
+                    :hash-key
+                    :hash-value)))
   (setf (form instance) expression))
 
 (defmethod path-using-names ((instance for-as-hash-key))
-  '((:hash-value . :other) (:hash-values . :other)))
+  '((:hash-value . :other)))
 
 (defmethod path-using-names ((instance for-as-hash-value))
-  '((:hash-key . :other) (:hash-keys . :other)))
+  '((:hash-key . :other)))
 
 (defmethod (setf path-using)
     (value (instance for-as-hash) (key (eql :other)))
@@ -672,7 +689,11 @@
   (when (eq (type-spec (var clause)) *placeholder-result*)
     (setf (type-spec (var clause)) t))
   (unless (slot-boundp clause '%form)
-    (error "Missing IN/OF preposition")))
+    (error 'missing-iteration-path-prepositions
+           :names '(:in)
+           :name (if (typep clause 'for-as-hash-key)
+                     :hash-key
+                     :hash-value))))
 
 (defmethod initial-bindings ((clause for-as-hash))
   `((,(form-var clause) ,(form clause))))
@@ -733,7 +754,7 @@
 
 ;;; FOR-AS-PACKAGE path protocol support
 
-(defmethod make-path-iterator
+(defmethod make-iteration-path
     ((client standard-client) scope (name (eql :symbol)) &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore scope inclusive-form))
   (if inclusive-form-p
@@ -741,7 +762,7 @@
       (make-instance 'for-as-package
                       :iterator-keywords '(:internal :external :inherited))))
 
-(defmethod make-path-iterator
+(defmethod make-iteration-path
     ((client standard-client) scope (name (eql :symbols)) &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore scope inclusive-form))
   (if inclusive-form-p
@@ -749,7 +770,7 @@
       (make-instance 'for-as-package
                       :iterator-keywords '(:internal :external :inherited))))
 
-(defmethod make-path-iterator
+(defmethod make-iteration-path
     ((client standard-client) scope (name (eql :present-symbol)) &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore scope inclusive-form))
   (if inclusive-form-p
@@ -757,7 +778,7 @@
       (make-instance 'for-as-package
                       :iterator-keywords '(:internal :external))))
 
-(defmethod make-path-iterator
+(defmethod make-iteration-path
     ((client standard-client) scope (name (eql :present-symbols)) &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore scope inclusive-form))
   (if inclusive-form-p
@@ -765,7 +786,7 @@
       (make-instance 'for-as-package
                       :iterator-keywords '(:internal :external))))
 
-(defmethod make-path-iterator
+(defmethod make-iteration-path
     ((client standard-client) scope (name (eql :external-symbol)) &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore scope inclusive-form))
   (if inclusive-form-p
@@ -773,7 +794,7 @@
       (make-instance 'for-as-package
                       :iterator-keywords '(:external))))
 
-(defmethod make-path-iterator
+(defmethod make-iteration-path
     ((client standard-client) scope (name (eql :external-symbols)) &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore scope inclusive-form))
   (if inclusive-form-p

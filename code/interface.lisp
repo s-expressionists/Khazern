@@ -146,7 +146,7 @@
 ;;; function takes an accumulation clause and returns the category.
 (defgeneric accumulation-category (clause))
 
-(defgeneric make-path-iterator (client scope name &optional inclusive-form))
+(defgeneric make-iteration-path (client scope name &optional inclusive-form))
 
 (defgeneric path-inclusive-permitted-p (instance)
   (:method (instance)

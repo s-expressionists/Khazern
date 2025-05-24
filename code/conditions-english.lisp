@@ -12,20 +12,34 @@
           (class-name (class-of (scope condition)))))
 
 (defmethod acclimation:report-condition
-    ((condition unknown-path-iterator) stream (language acclimation:english))
+    ((condition unknown-iteration-path) stream (language acclimation:english))
   (format stream
-          "Unknown ~:[~;inclusive ~]path iterator ~a with client ~a and scope ~a."
+          "Unknown ~:[~;inclusive ~]iteration path ~a with client ~a and scope ~a."
           (inclusivep condition) (name condition)
           (class-name (class-of (client condition)))
           (class-name (class-of (scope condition)))))
 
 (defmethod acclimation:report-condition
+    ((condition missing-iteration-path-prepositions) stream (language acclimation:english))
+  (format stream
+          "Missing ~{~#[~;~a~;~a and ~a~:;~@{~a~#[~;, and ~:;, ~]~}~]~} preposition~p for ~:[~;inclusive ~]iteration path ~a."
+          (names condition) (length (names condition))
+          (inclusivep condition) (name condition)))
+
+(defmethod acclimation:report-condition
+    ((condition invalid-iteration-path-preposition-order) stream (language acclimation:english))
+  (format stream
+          "Preposition order of ~a followed by ~a is invalid for ~:[~;inclusive ~]iteration path ~a."
+          (first-preposition condition) (second-preposition condition)
+          (inclusivep condition) (name condition)))
+
+(defmethod acclimation:report-condition
     ((condition expected-token-but-end) stream
      (language acclimation:english))
   (format stream
-          "Expected a token~:[~; either~]~
-           ~@[ being a loop keyword of ~{~#[~;~a~;~a and ~a~:;~@{~a~#[~;, or ~:;, ~]~}~]~}~]~
-           ~:[~; or~]~@[ being of type ~s~]~
+          "Expected~:[~; either~]~
+           ~@[ a loop keyword of ~{~#[~;~a~;~a or ~a~:;~@{~a~#[~;, or ~:;, ~]~}~]~}~]~
+           ~:[~; or~]~@[ a token of type ~s~]~
            ~@[ at location ~s~] but reached the end of the loop body instead."
           (and (expected-keywords condition)
                (expected-type condition))
@@ -40,9 +54,9 @@
      stream
      (language acclimation:english))
   (format stream
-          "Expected a token~:[~; either~]~
-           ~@[ being a loop keyword of ~{~#[~;~a~;~a and ~a~:;~@{~a~#[~;, or ~:;, ~]~}~]~}~]~
-           ~:[~; or~]~@[ being of type ~s~]~
+          "Expected~:[~; either~]~
+           ~@[ a loop keyword of ~{~#[~;~a~;~a or ~a~:;~@{~a~#[~;, or ~:;, ~]~}~]~}~]~
+           ~:[~; or~]~@[ a token of type ~s~]~
            ~@[ at location ~s~] but found ~a instead."
           (and (expected-keywords condition)
                (expected-type condition))
@@ -54,11 +68,11 @@
           (found condition)))
 
 (defmethod acclimation:report-condition
-    ((condition unexpected-tokens-found)
+    ((condition unexpected-token-found)
      stream
      (language acclimation:english))
   (format stream
-          "Unexpected tokens ~s found~@[at location ~s ~]."
+          "Unexpected token ~s found~@[at location ~s ~]."
           (found  condition)
           (location condition)))
 

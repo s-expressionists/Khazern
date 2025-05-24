@@ -29,7 +29,7 @@
            #:initial-step-declarations
            #:initial-step-forms
            #:main-clause-p
-           #:make-path-iterator
+           #:make-iteration-path
            #:map-variables
            #:name-clause-p
            #:path-preposition
