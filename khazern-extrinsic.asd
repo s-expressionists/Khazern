@@ -48,7 +48,8 @@
   :source-control (:git "https://github.com/s-expressionists/Khazern.git")
   :depends-on ("cl-spark"
                "cl-ascii-table"
-               "khazern-extrinsic")
+               "khazern-extrinsic"
+               "trivial-macroexpand-all")
   :components ((:module "code"
                 :pathname "code/extrinsic/benchmark/"
                 :serial t

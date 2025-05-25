@@ -21,6 +21,17 @@
 (defvar *random-double-floats*
   (random-double-floats 100))
 
+(define-benchmark expansion
+  (tma:macroexpand-all
+    '(loop for i in '(1 324 2345 323 2 4 235 252)
+           when (oddp i)
+             do (print i)
+             and collect i into odd-numbers
+             and do (terpri)
+           else
+             collect i into even-numbers
+           finally (return (values odd-numbers even-numbers)))))
+
 (define-benchmark repeat
   (loop repeat 100
         do (nothing)))
