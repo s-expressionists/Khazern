@@ -32,10 +32,10 @@
            #:make-iteration-path
            #:map-variables
            #:name-clause-p
-           #:path-preposition
-           #:path-preposition-names
-           #:path-using
-           #:path-using-names
+           #:iteration-path-preposition
+           #:iteration-path-preposition-names
+           #:iteration-path-using
+           #:iteration-path-using-names
            #:prologue-forms
            #:standard-client
            #:subclauses

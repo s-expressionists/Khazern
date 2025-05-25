@@ -510,16 +510,11 @@
 
 (defparameter *current-path* nil)
 
-(defparameter *current-path-prepositions* nil)
-
-(defun current-path-preposition-p (name)
+(defun iteration-path-preposition-p (name)
   (and *current-path*
-       (or (let ((key (symbol-lookup name (path-preposition-names *current-path*))))
-             (and key
-                  (not (member key *current-path-prepositions*))))
+       (or (symbol-lookup name (iteration-path-preposition-names *current-path*))
            (and (symbol-equal name :using)
-                (path-using-names *current-path*)))
-           
+                (iteration-path-using-names *current-path*)))
        t))
 
 (defun make-iteration-path-name (client scope token)
@@ -542,47 +537,39 @@
          :inclusive inclusive-form-p))
 
 (defun parse-iteration-path-using (scope using)
-  (prog ((using-names (path-using-names scope))
-         (current-names nil)
-         key value name)
+  (prog (key value name)
    next-using
      (setf key (first using)
            value (second using) 
-           name (symbol-lookup key using-names))
-     (when (or (null name)
-               (member name current-names))
-       (let ((keywords (mapcan (lambda (pair)
-                                 (unless (member (cdr pair) current-names)
-                                   (list (car pair))))
-                               preposition-names)))
+           name (symbol-lookup key
+                               (iteration-path-using-names scope)))
+     (when (null name)
+       (let ((keywords (mapcar #'car (iteration-path-using-names scope))))
          (if keywords
              (error 'expected-token-but-found
                     :found key
                     :expected-keywords keywords)
              (error 'unexpected-token-found
                     :found key))))
-     (setf (path-using scope name) value
+     (setf (iteration-path-using scope name) value
            using (cddr using))
-     (push name current-names)
      (when using
        (go next-using))))
 
 (defun parse-iteration-path-prepositions (client scope tokens)
-  (prog ((preposition-names (path-preposition-names scope))
-         (*current-path* scope)
-         (*current-path-prepositions* nil)
+  (prog ((*current-path* scope)
          (name nil)
          (foundp nil)
          (token nil))
    next-preposition
      (multiple-value-setq (foundp token)
-       (pop-token? client scope tokens :type '(satisfies current-path-preposition-p)))
+       (pop-token? client scope tokens :type '(satisfies iteration-path-preposition-p)))
      (when foundp
        (if (symbol-equal token :using)
            (parse-iteration-path-using scope (pop-token client scope tokens :type 'cons))
-           (setf name (symbol-lookup token preposition-names)
-                 (path-preposition scope name) (pop-token client scope tokens)))
-       (push name *current-path-prepositions*)
+           (setf name (symbol-lookup token
+                                     (iteration-path-preposition-names scope))
+                 (iteration-path-preposition scope name) (pop-token client scope tokens)))
        (go next-preposition))))
 
 (defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :being)) tokens)
@@ -611,16 +598,22 @@
                     :initform (gensym))
    (%iterator-var :reader iterator-var
                   :initform (gensym))
+   (%preposition-names :accessor iteration-path-preposition-names
+                       :initform `((:in . :in) (:of . :in)))
+   (%using-names :accessor iteration-path-using-names
+                 :initarg :using-names)
    (%other-var :accessor other-var
                :initarg :other-var
                :initform (make-instance 'd-spec
                                         :var-spec nil))))
 
 (defclass for-as-hash-key (for-as-hash)
-  ())
+  ()
+  (:default-initargs :using-names `((:hash-value . :other))))
 
 (defclass for-as-hash-value (for-as-hash)
-  ())
+  ()
+  (:default-initargs :using-names `((:hash-key . :other))))
 
 ;;; FOR-AS-HASH path extension support
 
@@ -655,10 +648,7 @@
       (call-next-method)
       (make-instance 'for-as-hash-value)))
 
-(defmethod path-preposition-names ((instance for-as-hash))
-  '((:in . :in) (:of . :in)))
-
-(defmethod (setf path-preposition)
+(defmethod (setf iteration-path-preposition)
     (expression (instance for-as-hash) (key (eql :in)))
   (when (var-spec (other-var instance))
     (warn 'invalid-iteration-path-preposition-order
@@ -667,16 +657,12 @@
           :name (if (typep instance 'for-as-hash-key)
                     :hash-key
                     :hash-value)))
+  (setf (iteration-path-preposition-names instance) nil)
   (setf (form instance) expression))
 
-(defmethod path-using-names ((instance for-as-hash-key))
-  '((:hash-value . :other)))
-
-(defmethod path-using-names ((instance for-as-hash-value))
-  '((:hash-key . :other)))
-
-(defmethod (setf path-using)
+(defmethod (setf iteration-path-using)
     (value (instance for-as-hash) (key (eql :other)))
+  (setf (iteration-path-using-names instance) nil)
   (setf (other-var instance) (make-instance 'd-spec
                                             :var-spec value))
   value)
@@ -744,6 +730,8 @@
                       :initform (gensym))
    (%temp-symbol-var :reader temp-symbol-var
                      :initform (gensym))
+   (%preposition-names :accessor iteration-path-preposition-names
+                       :initform `((:in . :in) (:of . :in)))
    (%iterator-var :reader iterator-var
                   :initform (gensym))
    (%iterator-keywords :reader iterator-keywords
@@ -800,11 +788,9 @@
       (make-instance 'for-as-package
                       :iterator-keywords '(:external))))
 
-(defmethod path-preposition-names ((instance for-as-package))
-  '((:in . :in) (:of . :in)))
-
-(defmethod (setf path-preposition)
+(defmethod (setf iteration-path-preposition)
     (expression (instance for-as-package) (key (eql :in)))
+  (setf (iteration-path-preposition-names instance) nil)
   (setf (form instance) expression))
 
 ;;; FOR-AS-PACKAGE expansion methods

@@ -148,32 +148,23 @@
 
 (defgeneric make-iteration-path (client scope name &optional inclusive-form))
 
-(defgeneric path-inclusive-permitted-p (instance)
+(defgeneric iteration-path-preposition-names (instance)
   (:method (instance)
     (declare (ignore instance))
     nil))
 
-(defgeneric path-inclusive-p (instance))
+(defgeneric iteration-path-preposition (instance key))
 
-(defgeneric (setf path-inclusive-p) (instance))
+(defgeneric (setf iteration-path-preposition) (new-value instance name))
 
-(defgeneric path-preposition-names (instance)
+(defgeneric iteration-path-using-names (instance)
   (:method (instance)
     (declare (ignore instance))
     nil))
 
-(defgeneric path-preposition (instance key))
+(defgeneric iteration-path-using (instance key))
 
-(defgeneric (setf path-preposition) (new-value instance name))
-
-(defgeneric path-using-names (instance)
-  (:method (instance)
-    (declare (ignore instance))
-    nil))
-
-(defgeneric path-using (instance key))
-
-(defgeneric (setf path-using) (new-value instance name))
+(defgeneric (setf iteration-path-using) (new-value instance name))
 
 (defgeneric subclauses (clause)
   (:method (clause)

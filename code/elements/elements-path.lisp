@@ -35,6 +35,14 @@
   ((%var :accessor var
          :accessor khazern:var
          :initarg :var)
+   (%preposition-names :accessor khazern:iteration-path-preposition-names
+                       :initform `((:in . :in)
+                                   (:of . :in)
+                                   (:start . :start)
+                                   (:end . :end)
+                                   (:from-end . :from-end)))
+   (%using-names :accessor khazern:iteration-path-using-names
+                 :initform `((:index . :index)))
    (%start-var :reader start-var
                :initform (gensym "START"))
    (%start-form :accessor start-form
@@ -72,30 +80,29 @@
   #+(or)(when (index-var clause)
     (funcall function (index-func) 'fixnum nil)))
 
-(defmethod khazern:path-preposition-names ((instance for-as-elements))
-  '((:in . :in)
-    (:of . :in)
-    (:start . :start)
-    (:end . :end)
-    (:from-end . :from-end)))
+(defmethod (setf khazern:iteration-path-preposition) :after (expression (instance for-as-elements) key)
+  (setf (khazern:iteration-path-preposition-names instance)
+        (delete key (khazern:iteration-path-preposition-names instance)
+                :key #'cdr)))
 
-(defmethod (setf khazern:path-preposition) (expression (instance for-as-elements) (key (eql :in)))
+(defmethod (setf khazern:iteration-path-preposition) (expression (instance for-as-elements) (key (eql :in)))
   (setf (in-form instance) expression))
 
-(defmethod (setf khazern:path-preposition) (expression (instance for-as-elements) (key (eql :start)))
+(defmethod (setf khazern:iteration-path-preposition) (expression (instance for-as-elements) (key (eql :start)))
   (setf (start-form instance) expression))
 
-(defmethod (setf khazern:path-preposition) (expression (instance for-as-elements) (key (eql :end)))
+(defmethod (setf khazern:iteration-path-preposition) (expression (instance for-as-elements) (key (eql :end)))
   (setf (end-form instance) expression))
 
-(defmethod (setf khazern:path-preposition) (expression (instance for-as-elements) (key (eql :from-end)))
+(defmethod (setf khazern:iteration-path-preposition) (expression (instance for-as-elements) (key (eql :from-end)))
   (setf (from-end-form instance) expression))
 
-(defmethod khazern:path-using-names ((instance for-as-elements))
-  '((:index . :index)
-    (:indicies . :indicies)))
+(defmethod (setf khazern:iteration-path-using) :after (expression (instance for-as-elements) key)
+  (setf (khazern:iteration-path-using-names instance)
+        (delete key (khazern:iteration-path-using-names instance)
+                :key #'cdr)))
 
-(defmethod (setf khazern:path-using) (value (instance for-as-elements) (key (eql :index)))
+(defmethod (setf khazern:iteration-path-using) (value (instance for-as-elements) (key (eql :index)))
   (setf (index-var instance) value))
 
 (defmethod khazern:analyze ((instance for-as-elements))
