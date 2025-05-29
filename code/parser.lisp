@@ -13,20 +13,19 @@
                   &key (type nil type-p) (keywords nil keywords-p))
   (when (null (tokens token-stream))
     (error 'expected-token-but-end
+           :expected-type type
+           :expected-keywords keywords
            :location (index token-stream)))
   (trivial-with-current-source-form:with-current-source-form
       ((car (tokens token-stream)) (tokens token-stream))
-    (when (and type-p
-               (not (typep (car (tokens token-stream)) type)))
+    (when (or (and type-p
+                   (not (typep (car (tokens token-stream)) type)))
+              (and keywords-p
+                   (or (not (symbolp (car (tokens token-stream))))
+                       (not (find (car (tokens token-stream)) keywords :test #'symbol-equal)))))
       (error 'expected-token-but-found
              :found (car (tokens token-stream))
              :expected-type type
-             :location (index token-stream)))
-    (when (and keywords-p
-               (or (not (symbolp (car (tokens token-stream))))
-                   (not (find (car (tokens token-stream)) keywords :test #'symbol-equal))))
-      (error 'expected-token-but-found
-             :found (car (tokens token-stream))
              :expected-keywords keywords
              :location (index token-stream)))
     (incf (index token-stream))
