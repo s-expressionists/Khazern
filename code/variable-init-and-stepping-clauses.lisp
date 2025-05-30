@@ -86,15 +86,135 @@
 (defmethod map-variables (function (clause for-as-clause))
   (map-variables function (subclauses clause)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Clause FOR-AS-PATH
+
+(defclass for-as-path (for-as-subclause)
+  ((%preposition-names :accessor iteration-path-preposition-names
+                       :initarg :preposition-names
+                       :initform nil)
+   (%using-names :accessor iteration-path-using-names
+                 :initarg :using-names
+                 :initform nil)))
+
+(defmethod (setf iteration-path-preposition) :after (value (instance for-as-path) name)
+  (declare (ignore value))
+  (let* ((names (iteration-path-preposition-names instance))
+         (group (third (find name names :key #'second))))
+    (when group
+      (setf (iteration-path-preposition-names instance)
+            (delete group names :key #'third)))))
+
+(defmethod (setf iteration-path-using) :after (value (instance for-as-path) name)
+  (declare (ignore value))
+  (let* ((names (iteration-path-using-names instance))
+         (group (third (find name names :key #'second))))
+    (when group
+      (setf (iteration-path-using-names instance)
+            (delete group names :key #'third)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Parsers
+
+(defparameter *current-path* nil)
+
+(defun iteration-path-preposition-p (name)
+  (and *current-path*
+       (or (symbol-lookup name (iteration-path-preposition-names *current-path*))
+           (and (symbol-equal name :using)
+                (iteration-path-using-names *current-path*)))
+       t))
+
+(defun make-iteration-path-name (client scope token)
+  (when (symbolp token)
+    (multiple-value-bind (name status)
+        (find-symbol (symbol-name token) :keyword)
+      (when status
+        (return-from make-iteration-path-name name))))
+  (error 'unknown-iteration-path
+         :client client
+         :scope scope
+         :name token))
+
+(defmethod make-iteration-path (client scope name &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
+  (error 'unknown-iteration-path
+         :client client
+         :scope scope
+         :name token
+         :inclusive inclusive-form-p))
+
+(defun parse-iteration-path-using (scope using)
+  (prog (key value name)
+   next-using
+     (setf key (first using)
+           value (second using) 
+           name (symbol-lookup key
+                               (iteration-path-using-names scope)))
+     (when (null name)
+       (let ((keywords (mapcar #'car (iteration-path-using-names scope))))
+         (if keywords
+             (error 'expected-token-but-found
+                    :found key
+                    :expected-keywords keywords)
+             (error 'unexpected-token-found
+                    :found key))))
+     (setf (iteration-path-using scope name) value
+           using (cddr using))
+     (when using
+       (go next-using))))
+
+(defun parse-iteration-path-prepositions (client scope tokens)
+  (prog ((name nil)
+         (foundp nil)
+         (token nil)
+         (usingp (and (iteration-path-using-names scope) t)))
+   next-preposition
+     (multiple-value-setq (foundp token)
+       (pop-token? client scope tokens
+                   :keywords (if usingp
+                                 (list* :using
+                                        (mapcar #'car
+                                                (iteration-path-preposition-names scope)))
+                                 (mapcar #'car
+                                                (iteration-path-preposition-names scope)))))
+     (cond ((not foundp)
+            (return scope))
+           ((symbol-equal token :using)
+            (setf usingp nil)
+            (parse-iteration-path-using scope (pop-token client scope tokens :type 'cons)))
+           (t
+            (setf name (symbol-lookup token
+                                      (iteration-path-preposition-names scope))
+                  (iteration-path-preposition scope name) (pop-token client scope tokens))))
+     (go next-preposition)))
+
+(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :being)) tokens)
+  (let ((instance (if (pop-token? client scope tokens :keywords '(:each :the))
+                      (make-iteration-path client scope
+                                           (make-iteration-path-name client scope
+                                                                     (pop-token client scope tokens)))
+                      (let ((form (pop-token client scope tokens)))
+                        (pop-token client scope tokens :keywords '(:and))
+                        (pop-token client scope tokens :keywords '(:its :each :his :her))
+                        (make-iteration-path client scope
+                                             (make-iteration-path-name client scope
+                                                                       (pop-token client scope tokens))
+                                             form)))))
+    (parse-iteration-path-prepositions client instance tokens)
+    instance))
+
 ;;; 6.1.2.1.1 FOR-AS-ARITHMETIC sublause
 
-(defclass for-as-arithmetic (for-as-subclause)
+(defclass for-as-arithmetic (for-as-path)
   (;; The order in which the forms are given.  This is a list of three
    ;; elements FROM, TO, and BY in the order that they were given in
    ;; the clause.
    (%order :accessor order
            :initarg :order
-           :initform nil)
+           :initform (list :from :to :by))
    ;; The form that was given after one of the LOOP keywords FROM,
    ;; UPFROM, or DOWNFROM, or 0 if none of these LOOP keywords was
    ;; given.
@@ -134,7 +254,16 @@
    ;; then this slot contains NIL.
    (%termination-test :accessor termination-test
                       :initarg :termination-test
-                      :initform nil)))
+                      :initform nil))
+  (:default-initargs :preposition-names (copy-list '((:from :from :from)
+                                                     (:upfrom :upfrom :from)
+                                                     (:downfrom :downfrom :from)
+                                                     (:to :to :to)
+                                                     (:upto :upto :to)
+                                                     (:downto :downto :to)
+                                                     (:above :above :above)
+                                                     (:below :below :below)
+                                                     (:by :by :by)))))
 
 (defclass for-as-arithmetic-up (for-as-arithmetic)
   ())
@@ -146,101 +275,79 @@
 ;;;
 ;;; FOR-AS-ARITHMETIC parsers
 
-(defun parse-for-as-arithmetic (client scope tokens keyword1 keywords2 keywords3)
-  (let ((instance (make-instance 'for-as-arithmetic)))
-    (labels ((handle-preposition (keyword)
-               ;; parse the form
-               (ecase keyword
-                 ((:to :upto :downto :above :below)
-                  (setf (end-form instance) (pop-token client scope tokens))
-                  (push :to (order instance)))
-                 ((:from :downfrom :upfrom)
-                  (setf (start-form instance) (pop-token client scope tokens))
-                  (push :from (order instance)))
-                 (:by
-                  (setf (by-form instance) (pop-token client scope tokens))
-                  (push :by (order instance))))
-               ;; set the termination test
-               (case keyword
-                 ((:to :upto :downto)
-                  (setf (termination-test instance) '<=))
-                 ((:above :below)
-                  (setf (termination-test instance) '<)))
-               ;; set the direction
-               (case keyword
-                 ((:upto :upfrom :below)
-                  (cond ((typep instance 'for-as-arithmetic-down)
-                         (error 'conflicting-stepping-directions))
-                        ((not (typep instance 'for-as-arithmetic-up))
-                         (change-class instance 'for-as-arithmetic-up))))
-                 ((:downto :downfrom :above)
-                  (cond ((typep instance 'for-as-arithmetic-up)
-                         (error 'conflicting-stepping-directions))
-                        ((not (typep instance 'for-as-arithmetic-down))
-                         (change-class instance 'for-as-arithmetic-down))))))
-             (parse-preposition (keywords)
-               (multiple-value-bind (foundp token)
-                   (pop-token? client scope tokens :keywords keywords)
-                 (when foundp
-                   (handle-preposition (intern (symbol-name token) :keyword)))
-                 foundp)))
-      (handle-preposition keyword1)
-      (let ((keywords2-p (parse-preposition keywords2)))
-        (parse-preposition keywords3)
-        (unless keywords2-p
-          (parse-preposition keywords2))))
-    (pushnew :by (order instance))
-    (pushnew :to (order instance))
-    (pushnew :from (order instance))
-    (setf (order instance) (nreverse (order instance)))
-    (unless (typep instance '(or for-as-arithmetic-down for-as-arithmetic-up))
-      (change-class instance 'for-as-arithmetic-up))
-    instance))
-
 (defvar +from-keywords+ '(:from :upfrom :downfrom))
 
 (defvar +to-keywords+ '(:to :upto :downto :above :below))
 
 (defvar +by-keywords+ '(:by))
 
-(defun parse-for-as-arithmetic/from-to-by (client scope keyword tokens)
-  (parse-for-as-arithmetic client scope tokens
-                           keyword +to-keywords+ +by-keywords+))
+(defmethod (setf iteration-path-preposition) (value (instance for-as-arithmetic) keyword)
+  ;; parse the form
+  (ecase keyword
+    ((:to :upto :downto :above :below)
+     (setf (end-form instance) value
+           (order instance) (nconc (delete :to (order instance))
+                                   (list :to))))
+    ((:from :downfrom :upfrom)
+     (setf (start-form instance) value
+           (order instance) (nconc (delete :from (order instance))
+                                   (list :from))))
+    (:by
+     (setf (by-form instance) value
+           (order instance) (nconc (delete :by (order instance))
+                                   (list :by)))))
+  ;; set the termination test
+  (case keyword
+    ((:to :upto :downto)
+     (setf (termination-test instance) '<=))
+    ((:above :below)
+     (setf (termination-test instance) '<)))
+  ;; set the direction
+  (case keyword
+    ((:upto :upfrom :below)
+     (cond ((typep instance 'for-as-arithmetic-down)
+            (error 'conflicting-stepping-directions))
+           ((not (typep instance 'for-as-arithmetic-up))
+            (change-class instance 'for-as-arithmetic-up))))
+    ((:downto :downfrom :above)
+     (cond ((typep instance 'for-as-arithmetic-up)
+            (error 'conflicting-stepping-directions))
+           ((not (typep instance 'for-as-arithmetic-down))
+            (change-class instance 'for-as-arithmetic-down)))))
+  value)
 
-(defun parse-for-as-arithmetic/to-from-by (client scope keyword tokens)
-  (parse-for-as-arithmetic client scope tokens
-                           keyword +from-keywords+ +by-keywords+))
-  
-(defun parse-for-as-arithmetic/by-from-to (client scope keyword tokens)
-  (parse-for-as-arithmetic client scope tokens
-                           keyword +from-keywords+ +to-keywords+))
-  
+(defun parse-for-as-arithmetic (client keyword tokens)
+  (push keyword (tokens tokens))
+  (decf (index tokens))
+  (parse-iteration-path-prepositions client (make-instance 'for-as-arithmetic)
+                                     tokens))
+
 (defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :from)) tokens)
-  (parse-for-as-arithmetic/from-to-by client scope keyword tokens))
+  (parse-for-as-arithmetic client keyword tokens))
 
 (defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :upfrom)) tokens)
-  (parse-for-as-arithmetic/from-to-by client scope keyword tokens))
+  (parse-for-as-arithmetic client keyword tokens))
 
 (defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :downfrom)) tokens)
-  (parse-for-as-arithmetic/from-to-by client scope keyword tokens))
+  (parse-for-as-arithmetic client keyword tokens))
 
 (defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :to)) tokens)
-  (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
+  (parse-for-as-arithmetic client keyword tokens))
 
 (defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :upto)) tokens)
-  (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
+  (parse-for-as-arithmetic client keyword tokens))
 
 (defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :downto)) tokens)
-  (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
+  (parse-for-as-arithmetic client keyword tokens))
 
 (defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :above)) tokens)
-  (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
+  (parse-for-as-arithmetic client keyword tokens))
 
 (defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :below)) tokens)
-  (parse-for-as-arithmetic/to-from-by client scope keyword tokens))
+  (parse-for-as-arithmetic client keyword tokens))
 
 (defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :by)) tokens)
-  (parse-for-as-arithmetic/by-from-to client scope keyword tokens))
+  (parse-for-as-arithmetic client keyword tokens))
 
 ;;; FOR-AS-ARITHMETIC expansion methods
 
@@ -248,6 +355,8 @@
   (map-variables function (var clause)))
 
 (defmethod analyze ((clause for-as-arithmetic))
+  (unless (typep clause '(or for-as-arithmetic-down for-as-arithmetic-up))
+    (change-class clause 'for-as-arithmetic-up))
   (with-accessors ((next-var next-var)
                    (by-var by-var)
                    (var var)
@@ -497,99 +606,9 @@
                          `(aref ,(form-var clause)
                                 ,(index-var clause)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Clause FOR-AS-PATH
-
-(defclass for-as-path (for-as-subclause)
-  ())
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers
-
-(defparameter *current-path* nil)
-
-(defun iteration-path-preposition-p (name)
-  (and *current-path*
-       (or (symbol-lookup name (iteration-path-preposition-names *current-path*))
-           (and (symbol-equal name :using)
-                (iteration-path-using-names *current-path*)))
-       t))
-
-(defun make-iteration-path-name (client scope token)
-  (when (symbolp token)
-    (multiple-value-bind (name status)
-        (find-symbol (symbol-name token) :keyword)
-      (when status
-        (return-from make-iteration-path-name name))))
-  (error 'unknown-iteration-path
-         :client client
-         :scope scope
-         :name token))
-
-(defmethod make-iteration-path (client scope name &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore inclusive-form))
-  (error 'unknown-iteration-path
-         :client client
-         :scope scope
-         :name token
-         :inclusive inclusive-form-p))
-
-(defun parse-iteration-path-using (scope using)
-  (prog (key value name)
-   next-using
-     (setf key (first using)
-           value (second using) 
-           name (symbol-lookup key
-                               (iteration-path-using-names scope)))
-     (when (null name)
-       (let ((keywords (mapcar #'car (iteration-path-using-names scope))))
-         (if keywords
-             (error 'expected-token-but-found
-                    :found key
-                    :expected-keywords keywords)
-             (error 'unexpected-token-found
-                    :found key))))
-     (setf (iteration-path-using scope name) value
-           using (cddr using))
-     (when using
-       (go next-using))))
-
-(defun parse-iteration-path-prepositions (client scope tokens)
-  (prog ((*current-path* scope)
-         (name nil)
-         (foundp nil)
-         (token nil))
-   next-preposition
-     (multiple-value-setq (foundp token)
-       (pop-token? client scope tokens :type '(satisfies iteration-path-preposition-p)))
-     (when foundp
-       (if (symbol-equal token :using)
-           (parse-iteration-path-using scope (pop-token client scope tokens :type 'cons))
-           (setf name (symbol-lookup token
-                                     (iteration-path-preposition-names scope))
-                 (iteration-path-preposition scope name) (pop-token client scope tokens)))
-       (go next-preposition))))
-
-(defmethod parse-tokens ((client standard-client) (scope for-as-clause) (keyword (eql :being)) tokens)
-  (let ((instance (if (pop-token? client scope tokens :keywords '(:each :the))
-                      (make-iteration-path client scope
-                                           (make-iteration-path-name client scope
-                                                                     (pop-token client scope tokens)))
-                      (let ((form (pop-token client scope tokens)))
-                        (pop-token client scope tokens :keywords '(:and))
-                        (pop-token client scope tokens :keywords '(:its :each :his :her))
-                        (make-iteration-path client scope
-                                             (make-iteration-path-name client scope
-                                                                       (pop-token client scope tokens))
-                                             form)))))
-    (parse-iteration-path-prepositions client instance tokens)
-    instance))
-
 ;;; 6.1.2.1.6 FOR-AS-HASH Subclause
 
-(defclass for-as-hash (for-as-subclause form-mixin form-var-mixin)
+(defclass for-as-hash (for-as-path form-mixin form-var-mixin)
   ((%temp-entry-p-var :reader temp-entry-p-var
                       :initform (gensym))
    (%temp-key-var :reader temp-key-var
@@ -598,22 +617,20 @@
                     :initform (gensym))
    (%iterator-var :reader iterator-var
                   :initform (gensym))
-   (%preposition-names :accessor iteration-path-preposition-names
-                       :initform `((:in . :in) (:of . :in)))
-   (%using-names :accessor iteration-path-using-names
-                 :initarg :using-names)
    (%other-var :accessor other-var
                :initarg :other-var
                :initform (make-instance 'd-spec
-                                        :var-spec nil))))
+                                        :var-spec nil)))
+  (:default-initargs :preposition-names (copy-list '((:in :in :in)
+                                                     (:of :in :in)))))
 
 (defclass for-as-hash-key (for-as-hash)
   ()
-  (:default-initargs :using-names `((:hash-value . :other))))
+  (:default-initargs :using-names (copy-list '((:hash-value :other :other)))))
 
 (defclass for-as-hash-value (for-as-hash)
   ()
-  (:default-initargs :using-names `((:hash-key . :other))))
+  (:default-initargs :using-names (copy-list '((:hash-key :other :other)))))
 
 ;;; FOR-AS-HASH path extension support
 
@@ -657,12 +674,10 @@
           :name (if (typep instance 'for-as-hash-key)
                     :hash-key
                     :hash-value)))
-  (setf (iteration-path-preposition-names instance) nil)
   (setf (form instance) expression))
 
 (defmethod (setf iteration-path-using)
     (value (instance for-as-hash) (key (eql :other)))
-  (setf (iteration-path-using-names instance) nil)
   (setf (other-var instance) (make-instance 'd-spec
                                             :var-spec value))
   value)
@@ -725,18 +740,18 @@
 
 ;;; 6.1.2.1.7 FOR-AS-PACKAGE Subclause
 
-(defclass for-as-package (for-as-subclause form-mixin form-var-mixin)
+(defclass for-as-package (for-as-path form-mixin form-var-mixin)
   ((%temp-entry-p-var :reader temp-entry-p-var
                       :initform (gensym))
    (%temp-symbol-var :reader temp-symbol-var
                      :initform (gensym))
-   (%preposition-names :accessor iteration-path-preposition-names
-                       :initform `((:in . :in) (:of . :in)))
    (%iterator-var :reader iterator-var
                   :initform (gensym))
    (%iterator-keywords :reader iterator-keywords
                        :initarg :iterator-keywords))
-  (:default-initargs :form '*package*))
+  (:default-initargs :form '*package*
+                     :preposition-names (copy-list '((:in :in :in)
+                                                     (:of :in :in)))))
 
 ;;; FOR-AS-PACKAGE path protocol support
 
@@ -790,7 +805,6 @@
 
 (defmethod (setf iteration-path-preposition)
     (expression (instance for-as-package) (key (eql :in)))
-  (setf (iteration-path-preposition-names instance) nil)
   (setf (form instance) expression))
 
 ;;; FOR-AS-PACKAGE expansion methods
