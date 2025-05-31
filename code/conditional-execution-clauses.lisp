@@ -33,23 +33,23 @@
 (defmethod parse-tokens
     (client (scope selectable-clauses) (keyword (eql :if)) tokens)
   (parse-conditional-clause-tail client
-                               (make-instance 'conditional-clause
-                                              :condition (pop-token tokens))
-                               tokens))
+                                 (make-instance 'conditional-clause
+                                                :condition (pop-token tokens))
+                                 tokens))
 
 (defmethod parse-tokens
     (client (scope selectable-clauses) (keyword (eql :when)) tokens)
   (parse-conditional-clause-tail client
-                               (make-instance 'conditional-clause
-                                              :condition (pop-token tokens))
-                               tokens))
+                                 (make-instance 'conditional-clause
+                                                :condition (pop-token tokens))
+                                 tokens))
 
 (defmethod parse-tokens
     (client (scope selectable-clauses) (keyword (eql :unless)) tokens)
   (parse-conditional-clause-tail client
-                               (make-instance 'conditional-clause
-                                              :condition `(not ,(pop-token tokens)))
-                               tokens))
+                                 (make-instance 'conditional-clause
+                                                :condition `(not ,(pop-token tokens)))
+                                 tokens))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

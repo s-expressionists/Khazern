@@ -187,7 +187,7 @@
    ;; the clause.
    (%order :accessor order
            :initarg :order
-           :initform (list :from :to :by))
+           :initform '())
    ;; The form that was given after one of the LOOP keywords FROM,
    ;; UPFROM, or DOWNFROM, or 0 if none of these LOOP keywords was
    ;; given.
@@ -255,25 +255,19 @@
      (setf (end-form instance) value
            (iteration-path-preposition-names instance)
                (nset-difference (iteration-path-preposition-names instance)
-                                +to-keywords+)
-           (order instance)
-               (nconc (delete :to (order instance))
-                      (list :to))))
+                                +to-keywords+))
+     (push :to (order instance)))
     ((:from :downfrom :upfrom)
      (setf (start-form instance) value
            (iteration-path-preposition-names instance)
                (nset-difference (iteration-path-preposition-names instance)
-                                +from-keywords+)
-           (order instance)
-               (nconc (delete :from (order instance))
-                      (list :from))))
+                                +from-keywords+))
+     (push :from (order instance)))
     (:by
      (setf (by-form instance) value
            (iteration-path-preposition-names instance)
-           (delete :by (iteration-path-preposition-names instance))
-           (order instance)
-               (nconc (delete :by (order instance))
-                      (list :by)))))
+           (delete :by (iteration-path-preposition-names instance)))
+     (push :by (order instance))))
   ;; set the termination test
   (case name
     ((:to :upto :downto)
@@ -332,6 +326,10 @@
   (map-variables function (var clause)))
 
 (defmethod analyze ((clause for-as-arithmetic))
+  (setf (order clause) (nreverse (order clause)))
+  (pushnew :from (order clause))
+  (pushnew :to (order clause))
+  (pushnew :by (order clause))
   (unless (typep clause '(or for-as-arithmetic-down for-as-arithmetic-up))
     (change-class clause 'for-as-arithmetic-up))
   (with-accessors ((next-var next-var)
