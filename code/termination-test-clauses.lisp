@@ -30,7 +30,7 @@
 
 (defmethod parse-tokens
     (client (scope body-clauses) (keyword (eql :repeat)) tokens)
-  (make-instance 'repeat-clause :form (pop-token client scope tokens)))
+  (make-instance 'repeat-clause :form (pop-token tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -76,7 +76,7 @@
 
 (defmethod parse-tokens
     (client (scope body-clauses) (keyword (eql :always)) tokens)
-  (make-instance 'always-clause :form (pop-token client scope tokens)))
+  (make-instance 'always-clause :form (pop-token tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -100,7 +100,7 @@
 
 (defmethod parse-tokens
     (client (scope body-clauses) (keyword (eql :never)) tokens)
-  (make-instance 'never-clause :form (pop-token client scope tokens)))
+  (make-instance 'never-clause :form (pop-token tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -123,7 +123,7 @@
 
 (defmethod parse-tokens
     (client (scope body-clauses) (keyword (eql :thereis)) tokens)
-  (make-instance 'thereis-clause :form (pop-token client scope tokens)))
+  (make-instance 'thereis-clause :form (pop-token tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -144,11 +144,11 @@
 
 (defmethod parse-tokens
     (client (scope body-clauses) (keyword (eql :while)) tokens)
-  (make-instance 'while-clause :form (pop-token client scope tokens)))
+  (make-instance 'while-clause :form (pop-token tokens)))
 
 (defmethod parse-tokens
     (client (scope body-clauses) (keyword (eql :until)) tokens)
-  (make-instance 'while-clause :form `(not ,(pop-token client scope tokens))))
+  (make-instance 'while-clause :form `(not ,(pop-token tokens))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

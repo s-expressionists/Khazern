@@ -5,9 +5,9 @@
 (defclass accumulation-clause (selectable-clause accumulation-mixin form-mixin)
   ())
 
-(defun parse-into (client scope tokens)
-  (if (pop-token? client scope tokens :keywords '(:into))
-      (pop-token client scope tokens :type 'symbol)
+(defun parse-into (tokens)
+  (if (pop-token? tokens :keywords '(:into))
+      (pop-token tokens :type 'symbol)
       (default-accumulation-variable)))
 
 ;;; COLLECT clause
@@ -19,16 +19,16 @@
 
 (defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :collect)) tokens)
   (make-instance 'collect-clause
-                 :form (pop-token client scope tokens)
+                 :form (pop-token tokens)
                  :var (make-instance 'd-spec
-                                     :var-spec (parse-into client scope tokens)
+                                     :var-spec (parse-into tokens)
                                      :accumulation-category 'list)))
 
 (defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :collecting)) tokens)
   (make-instance 'collect-clause
-                 :form (pop-token client scope tokens)
+                 :form (pop-token tokens)
                  :var (make-instance 'd-spec
-                                     :var-spec (parse-into client scope tokens)
+                                     :var-spec (parse-into tokens)
                                      :accumulation-category 'list)))
 
 ;;; COLLECT expansion methods
@@ -53,16 +53,16 @@
 
 (defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :append)) tokens)
   (make-instance 'append-clause
-                 :form (pop-token client scope tokens)
+                 :form (pop-token tokens)
                  :var (make-instance 'd-spec
-                                     :var-spec (parse-into client scope tokens)
+                                     :var-spec (parse-into tokens)
                                      :accumulation-category 'list)))
 
 (defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :appending)) tokens)
   (make-instance 'append-clause
-                 :form (pop-token client scope tokens)
+                 :form (pop-token tokens)
                  :var (make-instance 'd-spec
-                                     :var-spec (parse-into client scope tokens)
+                                     :var-spec (parse-into tokens)
                                      :accumulation-category 'list)))
 
 ;;; APPEND expansion methods
@@ -104,16 +104,16 @@
 
 (defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :nconc)) tokens)
   (make-instance 'nconc-clause
-                 :form (pop-token client scope tokens)
+                 :form (pop-token tokens)
                  :var (make-instance 'd-spec
-                                     :var-spec (parse-into client scope tokens)
+                                     :var-spec (parse-into tokens)
                                      :accumulation-category 'list)))
 
 (defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :nconcing)) tokens)
   (make-instance 'nconc-clause
-                 :form (pop-token client scope tokens)
+                 :form (pop-token tokens)
                  :var (make-instance 'd-spec
-                                     :var-spec (parse-into client scope tokens)
+                                     :var-spec (parse-into tokens)
                                      :accumulation-category 'list)))
 
 ;;; NCONC expansion methods
@@ -145,18 +145,18 @@
 
 (defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :count)) tokens)
   (make-instance 'count-clause
-                 :form (pop-token client scope tokens)
+                 :form (pop-token tokens)
                  :var (make-instance 'd-spec
-                                     :var-spec (parse-into client scope tokens)
-                                     :type-spec (parse-type-spec client scope tokens 'fixnum)                          
+                                     :var-spec (parse-into tokens)
+                                     :type-spec (parse-type-spec tokens 'fixnum)                          
                                      :accumulation-category 'count/sum)))
 
 (defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :counting)) tokens)
   (make-instance 'count-clause
-                 :form (pop-token client scope tokens)
+                 :form (pop-token tokens)
                  :var (make-instance 'd-spec
-                                     :var-spec (parse-into client scope tokens)
-                                     :type-spec (parse-type-spec client scope tokens 'fixnum)                          
+                                     :var-spec (parse-into tokens)
+                                     :type-spec (parse-type-spec tokens 'fixnum)                          
                                      :accumulation-category 'count/sum)))
 
 ;;; COUNT expansion methods
@@ -183,38 +183,38 @@
 
 (defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :minimize)) tokens)
   (make-instance 'extremum-clause
-                 :form (pop-token client scope tokens)
+                 :form (pop-token tokens)
                  :reduce-function 'min
                  :var (make-instance 'd-spec
-                                     :var-spec (parse-into client scope tokens)
-                                     :type-spec (parse-type-spec client scope tokens 'real)                          
+                                     :var-spec (parse-into tokens)
+                                     :type-spec (parse-type-spec tokens 'real)                          
                                      :accumulation-category 'max/min)))
 
 (defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :minimizing)) tokens)
   (make-instance 'extremum-clause
-                 :form (pop-token client scope tokens)
+                 :form (pop-token tokens)
                  :reduce-function 'min
                  :var (make-instance 'd-spec
-                                     :var-spec (parse-into client scope tokens)
-                                     :type-spec (parse-type-spec client scope tokens 'real)                          
+                                     :var-spec (parse-into tokens)
+                                     :type-spec (parse-type-spec tokens 'real)                          
                                      :accumulation-category 'max/min)))
 
 (defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :maximize)) tokens)
   (make-instance 'extremum-clause
-                 :form (pop-token client scope tokens)
+                 :form (pop-token tokens)
                  :reduce-function 'max
                  :var (make-instance 'd-spec
-                                     :var-spec (parse-into client scope tokens)
-                                     :type-spec (parse-type-spec client scope tokens 'real)                          
+                                     :var-spec (parse-into tokens)
+                                     :type-spec (parse-type-spec tokens 'real)                          
                                      :accumulation-category 'max/min)))
 
 (defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :maximizing)) tokens)
   (make-instance 'extremum-clause
-                 :form (pop-token client scope tokens)
+                 :form (pop-token tokens)
                  :reduce-function 'max
                  :var (make-instance 'd-spec
-                                     :var-spec (parse-into client scope tokens)
-                                     :type-spec (parse-type-spec client scope tokens 'real)                          
+                                     :var-spec (parse-into tokens)
+                                     :type-spec (parse-type-spec tokens 'real)                          
                                      :accumulation-category 'max/min)))
 
 ;;; MINIMIZE/MAXIMIZE expansion methods
@@ -242,18 +242,18 @@
 
 (defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :sum)) tokens)
   (make-instance 'sum-clause
-                 :form (pop-token client scope tokens)
+                 :form (pop-token tokens)
                  :var (make-instance 'd-spec
-                                     :var-spec (parse-into client scope tokens)
-                                     :type-spec (parse-type-spec client scope tokens 'number)                          
+                                     :var-spec (parse-into tokens)
+                                     :type-spec (parse-type-spec tokens 'number)                          
                                      :accumulation-category 'count/sum)))
 
 (defmethod parse-tokens ((client standard-client) (scope selectable-clauses) (keyword (eql :summing)) tokens)
   (make-instance 'sum-clause
-                 :form (pop-token client scope tokens)
+                 :form (pop-token tokens)
                  :var (make-instance 'd-spec
-                                     :var-spec (parse-into client scope tokens)
-                                     :type-spec (parse-type-spec client scope tokens 'number)                          
+                                     :var-spec (parse-into tokens)
+                                     :type-spec (parse-type-spec tokens 'number)                          
                                      :accumulation-category 'count/sum)))
 
 ;;; SUM expansion methods

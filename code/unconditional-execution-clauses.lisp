@@ -24,12 +24,12 @@
 (defmethod parse-tokens
     (client (scope selectable-clauses) (keyword (eql :do)) tokens)
   (make-instance 'do-clause
-                 :forms (parse-compound-form+ client scope tokens)))
+                 :forms (parse-compound-form+ tokens)))
 
 (defmethod parse-tokens
     (client (scope selectable-clauses) (keyword (eql :doing)) tokens)
   (make-instance 'do-clause
-                 :forms (parse-compound-form+ client scope tokens)))
+                 :forms (parse-compound-form+ tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

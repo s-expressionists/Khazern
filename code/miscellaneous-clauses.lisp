@@ -28,7 +28,7 @@
 
 (defmethod parse-tokens
     (client (scope body-clauses) (keyword (eql :named)) tokens)
-  (make-instance 'name-clause :name (pop-token client scope tokens)))
+  (make-instance 'name-clause :name (pop-token tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -48,7 +48,7 @@
 
 (defmethod parse-tokens
     (client (scope selectable-clauses) (keyword (eql :return)) tokens)
-  (make-instance 'return-clause :form (pop-token client scope tokens)))
+  (make-instance 'return-clause :form (pop-token tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -83,7 +83,7 @@
 (defmethod parse-tokens
     (client (scope body-clauses) (keyword (eql :initially)) tokens)
   (make-instance 'initial-clause
-                 :forms (parse-compound-form+ client scope tokens)))
+                 :forms (parse-compound-form+ tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -114,7 +114,7 @@
 (defmethod parse-tokens
     (client (scope body-clauses) (keyword (eql :finally)) tokens)
   (make-instance 'final-clause
-                 :forms (parse-compound-form+ client scope tokens)))
+                 :forms (parse-compound-form+ tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

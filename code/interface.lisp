@@ -185,8 +185,7 @@
 (defmacro define-interface (client-var client-class &optional intrinsic)
   (declare (ignore client-class))
   (let* ((intrinsic-pkg (if intrinsic (find-package '#:common-lisp) *package*))
-         (epilogue-tag (ensure-symbol '#:epilogue))
-         (initialize-func (ensure-symbol '#:initialize-khazern)))
+         (epilogue-tag (ensure-symbol '#:epilogue)))
     `(progn
        (defmacro ,(ensure-symbol '#:loop-finish intrinsic-pkg) ()
          '(go ,epilogue-tag))

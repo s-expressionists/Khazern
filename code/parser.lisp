@@ -9,8 +9,7 @@
    (%tokens :accessor tokens
             :initarg :tokens)))
 
-(defun pop-token (client scope token-stream
-                  &key (type nil type-p) (keywords nil keywords-p))
+(defun pop-token (token-stream &key (type nil type-p) (keywords nil keywords-p))
   (when (null (tokens token-stream))
     (error 'expected-token-but-end
            :expected-type type
@@ -31,8 +30,7 @@
     (incf (index token-stream))
     (pop (tokens token-stream))))
 
-(defun pop-token? (client scope token-stream
-                   &key (type nil type-p) (keywords nil keywords-p))
+(defun pop-token? (token-stream &key (type nil type-p) (keywords nil keywords-p))
   (cond ((and (car (tokens token-stream))
               (or (not type-p)
                   (typep (car (tokens token-stream)) type))
@@ -42,6 +40,10 @@
          (values t (pop (tokens token-stream))))
         (t
          (values nil nil))))
+
+(defun push-token (token token-stream)
+  (decf (index token-stream))
+  (push token (tokens token-stream)))
 
 (defmethod parse-tokens (client scope name tokens)
   (declare (ignore tokens))
@@ -62,29 +64,29 @@
          :name token))
 
 (defun do-parse-tokens (client scope tokens)
-  (parse-tokens client scope (make-parser-name client scope (pop-token client scope tokens)) tokens))
+  (parse-tokens client scope (make-parser-name client scope (pop-token tokens)) tokens))
 
-(defun parse-type-spec (client scope tokens &optional (default-type-spec t))
-  (if (pop-token? client scope tokens :keywords '(:of-type))
-      (pop-token client scope tokens)
+(defun parse-type-spec (tokens &optional (default-type-spec t))
+  (if (pop-token? tokens :keywords '(:of-type))
+      (pop-token tokens)
       (multiple-value-bind (foundp type-spec)
-          (pop-token? client scope tokens :type 'simple-type-spec)
+          (pop-token? tokens :type 'simple-type-spec)
         (if foundp
             type-spec
             default-type-spec))))
 
-(defun parse-d-spec (client scope tokens &key (type-spec t) (accumulation-category t))
+(defun parse-d-spec (tokens &key (type-spec t) (accumulation-category t))
   (make-instance 'd-spec
-                 :var-spec (pop-token client scope tokens)
-                 :type-spec (parse-type-spec client scope tokens type-spec)
+                 :var-spec (pop-token tokens)
+                 :type-spec (parse-type-spec tokens type-spec)
                  :accumulation-category accumulation-category))
 
-(defun parse-compound-form+ (client scope tokens)
+(defun parse-compound-form+ (tokens)
   (prog (forms)
-     (push (pop-token client scope tokens :type 'cons) forms)
+     (push (pop-token tokens :type 'cons) forms)
    next
      (multiple-value-bind (foundp form)
-         (pop-token? client scope tokens :type 'cons)
+         (pop-token? tokens :type 'cons)
        (when foundp
          (push form forms)
          (go next)))
@@ -95,7 +97,7 @@
    next
      (push (do-parse-tokens client scope tokens)
            clauses)
-     (when (pop-token? client scope tokens :keywords '(:and))
+     (when (pop-token? tokens :keywords '(:and))
        (go next))
      (return (nreverse clauses))))
 
