@@ -47,7 +47,8 @@
 
 (defmethod analyze ((clause for-as-subclause))
   (when (eq (type-spec (var clause)) *placeholder-result*)
-    (setf (type-spec (var clause)) t)))
+    (setf (type-spec (var clause)) t))
+  (check-type-spec (var clause)))
 
 ;;; FOR-AS-CLAUSE parsers
 
@@ -57,7 +58,8 @@
          var)
    next
      (setf var (parse-d-spec tokens
-                             :type-spec *placeholder-result*))
+                             :type-spec *placeholder-result*)
+           (ignorablep var) t)
      (push (do-parse-tokens client instance tokens)
            subclauses)
      (setf (var (car subclauses)) var)
@@ -72,7 +74,8 @@
          var)
    next
      (setf var (parse-d-spec tokens
-                             :type-spec *placeholder-result*))
+                             :type-spec *placeholder-result*)
+           (ignorablep var) t)
      (push (do-parse-tokens client instance tokens)
            subclauses)
      (setf (var (car subclauses)) var)
@@ -366,7 +369,8 @@
                    (setf by-form (coerce by-form by-type))))
                 (t
                  (setf var-type 'number
-                       by-type 'number))))))))
+                       by-type 'number)))))))
+  (check-type-spec (var clause)))
  
 (defmethod initial-bindings ((clause for-as-arithmetic))
   (nconc (mapcan (lambda (name)
@@ -381,7 +385,7 @@
                       (unless (numberp (by-form clause))
                         (d-spec-simple-bindings (by-var clause) (by-form clause))))))
                  (order clause))
-         (d-spec-simple-bindings (var clause))))
+         (d-spec-outer-bindings (var clause))))
 
 (defmethod initial-declarations ((clause for-as-arithmetic))
   (nconc (d-spec-simple-declarations (next-var clause))
@@ -390,7 +394,7 @@
          (unless (or (null (end-form clause))
                      (numberp (end-form clause)))
            (d-spec-simple-declarations (end-var clause)))
-         (d-spec-simple-declarations (var clause) :ignorable t :nullable t)))
+         (d-spec-outer-declarations (var clause))))
 
 (defmethod initial-step-forms ((clause for-as-arithmetic-up))
   (nconc (when (termination-test clause)
@@ -464,15 +468,12 @@
 ;;; FOR-AS-IN-LIST/FOR-AS-ON-LIST expansion methods
 
 (defmethod initial-bindings ((clause for-as-list))
-  `((,(form-var clause) ,(form clause))
+  `((,(rest-var clause) ,(form clause))
     ,@(unless (function-operator-p (by-form clause))
-        `((,(by-var clause) ,(by-form clause))))))
-
-(defmethod final-bindings ((clause for-as-list))
-  `((,(rest-var clause) ,(form-var clause))
+        `((,(by-var clause) ,(by-form clause))))
     ,.(d-spec-outer-bindings (var clause))))
 
-(defmethod final-declarations ((clause for-as-list))
+(defmethod initial-declarations ((clause for-as-list))
   (d-spec-outer-declarations (var clause)))
 
 (defmethod initial-step-forms ((clause for-as-in-list))
@@ -513,7 +514,8 @@
 (defmethod analyze ((clause for-as-equals-then))
   (when (eq (type-spec (var clause)) *placeholder-result*)
     (setf (type-spec (var clause)) t))
-  (set-d-spec-temps (var clause) t))
+  (set-d-spec-temps (var clause) t)
+  (check-type-spec (var clause)))
 
 ;;; FOR-AS-EQUALS-THEN expansion methods
 
@@ -553,22 +555,19 @@
 
 (defmethod initial-bindings ((clause for-as-across))
   `((,(form-var clause) ,(form clause))
-    (,(index-var clause) 0)))
+    (,(index-var clause) 0)
+    (,(length-var clause) 0)
+    ,.(d-spec-outer-bindings (var clause))))
 
 (defmethod initial-declarations ((clause for-as-across))
   `((type vector ,(form-var clause))
-    (type fixnum ,(index-var clause))))
-  
-(defmethod final-bindings ((clause for-as-across))
-  `((,(length-var clause) (length ,(form-var clause)))
-    ,.(d-spec-outer-bindings (var clause))))
-
-(defmethod final-declarations ((clause for-as-across))
-  (list* `(type fixnum ,(length-var clause))
-         (d-spec-outer-declarations (var clause))))
+    (type fixnum ,(index-var clause))
+    (type fixnum ,(length-var clause))
+    ,.(d-spec-outer-declarations (var clause))))
 
 (defmethod initial-step-forms ((clause for-as-across))
-  `((when (>= ,(index-var clause) ,(length-var clause))
+  `((setq ,(length-var clause) (length ,(form-var clause)))
+    (when (>= ,(index-var clause) ,(length-var clause))
       (go ,*epilogue-tag*))
     ,@(d-spec-inner-form (var clause)
                          `(aref ,(form-var clause)
@@ -668,19 +667,18 @@
            :names '(:in)
            :name (if (typep clause 'for-as-hash-key)
                      :hash-key
-                     :hash-value))))
+                     :hash-value)))
+  (check-type-spec (var clause)))
 
 (defmethod initial-bindings ((clause for-as-hash))
-  `((,(form-var clause) ,(form clause))))
-
-(defmethod final-bindings ((clause for-as-hash))
-  `((,(temp-entry-p-var clause) nil)
+  `((,(form-var clause) ,(form clause))
+    (,(temp-entry-p-var clause) nil)
     (,(temp-key-var clause) nil)
     (,(temp-value-var clause) nil)
     ,.(d-spec-outer-bindings (var clause))
     ,.(d-spec-outer-bindings (other-var clause))))
 
-(defmethod final-declarations ((clause for-as-hash))
+(defmethod initial-declarations ((clause for-as-hash))
   (d-spec-outer-declarations (var clause)))
   
 (defmethod wrap-subclause :around ((subclause for-as-hash) inner-form)
@@ -787,17 +785,16 @@
 
 (defmethod analyze ((clause for-as-package))
   (when (eq (type-spec (var clause)) *placeholder-result*)
-    (setf (type-spec (var clause)) t)))
+    (setf (type-spec (var clause)) t))
+  (check-type-spec (var clause)))
 
 (defmethod initial-bindings ((clause for-as-package))
-  `((,(form-var clause) ,(form clause))))
-
-(defmethod final-bindings ((clause for-as-package))
-  `((,(temp-entry-p-var clause) nil)
+  `((,(form-var clause) ,(form clause))
+    (,(temp-entry-p-var clause) nil)
     (,(temp-symbol-var clause) nil)
     ,.(d-spec-outer-bindings (var clause))))
 
-(defmethod final-declarations ((clause for-as-package))
+(defmethod initial-declarations ((clause for-as-package))
   (d-spec-outer-declarations (var clause)))
   
 (defmethod wrap-subclause :around ((subclause for-as-package) inner-form)
@@ -871,7 +868,8 @@
          var
          subclauses)
    next
-     (setf var (parse-d-spec tokens))
+     (setf var (parse-d-spec tokens)
+           (ignorablep var) t)
      (if (pop-token? tokens :keywords '(:=))
          (push (make-instance 'with-subclause-with-form
                               :var var
@@ -887,6 +885,9 @@
 
 ;;; WITH expansion methods
 
+(defmethod analyze ((instance with-subclause))
+  (check-type-spec (var instance)))
+
 (defmethod map-variables (function (clause with-clause))
   (map-variables function (subclauses clause)))
 
@@ -895,14 +896,7 @@
          (d-spec-outer-bindings (var clause))))
 
 (defmethod initial-bindings ((clause with-subclause-no-form))
-  (let ((result '()))
-    (map-variables (lambda (var type category)
-                     (declare (ignore category))
-                   (push `(,var ,(if (subtypep type 'number)
-                               (coerce 0 type)
-                               nil)) result))
-                   (var clause))
-    (nreverse result)))
+  (d-spec-outer-bindings (var clause)))
 
 (defmethod wrap-subclause ((subclause with-subclause-with-form) inner-form)
   (nconc (d-spec-inner-form (var subclause) (form-var subclause))

@@ -34,6 +34,12 @@
           (inclusivep condition) (name condition)))
 
 (defmethod acclimation:report-condition
+    ((condition unable-to-deduce-initial-value) stream (language acclimation:english))
+  (format stream
+          "Unable to deduce initial value for type ~s. Using NIL as a fallback."
+          (type-spec condition)))
+
+(defmethod acclimation:report-condition
     ((condition expected-token-but-end) stream
      (language acclimation:english))
   (format stream

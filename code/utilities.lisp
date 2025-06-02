@@ -15,12 +15,6 @@
        (symbolp symbol2)
        (string= symbol1 symbol2)))
 
-(defun symbol-lookup (symbol choices &optional default)
-  (let ((result (assoc symbol choices :test #'symbol-equal)))
-    (if result
-        (second result)
-        default)))
-
 (defun it-keyword-p (symbol)
   (symbol-equal symbol :it))
 
@@ -97,22 +91,6 @@
               (cdr ,list-tail-accumulation-variable))
         (go again))))
 
-(defun first-result (&rest rest)
-  (first rest))
-
-(defun second-result (&rest rest)
-  (second rest))
-
-(defun third-result (&rest rest)
-  (third rest))
-
-(defun fourth-result (&rest rest)
-  (fourth rest))
-
-(defun normalize-keyword (x choices)
-  (car (find x choices
-             :test (lambda (x y) (find x y :test #'symbol-equal)))))
-
 ;;; This is very hacky
 (defun numeric-types ()
   (let ((types (list 'complex 'number)))
@@ -142,6 +120,35 @@
 (defun numeric-super-type (type)
   (find type *numeric-types* :test #'subtypep))
 
+(defvar +initial-values+
+  (remove-duplicates '(nil #\*
+                       0 0s0 0f0 0d0 0l0
+                       #C(0s0 0s0) #C(0f0 0f0) #C(0d0 0d0) #C(0l0 0l0)
+                       "" #P"")))
+
+(defun deduce-initial-value (type)
+  (loop for value in +initial-values+
+        when (typep value type)
+          do (return-from deduce-initial-value
+               (values (coerce value type)
+                       t)))
+  (if (consp type)
+      (case (first type)
+        ((integer rational short-float single-float double-float long-float float real)
+         (let ((value (find-if #'numberp (cdr type))))
+           (if value
+               (values (coerce value type) t)
+               (values nil nil))))
+        (complex
+         (multiple-value-bind (value validp)
+             (deduce-initial-value (second type))
+           (if validp
+               (values (complex value value) t)
+               (values nil nil))))
+        (otherwise
+         (values nil nil)))
+      (values nil nil)))
+
 ;;; A d-var-spec is a is a destructuring variable specifier: 
 ;;; 
 ;;;    d-var-spec ::= simple-var | nil | (d-var-spec . d-var-spec)
@@ -169,6 +176,9 @@
    (%accumulation-category :accessor accumulation-category
                            :initarg :accumulation-category
                            :initform t)
+   (%ignorable :accessor ignorablep
+               :initarg :ignorable
+               :initform nil)
    (%temps :accessor temps)))
 
 (defun set-d-spec-temps (d-spec &optional temp-var-p)
@@ -268,24 +278,57 @@
              nil))
     (traverse (var-spec d-spec) (type-spec d-spec))))
 
-(defun d-spec-outer-declarations (d-spec)
+(defun check-type-spec (instance)
+  (labels ((deduce (type-spec)
+             (cond ((nth-value 1 (deduce-initial-value type-spec))
+                    type-spec)
+                   (t
+                    (warn 'unable-to-deduce-initial-value
+                          :type-spec type-spec)
+                    `(or null ,type-spec))))
+           (traverse (var-spec type-spec)
+             (cond ((null var-spec)
+                    nil)
+                   ((symbolp var-spec)
+                    (deduce type-spec))
+                   ((not (consp var-spec))
+                    (error 'expected-var-spec-but-found
+                           :found var-spec))
+                   ((symbolp type-spec)
+                    (setf type-spec (deduce type-spec))
+                    (cons (traverse (car var-spec) type-spec)
+                          (traverse (cdr var-spec) type-spec)))
+                   ((not (consp type-spec))
+                    (error 'expected-type-spec-but-found
+                           :found type-spec))
+                   (t
+                    (cons (traverse (car var-spec) (car type-spec))
+                          (traverse (cdr var-spec) (cdr type-spec)))))))
+    (setf (type-spec instance)
+          (traverse (var-spec instance) (type-spec instance)))))
+
+(defun d-spec-outer-declarations
+    (d-spec)
   (let ((result '())
-        (ignorables '()))
+        (ignorables '())
+        (ignorablep (ignorablep d-spec)))
     (map-variables (lambda (var type category)
                      (declare (ignore category))
                      (unless (eq type t)
-                       (push `(type ,(type-or-null type) ,var)
-                             result))
-                     (push var ignorables))
+                       (push `(type ,type ,var) result))
+                     (when ignorablep
+                       (push var ignorables)))
                    d-spec)
-     (cons `(ignorable ,.(nreverse ignorables))
-           (nreverse result))))
+    (when ignorables
+      (push `(ignorable ,.(nreverse ignorables)) result))
+    (nreverse result)))
 
 (defun d-spec-outer-bindings (d-spec)
   (let ((result '()))
     (map-variables (lambda (var type category)
-                     (declare (ignore type category))
-                     (push `(,var nil) result))
+                     (declare (ignore category))
+                     (push (list var (deduce-initial-value type))
+                           result))
                    d-spec)
     (nreverse result)))
 

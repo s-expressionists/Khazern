@@ -37,7 +37,10 @@
 ;;; Compute the bindings.
 
 (defmethod initial-bindings ((clause repeat-clause))
-  `((,(var-spec (var clause)) (max 0 (ceiling ,(form clause))))))
+  `((,(var-spec (var clause))
+     ,(if (numberp (form clause))
+          (max 0 (ceiling (form clause)))
+          `(max 0 (ceiling ,(form clause)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

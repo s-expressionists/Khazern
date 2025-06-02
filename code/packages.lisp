@@ -21,8 +21,6 @@
            #:define-interface
            #:epilogue-forms
            #:expand-body
-           #:final-bindings
-           #:final-declarations
            #:initial-bindings
            #:initial-declarations
            #:initial-step-bindings
@@ -43,7 +41,6 @@
            #:subsequent-step-declarations
            #:subsequent-step-forms
            #:symbol-equal
-           #:symbol-lookup
            #:var
            #:variable-clause-p
            #:wrap-clause

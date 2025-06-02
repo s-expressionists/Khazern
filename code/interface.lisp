@@ -24,17 +24,7 @@
     (declare (ignore clause))
     '()))
 
-(defgeneric final-declarations (clause)
-  (:method (clause)
-    (declare (ignore clause))
-    '()))
-
 (defgeneric initial-bindings (clause)
-  (:method (clause)
-    (declare (ignore clause))
-    '()))
-
-(defgeneric final-bindings (clause)
   (:method (clause)
     (declare (ignore clause))
     '()))

@@ -88,9 +88,7 @@
 ;;; each subclause contains only the final bindings, leaving the
 ;;; initial bindings to a single binding form of the entire clause.
 (defmethod wrap-subclause (subclause inner-form)
-  (wrap-let (final-bindings subclause)
-            (final-declarations subclause)
-            inner-form))
+  inner-form)
 
 ;;; Default method for WRAP-CLAUSE.  This method is applicable only if
 ;;; the clause type does not admit any subclauses.  It

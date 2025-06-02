@@ -57,6 +57,12 @@
    (%second-preposition :reader second-preposition
                         :initarg :second-preposition)))
 
+(define-condition unable-to-deduce-initial-value
+    (style-warning acclimation:condition)
+  ((%type-spec :reader type-spec
+               :initarg :type-spec
+               :initform nil)))
+
 (define-condition expected-var-spec-but-end (loop-parse-error)
   ())
 
