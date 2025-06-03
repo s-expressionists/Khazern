@@ -14,10 +14,9 @@
 (defmethod acclimation:report-condition
     ((condition unknown-iteration-path) stream (language acclimation:english))
   (format stream
-          "Unknown ~:[~;inclusive ~]iteration path ~a with client ~a and scope ~a."
+          "Unknown ~:[~;inclusive ~]iteration path ~a with client ~a."
           (inclusivep condition) (name condition)
-          (class-name (class-of (client condition)))
-          (class-name (class-of (scope condition)))))
+          (class-name (class-of (client condition)))))
 
 (defmethod acclimation:report-condition
     ((condition missing-iteration-path-prepositions) stream (language acclimation:english))

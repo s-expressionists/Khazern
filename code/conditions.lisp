@@ -28,8 +28,6 @@
 (define-condition unknown-iteration-path (loop-parse-error)
   ((%client :reader client
             :initarg :client)
-   (%scope :reader scope
-           :initarg :scope)
    (%name :reader name
           :initarg :name)
    (%inclusive :reader inclusivep
