@@ -163,6 +163,6 @@
                    clauses)))
 
 ;;; FIXME: Add more analyses.
-(defmethod analyze ((clause body-clauses))
+(defmethod analyze ((clause extended-superclause))
   (verify-clause-order (subclauses clause))
   (check-variables clause))

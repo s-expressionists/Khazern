@@ -8,23 +8,26 @@
 ;;;
 ;;; Common classes.
 
-;;; The base class of all clauses.
-(defclass clause ()
+;;;  Clauses that accept `AND'.
+(defclass simple-superclause ()
+  ((%subclauses :accessor subclauses
+                :initarg :subclauses
+                :initform nil)))
+
+(defclass sequential-superclass (simple-superclause)
   ())
 
-;;; Mixin for clauses that accept `AND'.
-(defclass subclauses-mixin ()
-  ((%subclauses :initarg :subclauses :accessor subclauses)))
-
-(defclass sequential-mixin (subclauses-mixin)
+(defclass parallel-superclause (simple-superclause)
   ())
 
-(defclass parallel-mixin (subclauses-mixin)
+(defclass selectable-superclass ()
   ())
 
-(defclass selectable-clauses () ())
+(defclass extended-superclause (selectable-superclass sequential-superclass)
+  ())
 
-(defclass body-clauses (selectable-clauses sequential-mixin) ())
+(defmethod analyze :before ((clause simple-superclause))
+  (mapc #'analyze (subclauses clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -34,50 +37,50 @@
 ;;;
 ;;; Compute the prologue-forms.
 
-(defmethod prologue-forms ((clause subclauses-mixin))
+(defmethod prologue-forms ((clause simple-superclause))
   (mapcan #'prologue-forms (subclauses clause)))
 
-(defmethod body-forms ((clause subclauses-mixin))
+(defmethod body-forms ((clause simple-superclause))
   (mapcan #'body-forms (subclauses clause)))
 
-(defmethod map-variables (function (clause subclauses-mixin))
+(defmethod map-variables (function (clause simple-superclause))
   (map-variables function (subclauses clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the step forms.
 
-(defmethod initial-step-forms ((clause parallel-mixin))
+(defmethod initial-step-forms ((clause parallel-superclause))
   (wrap-let* (mapcan #'initial-step-bindings (subclauses clause))
              (mapcan #'initial-step-declarations (subclauses clause))
              (mapcan #'initial-step-forms (subclauses clause))))
 
-(defmethod subsequent-step-forms ((clause parallel-mixin))
+(defmethod subsequent-step-forms ((clause parallel-superclause))
   (wrap-let* (mapcan #'subsequent-step-bindings (subclauses clause))
              (mapcan #'subsequent-step-declarations (subclauses clause))
              (mapcan #'subsequent-step-forms (subclauses clause))))
 
-(defmethod wrap-forms ((clause parallel-mixin) forms)
+(defmethod wrap-forms ((clause parallel-superclause) forms)
   (wrap-let (mapcan #'initial-bindings (subclauses clause))
             (mapcan #'initial-declarations (subclauses clause))
             (reduce #'wrap-forms (subclauses clause)
                     :from-end t :initial-value forms)))
 
-(defmethod initial-step-forms ((clause sequential-mixin))
+(defmethod initial-step-forms ((clause sequential-superclass))
   (mapcan (lambda (clause)
             (wrap-let* (initial-step-bindings clause)
                        (initial-step-declarations clause)
                        (initial-step-forms clause)))
           (subclauses clause)))
 
-(defmethod subsequent-step-forms ((clause sequential-mixin))
+(defmethod subsequent-step-forms ((clause sequential-superclass))
   (mapcan (lambda (clause)
             (wrap-let* (subsequent-step-bindings clause)
                        (subsequent-step-declarations clause)
                        (subsequent-step-forms clause)))
           (subclauses clause)))
 
-(defmethod wrap-forms ((clause sequential-mixin) forms)
+(defmethod wrap-forms ((clause sequential-superclass) forms)
   (reduce (lambda (clause forms)
             (wrap-let (initial-bindings clause)
                       (initial-declarations clause)
@@ -89,10 +92,10 @@
 ;;;
 ;;; Compute the body-forms.
 
-(defmethod body-forms ((clause subclauses-mixin))
+(defmethod body-forms ((clause simple-superclause))
   (mapcan #'body-forms (subclauses clause)))
 
-(defmethod epilogue-forms ((clause subclauses-mixin))
+(defmethod epilogue-forms ((clause simple-superclause))
   (mapcan #'epilogue-forms (subclauses clause)))
 
 (defclass var-mixin ()
@@ -180,7 +183,7 @@
 ;;;
 ;;;    main-clause ::= selectable-clause | termination-test
 
-(defclass main-clause (clause)
+(defclass main-clause ()
   ())
 
 (defmethod main-clause-p ((clause main-clause))
@@ -206,7 +209,7 @@
 ;;;
 ;;;   variable-clause ::= with-clause | for-as-clause
 
-(defclass variable-clause (clause)
+(defclass variable-clause ()
   ())
 
 (defmethod variable-clause-p ((clause variable-clause))

@@ -3,7 +3,7 @@
 (defclass standard-client ()
   ())
 
-(defgeneric parse-tokens (client scope name tokens))
+(defgeneric parse-clause (client scope name tokens))
 
 (defgeneric map-variables (function clause)
   (:method (function clause)
@@ -134,7 +134,7 @@
 ;;; function takes an accumulation clause and returns the category.
 (defgeneric accumulation-category (clause))
 
-(defgeneric make-iteration-path (client scope name &optional inclusive-form))
+(defgeneric make-iteration-path (client name &optional inclusive-form))
 
 (defgeneric iteration-path-preposition-names (instance)
   (:method (instance)
@@ -154,16 +154,9 @@
 
 (defgeneric (setf iteration-path-using) (new-value instance name))
 
-(defgeneric subclauses (clause)
-  (:method (clause)
-    (declare (ignore clause))
-    '()))
-
 (defgeneric analyze (clause-or-clauses)
   (:method (clause-or-clauses)
-    (declare (ignore clause-or-clauses)))
-  (:method :before (clause-or-clauses)
-    (mapc #'analyze (subclauses clause-or-clauses))))
+    (declare (ignore clause-or-clauses))))
 
 ;;; Interface declaration
 

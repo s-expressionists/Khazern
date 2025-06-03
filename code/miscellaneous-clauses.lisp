@@ -15,7 +15,7 @@
 ;;;
 ;;; where name is a symbol.
 
-(defclass name-clause (clause)
+(defclass name-clause ()
   ((%name :reader name
           :initarg :name)))
 
@@ -26,8 +26,8 @@
 ;;;
 ;;; Parser.
 
-(defmethod parse-tokens
-    (client (scope body-clauses) (keyword (eql :named)) tokens)
+(defmethod parse-clause
+    (client (scope extended-superclause) (keyword (eql :named)) tokens)
   (make-instance 'name-clause :name (pop-token tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -46,8 +46,8 @@
 ;;;
 ;;; Parser
 
-(defmethod parse-tokens
-    (client (scope selectable-clauses) (keyword (eql :return)) tokens)
+(defmethod parse-clause
+    (client (scope selectable-superclass) (keyword (eql :return)) tokens)
   (make-instance 'return-clause :form (pop-token tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -73,15 +73,15 @@
 ;;;
 ;;;    initial-clause ::= initially compound-form+
 
-(defclass initial-clause (clause compound-forms-mixin)
+(defclass initial-clause (compound-forms-mixin)
   ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parser
 
-(defmethod parse-tokens
-    (client (scope body-clauses) (keyword (eql :initially)) tokens)
+(defmethod parse-clause
+    (client (scope extended-superclause) (keyword (eql :initially)) tokens)
   (make-instance 'initial-clause
                  :forms (parse-compound-form+ tokens)))
 
@@ -104,15 +104,15 @@
 ;;;
 ;;;    final-clause ::= finally compound-form+
 
-(defclass final-clause (clause compound-forms-mixin)
+(defclass final-clause (compound-forms-mixin)
   ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Parser
 
-(defmethod parse-tokens
-    (client (scope body-clauses) (keyword (eql :finally)) tokens)
+(defmethod parse-clause
+    (client (scope extended-superclause) (keyword (eql :finally)) tokens)
   (make-instance 'final-clause
                  :forms (parse-compound-form+ tokens)))
 
