@@ -43,5 +43,4 @@
            #:symbol-equal
            #:var
            #:variable-clause-p
-           #:wrap-clause
-           #:wrap-subclause))
+           #:wrap-forms))

@@ -16,27 +16,19 @@
 (defclass subclauses-mixin ()
   ((%subclauses :initarg :subclauses :accessor subclauses)))
 
+(defclass sequential-mixin (subclauses-mixin)
+  ())
+
+(defclass parallel-mixin (subclauses-mixin)
+  ())
+
 (defclass selectable-clauses () ())
 
-(defclass body-clauses (selectable-clauses) ())
+(defclass body-clauses (selectable-clauses sequential-mixin) ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Expansion methods for FOR-AS clause.
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the bindings.
-
-(defmethod initial-bindings ((clause subclauses-mixin))
-  (mapcan #'initial-bindings (subclauses clause)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the declarations.
-
-(defmethod initial-declarations ((clause subclauses-mixin))
-  (mapcan #'initial-declarations (subclauses clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -45,19 +37,53 @@
 (defmethod prologue-forms ((clause subclauses-mixin))
   (mapcan #'prologue-forms (subclauses clause)))
 
+(defmethod body-forms ((clause subclauses-mixin))
+  (mapcan #'body-forms (subclauses clause)))
+
+(defmethod map-variables (function (clause subclauses-mixin))
+  (map-variables function (subclauses clause)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the step forms.
 
-(defmethod initial-step-forms ((clause subclauses-mixin))
+(defmethod initial-step-forms ((clause parallel-mixin))
   (wrap-let* (mapcan #'initial-step-bindings (subclauses clause))
              (mapcan #'initial-step-declarations (subclauses clause))
              (mapcan #'initial-step-forms (subclauses clause))))
 
-(defmethod subsequent-step-forms ((clause subclauses-mixin))
+(defmethod subsequent-step-forms ((clause parallel-mixin))
   (wrap-let* (mapcan #'subsequent-step-bindings (subclauses clause))
              (mapcan #'subsequent-step-declarations (subclauses clause))
              (mapcan #'subsequent-step-forms (subclauses clause))))
+
+(defmethod wrap-forms ((clause parallel-mixin) forms)
+  (wrap-let (mapcan #'initial-bindings (subclauses clause))
+            (mapcan #'initial-declarations (subclauses clause))
+            (reduce #'wrap-forms (subclauses clause)
+                    :from-end t :initial-value forms)))
+
+(defmethod initial-step-forms ((clause sequential-mixin))
+  (mapcan (lambda (clause)
+            (wrap-let* (initial-step-bindings clause)
+                       (initial-step-declarations clause)
+                       (initial-step-forms clause)))
+          (subclauses clause)))
+
+(defmethod subsequent-step-forms ((clause sequential-mixin))
+  (mapcan (lambda (clause)
+            (wrap-let* (subsequent-step-bindings clause)
+                       (subsequent-step-declarations clause)
+                       (subsequent-step-forms clause)))
+          (subclauses clause)))
+
+(defmethod wrap-forms ((clause sequential-mixin) forms)
+  (reduce (lambda (clause forms)
+            (wrap-let (initial-bindings clause)
+                      (initial-declarations clause)
+                      (wrap-forms clause forms)))
+          (subclauses clause)
+          :from-end t :initial-value forms))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

@@ -39,7 +39,7 @@
 ;;;    for-as-package-clause ::=
 ;;;      {for | as} for-as-package {and for-as-subclause}* 
 
-(defclass for-as-clause (variable-clause subclauses-mixin)
+(defclass for-as-clause (variable-clause parallel-mixin)
   ())
 
 (defclass for-as-subclause (var-mixin)
@@ -83,11 +83,6 @@
        (go next))
      (setf (subclauses instance) (nreverse subclauses))
      (return instance)))
-
-;; FOR-AS-CLAUSE expansion methods
-
-(defmethod map-variables (function (clause for-as-clause))
-  (map-variables function (subclauses clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -681,11 +676,10 @@
 (defmethod initial-declarations ((clause for-as-hash))
   (d-spec-outer-declarations (var clause)))
   
-(defmethod wrap-subclause :around ((subclause for-as-hash) inner-form)
-  (call-next-method subclause
-                    `((with-hash-table-iterator
-                          (,(iterator-var subclause) ,(form-var subclause))
-                        ,@inner-form))))
+(defmethod wrap-forms ((subclause for-as-hash) forms)
+  `((with-hash-table-iterator
+        (,(iterator-var subclause) ,(form-var subclause))
+      ,@forms)))
 
 (defmethod initial-step-forms ((clause for-as-hash))
   `((multiple-value-setq (,(temp-entry-p-var clause)
@@ -797,13 +791,12 @@
 (defmethod initial-declarations ((clause for-as-package))
   (d-spec-outer-declarations (var clause)))
   
-(defmethod wrap-subclause :around ((subclause for-as-package) inner-form)
-  (call-next-method subclause
-                    `((with-package-iterator
-                          (,(iterator-var subclause)
-                            ,(form-var subclause)
-                            ,@(iterator-keywords subclause))
-                        ,@inner-form))))
+(defmethod wrap-forms ((subclause for-as-package) forms)
+  `((with-package-iterator
+        (,(iterator-var subclause)
+         ,(form-var subclause)
+         ,@(iterator-keywords subclause))
+      ,@forms)))
 
 (defmethod initial-step-forms ((clause for-as-package))
   `((multiple-value-setq (,(temp-entry-p-var clause)
@@ -848,7 +841,7 @@
 ;;; type number, the value is 0, and for the type float, the value is
 ;;; 0.0.
 
-(defclass with-clause (variable-clause subclauses-mixin)
+(defclass with-clause (variable-clause parallel-mixin)
   ())
 
 (defclass with-subclause (var-mixin)
@@ -888,9 +881,6 @@
 (defmethod analyze ((instance with-subclause))
   (check-type-spec (var instance)))
 
-(defmethod map-variables (function (clause with-clause))
-  (map-variables function (subclauses clause)))
-
 (defmethod initial-bindings ((clause with-subclause-with-form))
   (list* `(,(form-var clause) ,(form clause))
          (d-spec-outer-bindings (var clause))))
@@ -898,9 +888,9 @@
 (defmethod initial-bindings ((clause with-subclause-no-form))
   (d-spec-outer-bindings (var clause)))
 
-(defmethod wrap-subclause ((subclause with-subclause-with-form) inner-form)
+(defmethod wrap-forms ((subclause with-subclause-with-form) forms)
   (nconc (d-spec-inner-form (var subclause) (form-var subclause))
-         inner-form))
+         forms))
 
 (defmethod initial-declarations ((clause with-subclause))
   (d-spec-outer-declarations (var clause)))

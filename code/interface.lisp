@@ -107,12 +107,10 @@
 ;;; establishment of variable bindings in the wrapper.  Other clauses
 ;;; might need to be wrapped in some iterator form.  The generic
 ;;; function WRAP-CLAUSE defines how each clause type is wrapped.
-(defgeneric wrap-clause (clause inner-form))
-
-;;; If a clause can have subclauses, then each subclause may need to
-;;; be wrapped separately.  The generic function WRAP-SUBCLAUSE
-;;; determines how this is done.
-(defgeneric wrap-subclause (subclause inner-form))
+(defgeneric wrap-forms (clause forms)
+  (:method (clause forms)
+    (declare (ignore clause))
+    forms))
 
 (defgeneric main-clause-p (clause)
   (:method (clause)

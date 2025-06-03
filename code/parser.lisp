@@ -108,7 +108,8 @@
      (push (do-parse-tokens client scope tokens) clauses)
      (when (tokens tokens)
        (go next))
-     (return (nreverse clauses))))
+     (setf (subclauses scope) (nreverse clauses))
+     (return scope)))
 
 (defparameter *placeholder-result* (cons nil nil))
 

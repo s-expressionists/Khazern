@@ -62,82 +62,53 @@
 
 (defvar *epilogue-tag*)
 
-(defun prologue-body-epilogue (clauses)
+(defun prologue-body-epilogue (body-clause)
   (let ((start-tag (gensym "BODY")))
     `((tagbody
-         ,@(mapcan #'prologue-forms clauses)
-         ,@(mapcan (lambda (clause)
-                     (wrap-let* (initial-step-bindings clause)
-                                (initial-step-declarations clause)
-                                (initial-step-forms clause)))
-                   clauses)
+         ,@(prologue-forms body-clause)
+         ,@(initial-step-forms body-clause)
        ,start-tag
-         ,@(mapcan #'body-forms clauses)
-         ,@(mapcan (lambda (clause)
-                     (wrap-let* (subsequent-step-bindings clause)
-                                (subsequent-step-declarations clause)
-                                (subsequent-step-forms clause)))
-                   clauses)
+         ,@(body-forms body-clause)
+         ,@(subsequent-step-forms body-clause)
          (go ,start-tag)
        ,*epilogue-tag*
-         ,@(mapcan #'epilogue-forms clauses)
+         ,@(epilogue-forms body-clause)
          (return-from ,*loop-name*
            ,*accumulation-variable*)))))
 
-;;; Default method for WRAP-SUBCLAUSE.  By default, the wrapper for
-;;; each subclause contains only the final bindings, leaving the
-;;; initial bindings to a single binding form of the entire clause.
-(defmethod wrap-subclause (subclause inner-form)
-  inner-form)
+(defun expand-extended-loop (client loop-body)
+  (let* ((*accumulation-variable* nil)
+         (body-clause (parse-body client
+                                  (make-instance 'token-stream
+                                                 :tokens loop-body))))
+    (analyze body-clause)
+    (let ((*loop-name* (if (name-clause-p (car (subclauses body-clause)))
+                           (name (car (subclauses body-clause)))
+                           nil))
+          (*tail-variables* (make-hash-table :test #'eq)))
+      `(block ,*loop-name*
+         ,@(wrap-let (accumulation-bindings body-clause)
+                     (accumulation-declarations body-clause)
+                     (wrap-forms body-clause
+                                 (prologue-body-epilogue body-clause)))))))
 
-;;; Default method for WRAP-CLAUSE.  This method is applicable only if
-;;; the clause type does not admit any subclauses.  It
-;;; wraps each subclause individually, and then wraps the result in
-;;; the initial bindings for the entire clause.
-(defmethod wrap-clause (clause inner-form)
-  (wrap-let (initial-bindings clause)
-            (initial-declarations clause)
-            (reduce #'wrap-subclause (subclauses clause)
-                    :from-end t :initial-value inner-form)))
+(defun expand-simple-loop (client loop-body)
+  (declare (ignore client))
+  (let ((tag (gensym)))
+    `(block nil
+       (tagbody
+        ,tag
+          ,@loop-body
+          (go ,tag)))))
 
-;;; Process all clauses by first computing the prologue, the body, and
-;;; the epilogue, and then applying the clause-specific wrapper for
-;;; each clause to the result.
-(defun do-clauses (all-clauses)
-  (reduce #'wrap-clause all-clauses
-          :from-end t
-          :initial-value (prologue-body-epilogue all-clauses)))
-
-(defun expand-clauses (all-clauses)
-  (wrap-let (accumulation-bindings all-clauses)
-            (accumulation-declarations all-clauses)
-            (do-clauses all-clauses)))
-
-(defun expand-body (client loop-body epilogue-tag)
+(defun expand-body (client loop-body *epilogue-tag*)
   (trivial-with-current-source-form:with-current-source-form (loop-body)
     (cond ((notevery #'listp loop-body)
-           (let* ((*accumulation-variable* nil)
-                  (*epilogue-tag* epilogue-tag)
-                  (clauses (parse-body client
-                                       (make-instance 'token-stream
-                                                      :tokens loop-body))))
-             (analyze clauses)
-             (let* ((name (if (name-clause-p (car clauses))
-                              (name (car clauses))
-                              nil))
-                    (*loop-name* name)
-                    (*tail-variables* (make-hash-table :test #'eq)))
-               `(block ,name
-                  ,@(expand-clauses clauses)))))
+           (expand-extended-loop client loop-body))
           ((some #'null loop-body)
            (error 'non-compound-form))
           (t
-           (let ((tag (gensym)))
-             `(block nil
-                (tagbody
-                   ,tag
-                   ,@loop-body
-                   (go ,tag))))))))
+           (expand-simple-loop client loop-body)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -192,7 +163,6 @@
                    clauses)))
 
 ;;; FIXME: Add more analyses.
-(defmethod analyze ((clauses cons))
-  (mapc #'analyze clauses)
-  (verify-clause-order clauses)
-  (check-variables clauses))
+(defmethod analyze ((clause body-clauses))
+  (verify-clause-order (subclauses clause))
+  (check-variables clause))
