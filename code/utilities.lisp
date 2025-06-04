@@ -285,7 +285,10 @@
                    (t
                     (warn 'unable-to-deduce-initial-value
                           :type-spec type-spec)
-                    `(or null ,type-spec))))
+                    `(or ,(if (subtypep type-spec 'number)
+                              'bit
+                              'null)
+                         ,type-spec))))
            (traverse (var-spec type-spec)
              (cond ((null var-spec)
                     nil)

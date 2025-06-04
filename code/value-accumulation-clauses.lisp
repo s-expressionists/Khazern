@@ -10,6 +10,64 @@
       (pop-token tokens :type 'symbol)
       (default-accumulation-variable)))
 
+(defclass list-accumulation-clause (var-mixin)
+  ((%tail-var :reader tail-var
+              :initform (make-instance 'd-spec
+                                       :var-spec (gensym "TAIL")))))
+
+(defmethod accumulation-clause-reference ((instance list-accumulation-clause) name (ref (eql :tail)))
+  (and (eq name (var-spec (var instance)))
+       (var-spec (tail-var instance))))
+
+(defmethod make-accumulation-clause (name type (category (eql :list)))
+  (make-instance 'list-accumulation-clause
+                 :var (make-instance 'd-spec
+                                     :var-spec name
+                                     :type-spec type
+                                     :accumulation-category category)))
+
+(defmethod initial-bindings ((instance list-accumulation-clause))
+  (nconc (d-spec-outer-bindings (var instance))
+         (d-spec-outer-bindings (tail-var instance))))
+
+(defmethod initial-declarations ((instance list-accumulation-clause))
+  (nconc (d-spec-outer-declarations (var instance))
+         (d-spec-outer-declarations (tail-var instance))))
+
+(defclass summation-accumulation-clause (var-mixin)
+  ())
+
+(defmethod make-accumulation-clause (name type (category (eql :summation)))
+  (make-instance 'summation-accumulation-clause
+                 :var (make-instance 'd-spec
+                                     :var-spec name
+                                     :type-spec (if (eq type 'complex)
+                                                    'number
+                                                    type)
+                                     :accumulation-category category)))
+
+(defmethod initial-bindings ((instance summation-accumulation-clause))
+  (d-spec-outer-bindings (var instance)))
+
+(defmethod initial-declarations ((instance summation-accumulation-clause))
+  (d-spec-outer-declarations (var instance)))
+
+(defclass extremum-accumulation-clause (var-mixin)
+  ())
+
+(defmethod make-accumulation-clause (name type (category (eql :extremum)))
+  (make-instance 'extremum-accumulation-clause
+                 :var (make-instance 'd-spec
+                                     :var-spec name
+                                     :type-spec type
+                                     :accumulation-category category)))
+
+(defmethod initial-bindings ((instance extremum-accumulation-clause))
+  (d-spec-outer-bindings (var instance)))
+
+(defmethod initial-declarations ((instance extremum-accumulation-clause))
+  (d-spec-outer-declarations (var instance)))
+
 ;;; COLLECT clause
 
 (defclass collect-clause (accumulation-clause)

@@ -134,6 +134,13 @@
 ;;; function takes an accumulation clause and returns the category.
 (defgeneric accumulation-category (clause))
 
+(defgeneric make-accumulation-clause (name type category))
+
+(defgeneric accumulation-clause-reference (instance name ref)
+  (:method (instance name ref)
+    (declare (ignore instance name ref))
+    nil))
+
 (defgeneric make-iteration-path (client name &optional inclusive-form))
 
 (defgeneric iteration-path-preposition-names (instance)

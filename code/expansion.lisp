@@ -9,18 +9,19 @@
 
 (defvar *tail-variables*)
 
+(defvar *extended-superclause*)
+
 (defun default-accumulation-variable ()
   (or *accumulation-variable*
       (setf *accumulation-variable* (gensym "ACC"))))
 
 (defun tail-variable (head-variable)
-  (let ((result (gethash head-variable *tail-variables*)))
-    (when (null result)
-      (setf result (gensym "TAIL"))
-      (setf (gethash head-variable *tail-variables*) result))
-    result))
+  (loop for clause in (subclauses *extended-superclause*)
+        for tail = (accumulation-clause-reference clause head-variable :tail)
+        when tail
+          return tail))
 
-(defmethod initial-bindings ((clause extended-superclause))
+#+(or)(defmethod initial-bindings ((clause extended-superclause))
   (let ((bindings nil)
         (variables nil))
     (map-variables (lambda (name type category)
@@ -42,7 +43,7 @@
                    clause)
     (nreverse bindings)))
 
-(defmethod initial-declarations ((clause extended-superclause))
+#+(or)(defmethod initial-declarations ((clause extended-superclause))
   (let ((declarations nil)
         (variables nil))
     (map-variables (lambda (name type category)
@@ -78,17 +79,17 @@
 
 (defun expand-extended-loop (client loop-body)
   (let* ((*accumulation-variable* nil)
-         (body-clause (parse-body client
-                                  (make-instance 'token-stream
-                                                 :tokens loop-body))))
-    (analyze body-clause)
-    (let ((*loop-name* (if (name-clause-p (car (subclauses body-clause)))
-                           (name (car (subclauses body-clause)))
+         (*extended-superclause* (parse-body client
+                                             (make-instance 'token-stream
+                                                            :tokens loop-body))))
+    (analyze *extended-superclause*)
+    (let ((*loop-name* (if (name-clause-p (car (subclauses *extended-superclause*)))
+                           (name (car (subclauses *extended-superclause*)))
                            nil))
           (*tail-variables* (make-hash-table :test #'eq)))
       `(block ,*loop-name*
-         ,@(wrap-forms body-clause
-                       (prologue-body-epilogue body-clause))))))
+         ,@(wrap-forms *extended-superclause*
+                       (prologue-body-epilogue *extended-superclause*))))))
 
 (defun expand-simple-loop (client loop-body)
   (declare (ignore client))
@@ -139,12 +140,16 @@
   (check-order-variable-clause-main-clause clauses))
 
 (defun check-variables (clauses)
-  (let ((variables nil))
+  (let ((variables nil)
+        (accumulation-clauses nil))
     (map-variables (lambda (name type category)
                      (declare (ignore type))
                      (let ((current-category (getf variables name)))
                        (cond ((null current-category)
-                              (setf (getf variables name) category))
+                              (setf (getf variables name) category)
+                              (unless (eq category t)
+                                (push (make-accumulation-clause name type category)
+                                      accumulation-clauses)))
                              ((and (eq category t)
                                    (eq current-category t))
                               (error 'multiple-variable-occurrences
@@ -158,7 +163,15 @@
                                      :bound-variable name
                                      :first-clause category
                                      :second-clause current-category)))))
-                   clauses)))
+                   clauses)
+    (when accumulation-clauses
+      (setf (subclauses clauses)
+            (if (name-clause-p (car (subclauses clauses)))
+                (nconc (list (car (subclauses clauses)))
+                       (nreverse accumulation-clauses)
+                       (cdr (subclauses clauses)))
+                (nconc (nreverse accumulation-clauses)
+                       (subclauses clauses)))))))
 
 ;;; FIXME: Add more analyses.
 (defmethod analyze ((clause extended-superclause))

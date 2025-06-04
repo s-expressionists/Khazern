@@ -17,6 +17,37 @@
 (defclass boolean-termination-test-clause (termination-test-clause accumulation-mixin form-mixin)
   ())
 
+(defclass every-accumulation-clause (var-mixin)
+  ())
+
+(defmethod make-accumulation-clause (name type (category (eql :every)))
+  (make-instance 'every-accumulation-clause
+                 :var (make-instance 'd-spec
+                                     :var-spec name
+                                     :type-spec type
+                                     :accumulation-category category)))
+
+(defmethod initial-bindings ((instance every-accumulation-clause))
+  (d-spec-simple-bindings (var instance) t))
+
+(defmethod initial-declarations ((instance every-accumulation-clause))
+  (d-spec-outer-declarations (var instance)))
+
+(defclass some-accumulation-clause (var-mixin)
+  ())
+
+(defmethod make-accumulation-clause (name type (category (eql :some)))
+  (make-instance 'summation-accumulation-clause
+                 :var (make-instance 'd-spec
+                                     :var-spec name
+                                     :type-spec type
+                                     :accumulation-category category)))
+
+(defmethod initial-bindings ((instance some-accumulation-clause))
+  (d-spec-outer-bindings (var instance)))
+
+(defmethod initial-declarations ((instance some-accumulation-clause))
+  (d-spec-outer-declarations (var instance)))
 
 (defclass repeat-clause (termination-test-clause var-mixin form-mixin)
   ()
@@ -64,8 +95,6 @@
 (defmethod subsequent-step-forms ((clause repeat-clause))
   `((when (zerop (decf ,(var-spec (var clause))))
       (go ,*epilogue-tag*))))
-
-
 
 (defclass always-clause (boolean-termination-test-clause)
   ()
