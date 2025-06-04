@@ -69,9 +69,9 @@
 
 (defclass always-clause (boolean-termination-test-clause)
   ()
-   (:default-initargs :var (make-instance 'd-spec
+  (:default-initargs :var (make-instance 'd-spec
                                          :var-spec (default-accumulation-variable)
-                                         :accumulation-category 'always/never)))
+                                         :accumulation-category :every)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -94,7 +94,7 @@
   ()
   (:default-initargs :var (make-instance 'd-spec
                                          :var-spec (default-accumulation-variable)
-                                         :accumulation-category 'always/never)))
+                                         :accumulation-category :every)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -118,7 +118,7 @@
   ()
   (:default-initargs :var (make-instance 'd-spec
                                          :var-spec (default-accumulation-variable)
-                                         :accumulation-category 'thereis)))
+                                         :accumulation-category :some)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

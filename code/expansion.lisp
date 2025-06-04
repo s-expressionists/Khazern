@@ -20,7 +20,7 @@
       (setf (gethash head-variable *tail-variables*) result))
     result))
 
-(defun accumulation-bindings (clauses)
+(defmethod initial-bindings ((clause extended-superclause))
   (let ((bindings nil)
         (variables nil))
     (map-variables (lambda (name type category)
@@ -29,33 +29,33 @@
                        (push name variables)
                        (push `(,name
                                ,(case category
-                                  (count/sum
+                                  (:summation
                                    (coerce 0 type))
-                                  (always/never
+                                  (:every
                                    t)
                                   (otherwise
                                    nil)))
                              bindings)
-                       (when (eq category 'list)
+                       (when (eq category :list)
                          (push `(,(tail-variable name) nil)
                                bindings))))
-                   clauses)
+                   clause)
     (nreverse bindings)))
 
-(defun accumulation-declarations (clauses)
+(defmethod initial-declarations ((clause extended-superclause))
   (let ((declarations nil)
         (variables nil))
     (map-variables (lambda (name type category)
                      (unless (or (eq category t)
                                  (member name variables))
                        (push name variables)
-                       (push `(type ,(if (or (not (eq category 'count/sum))
+                       (push `(type ,(if (or (not (eq category :summation))
                                                 (typep (coerce 0 type) type))
                                             type
                                             `(or (integer 0 0) ,type))
                                        ,name)
                              declarations)))
-                   clauses)
+                   clause)
     (nreverse declarations)))
 
 (defvar *loop-name*)
@@ -87,10 +87,8 @@
                            nil))
           (*tail-variables* (make-hash-table :test #'eq)))
       `(block ,*loop-name*
-         ,@(wrap-let (accumulation-bindings body-clause)
-                     (accumulation-declarations body-clause)
-                     (wrap-forms body-clause
-                                 (prologue-body-epilogue body-clause)))))))
+         ,@(wrap-forms body-clause
+                       (prologue-body-epilogue body-clause))))))
 
 (defun expand-simple-loop (client loop-body)
   (declare (ignore client))

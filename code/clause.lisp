@@ -88,6 +88,12 @@
           (subclauses clause)
           :from-end t :initial-value forms))
 
+(defmethod wrap-forms :around ((clause extended-superclause) forms)
+  (declare (ignore forms))
+  (wrap-let (initial-bindings clause)
+            (initial-declarations clause)
+            (call-next-method)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute the body-forms.
