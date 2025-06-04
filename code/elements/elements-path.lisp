@@ -36,13 +36,9 @@
          :accessor khazern:var
          :initarg :var)
    (%preposition-names :accessor khazern:iteration-path-preposition-names
-                       :initform `((:in . :in)
-                                   (:of . :in)
-                                   (:start . :start)
-                                   (:end . :end)
-                                   (:from-end . :from-end)))
+                       :initform (list :in :of :start :end :from-end))
    (%using-names :accessor khazern:iteration-path-using-names
-                 :initform `((:index . :index)))
+                 :initform (list :index))
    (%start-var :reader start-var
                :initform (gensym "START"))
    (%start-form :accessor start-form
@@ -76,16 +72,22 @@
                 :initform (gensym "INDEX"))))
 
 (defmethod khazern:map-variables (function (clause for-as-elements))
-  (khazern:map-variables function (khazern:var clause))
-  #+(or)(when (index-var clause)
-    (funcall function (index-func) 'fixnum nil)))
+  (khazern:map-variables function (khazern:var clause)))
 
 (defmethod (setf khazern:iteration-path-preposition) :after (expression (instance for-as-elements) key)
   (setf (khazern:iteration-path-preposition-names instance)
-        (delete key (khazern:iteration-path-preposition-names instance)
-                :key #'cdr)))
+        (delete-if (lambda (name)
+                     (or (eq name key)
+                         (and (eq key :in)
+                              (eq name :of))
+                         (and (eq key :of)
+                              (eq name :in))))
+                   (khazern:iteration-path-preposition-names instance))))
 
 (defmethod (setf khazern:iteration-path-preposition) (expression (instance for-as-elements) (key (eql :in)))
+  (setf (in-form instance) expression))
+
+(defmethod (setf khazern:iteration-path-preposition) (expression (instance for-as-elements) (key (eql :of)))
   (setf (in-form instance) expression))
 
 (defmethod (setf khazern:iteration-path-preposition) (expression (instance for-as-elements) (key (eql :start)))
@@ -99,8 +101,7 @@
 
 (defmethod (setf khazern:iteration-path-using) :after (expression (instance for-as-elements) key)
   (setf (khazern:iteration-path-using-names instance)
-        (delete key (khazern:iteration-path-using-names instance)
-                :key #'cdr)))
+        (delete key (khazern:iteration-path-using-names instance))))
 
 (defmethod (setf khazern:iteration-path-using) (value (instance for-as-elements) (key (eql :index)))
   (setf (index-var instance) value))
@@ -114,34 +115,28 @@
 ;;; Compute bindings.
 
 (defmethod khazern:initial-bindings ((clause for-as-elements))
-  `((,(in-var clause) ,(in-form clause))
-    (,(start-var clause) ,(start-form clause))
-    (,(end-var clause) ,(end-form clause))
-    (,(from-end-var clause) ,(from-end-form clause))
-    ,(iterator-var clause)
-    ,(limit-var clause)
-    ,(step-func clause)
-    ,(endp-func clause)
-    ,(read-func clause)
-    ,(write-func clause)
-    ,(index-func clause)
-    ,@(when (index-var clause)
-        `((,(index-var clause) nil)))))
-
-(defmethod khazern:final-bindings ((clause for-as-elements))
-  (nconc (khazern:d-spec-outer-bindings (var clause))
-         #+(or)(when (other-var clause)
-           (khazern:d-spec-outer-bindings (other-var clause)))))
+  (nconc `((,(in-var clause) ,(in-form clause))
+           (,(start-var clause) ,(start-form clause))
+           (,(end-var clause) ,(end-form clause))
+           (,(from-end-var clause) ,(from-end-form clause))
+           ,(iterator-var clause)
+           ,(limit-var clause)
+           ,(step-func clause)
+           ,(endp-func clause)
+           ,(read-func clause)
+           ,(write-func clause)
+           ,(index-func clause)
+           ,@(when (index-var clause)
+               `((,(index-var clause) nil))))
+         (khazern:d-spec-outer-bindings (var clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Compute declarations.
 
 (defmethod khazern:initial-declarations ((clause for-as-elements))
-  `((ignorable ,(write-func clause) ,(index-func clause))))
-
-(defmethod khazern:final-declarations ((clause for-as-elements))
-  (khazern:d-spec-outer-declarations (var clause)))
+  (list* `(ignorable ,(write-func clause) ,(index-func clause))
+         (khazern:d-spec-outer-declarations (var clause))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
