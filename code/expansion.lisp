@@ -21,6 +21,12 @@
         when tail
           return tail))
 
+(defun accumulation-reference (var ref)
+  (loop for clause in (subclauses *extended-superclause*)
+        for tail = (accumulation-clause-reference clause var ref)
+        when tail
+          return tail))
+
 #+(or)(defmethod initial-bindings ((clause extended-superclause))
   (let ((bindings nil)
         (variables nil))
