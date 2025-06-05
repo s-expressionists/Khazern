@@ -3,4 +3,4 @@
 (defpackage #:khazern-intrinsic
   (:use #:common-lisp)
   (:export #:*client*
-           #:intrinsic-client)
+           #:intrinsic-client))
