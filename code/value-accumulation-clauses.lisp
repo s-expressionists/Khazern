@@ -13,11 +13,42 @@
 (defclass list-accumulation-clause (var-mixin)
   ((%tail-var :reader tail-var
               :initform (make-instance 'd-spec
-                                       :var-spec (gensym "TAIL")))))
+                                       :var-spec (gensym "TAIL")
+                                       :type-spec 'cons))
+   (%collect-func :accessor collect-func
+                  :initform nil)
+   (%append-func :accessor append-func
+                 :initform nil)
+   (%nconc-func :accessor nconc-func
+                :initform nil)))
 
 (defmethod accumulation-clause-reference ((instance list-accumulation-clause) name (ref (eql :tail)))
   (and (eq name (var-spec (var instance)))
        (var-spec (tail-var instance))))
+                                       
+(defmethod accumulation-clause-reference ((instance list-accumulation-clause) name (ref (eql :collect)))
+  (cond ((not (eq name (var-spec (var instance))))
+         nil)
+        ((null (collect-func instance))
+         (setf (collect-func instance) (gensym "COLLECT")))
+        (t
+         (collect-func instance))))
+
+(defmethod accumulation-clause-reference ((instance list-accumulation-clause) name (ref (eql :append)))
+  (cond ((not (eq name (var-spec (var instance))))
+         nil)
+        ((null (append-func instance))
+         (setf (append-func instance) (gensym "APPEND")))
+        (t
+         (append-func instance))))
+
+(defmethod accumulation-clause-reference ((instance list-accumulation-clause) name (ref (eql :nconc)))
+  (cond ((not (eq name (var-spec (var instance))))
+         nil)
+        ((null (nconc-func instance))
+         (setf (nconc-func instance) (gensym "NCONC")))
+        (t
+         (nconc-func instance))))
 
 (defmethod make-accumulation-clause (name type (category (eql :list)))
   (make-instance 'list-accumulation-clause
@@ -28,11 +59,48 @@
 
 (defmethod initial-bindings ((instance list-accumulation-clause))
   (nconc (d-spec-outer-bindings (var instance))
-         (d-spec-outer-bindings (tail-var instance))))
+         (d-spec-simple-bindings (tail-var instance) '(cons nil nil))))
 
 (defmethod initial-declarations ((instance list-accumulation-clause))
   (nconc (d-spec-outer-declarations (var instance))
-         (d-spec-outer-declarations (tail-var instance))))
+         (d-spec-outer-declarations (tail-var instance))
+         #+(or)`((dynamic-extent ,(var-spec (tail-var instance))))))
+
+(defmethod wrap-forms ((instance list-accumulation-clause) forms)
+  (let ((tail-var (var-spec (tail-var instance)))
+        (into-var (var-spec (var instance))))
+    (with-accessors ((collect-func collect-func)
+                     (append-func append-func)
+                     (nconc-func nconc-func))
+        instance
+      `((flet (,@(when collect-func
+                   `((,collect-func (value)
+                       (rplacd ,tail-var (setq ,tail-var (cons value nil)))
+                       (unless (consp ,into-var)
+                         (setq ,into-var ,tail-var)))))
+               ,@(when append-func
+                   `((,append-func (value)
+                       (tagbody
+                        repeat
+                          (cond ((null value))
+                                ((consp value)
+                                 (rplacd ,tail-var (cons (car value) nil))
+                                 (setq value (cdr value)
+                                       ,tail-var (cdr ,tail-var))
+                                 (unless (consp ,into-var)
+                                   (setq ,into-var ,tail-var))
+                                 (go repeat))
+                                (t
+                                 (rplacd ,tail-var value)
+                                 (unless (consp ,into-var)
+                                   (setq ,into-var (cdr ,tail-var)))))))))
+               ,@(when nconc-func
+                   `((,nconc-func (value)
+                       (rplacd ,tail-var value)
+                       (unless (consp ,into-var)
+                         (setq ,into-var (cdr ,tail-var)))
+                       (setq ,tail-var (last ,tail-var))))))
+          ,@forms)))))
 
 (defclass summation-accumulation-clause (var-mixin)
   ())
@@ -92,15 +160,10 @@
 ;;; COLLECT expansion methods
 
 (defmethod body-forms ((clause collect-clause))
-  (let* ((form (form clause))
-         (into-var (var-spec (var clause)))
-         (tail-var (tail-variable into-var)))
+  (let* ((form (form clause)))
     (when (and *it-var* (it-keyword-p form))
       (setf form *it-var*))
-    `((if (consp ,tail-var)
-          (rplacd ,tail-var (setq ,tail-var (cons ,form nil)))
-          (setq ,tail-var (cons ,form nil)
-                ,into-var ,tail-var)))))
+    `((,(accumulation-reference (var-spec (var clause)) :collect) ,form))))
 
 ;;; APPEND clause
 
@@ -126,32 +189,10 @@
 ;;; APPEND expansion methods
 
 (defmethod body-forms ((clause append-clause))
-  (let* ((head-var (gensym))
-         (form (form clause))
-         (into-var (var-spec (var clause)))
-         (tail-var (tail-variable into-var)))
+  (let* ((form (form clause)))
     (when (and *it-var* (it-keyword-p form))
       (setf form *it-var*))
-    `((let ((,head-var ,form))
-        (tagbody
-         repeat
-           (cond ((null ,head-var))
-                 ((and (null ,into-var) (consp ,head-var))
-                  (setq ,into-var (cons (car ,head-var) nil)
-                        ,tail-var ,into-var
-                        ,head-var (cdr ,head-var))
-                  (go repeat))
-                 ((null ,into-var)
-                  (setq ,into-var ,head-var
-                        ,tail-var ,into-var))
-                 ((consp ,head-var)
-                  (rplacd ,tail-var (cons (car ,head-var) nil))
-                  (setq ,tail-var (cdr ,tail-var)
-                        ,head-var (cdr ,head-var))
-                  (go repeat))
-                 (t
-                  (rplacd ,tail-var ,head-var)
-                  (setq ,tail-var (cdr ,tail-var)))))))))
+    `((,(accumulation-reference (var-spec (var clause)) :append) ,form))))
 
 ;;; NCONC clause
 
@@ -177,22 +218,10 @@
 ;;; NCONC expansion methods
 
 (defmethod body-forms ((clause nconc-clause))
-  (let* ((form (form clause))
-         (into-var (var-spec (var clause)))
-         (tail-var (tail-variable into-var))
-         (next-tag (gensym "NEXT")))
+  (let* ((form (form clause)))
     (when (and *it-var* (it-keyword-p form))
       (setf form *it-var*))
-    `((tagbody
-         (if (null ,into-var)
-             (setq ,into-var ,form
-                   ,tail-var ,into-var)
-             (rplacd ,tail-var ,form))
-       ,next-tag
-         (when (and (consp ,tail-var)
-                    (consp (cdr ,tail-var)))
-           (setq ,tail-var (cdr ,tail-var))
-           (go ,next-tag))))))
+    `((,(accumulation-reference (var-spec (var clause)) :nconc) ,form))))
 
 ;;; COUNT clause
 
