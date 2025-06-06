@@ -5,6 +5,11 @@
 ;;; clauses in its THEN and ELSE branches.
 (defvar *it-var* nil)
 
+(defun it-form (form)
+  (if (and *it-var* (it-keyword-p form))
+      *it-var*
+      form))
+
 (defvar *accumulation-variable*)
 
 (defvar *tail-variables*)
@@ -89,10 +94,7 @@
                                              (make-instance 'token-stream
                                                             :tokens loop-body))))
     (analyze *extended-superclause*)
-    (let ((*loop-name* (if (name-clause-p (car (subclauses *extended-superclause*)))
-                           (name (car (subclauses *extended-superclause*)))
-                           nil))
-          (*tail-variables* (make-hash-table :test #'eq)))
+    (let ((*loop-name* (name *extended-superclause*)))
       `(block ,*loop-name*
          ,@(wrap-forms *extended-superclause*
                        (prologue-body-epilogue *extended-superclause*))))))
@@ -145,7 +147,7 @@
   (check-name-clause-position clauses)
   (check-order-variable-clause-main-clause clauses))
 
-(defun check-variables (clauses)
+(defun check-variables (clause)
   (let ((variables nil)
         (accumulation-clauses nil))
     (map-variables (lambda (name type category)
@@ -169,15 +171,10 @@
                                      :bound-variable name
                                      :first-clause category
                                      :second-clause current-category)))))
-                   clauses)
-    (when accumulation-clauses
-      (setf (subclauses clauses)
-            (if (name-clause-p (car (subclauses clauses)))
-                (nconc (list (car (subclauses clauses)))
-                       (nreverse accumulation-clauses)
-                       (cdr (subclauses clauses)))
-                (nconc (nreverse accumulation-clauses)
-                       (subclauses clauses)))))))
+                   clause)
+    (setf (subclauses clause)
+          (nconc (nreverse accumulation-clauses)
+                 (subclauses clause)))))
 
 ;;; FIXME: Add more analyses.
 (defmethod analyze ((clause extended-superclause))

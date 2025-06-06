@@ -11,12 +11,14 @@
       (default-accumulation-variable)))
 
 (defclass list-accumulation-clause (var-mixin)
-  ((%tail-var :reader tail-var
+  ((%head-var :reader head-var
+              :initform (make-instance 'd-spec
+                                       :var-spec (gensym "HEAD")
+                                       :type-spec 'cons))
+   (%tail-var :reader tail-var
               :initform (make-instance 'd-spec
                                        :var-spec (gensym "TAIL")
                                        :type-spec 'cons))
-   (%collect-func :accessor collect-func
-                  :initform nil)
    (%append-func :accessor append-func
                  :initform nil)
    (%nconc-func :accessor nconc-func
@@ -26,14 +28,6 @@
   (and (eq name (var-spec (var instance)))
        (var-spec (tail-var instance))))
                                        
-(defmethod accumulation-clause-reference ((instance list-accumulation-clause) name (ref (eql :collect)))
-  (cond ((not (eq name (var-spec (var instance))))
-         nil)
-        ((null (collect-func instance))
-         (setf (collect-func instance) (gensym "COLLECT")))
-        (t
-         (collect-func instance))))
-
 (defmethod accumulation-clause-reference ((instance list-accumulation-clause) name (ref (eql :append)))
   (cond ((not (eq name (var-spec (var instance))))
          nil)
@@ -58,49 +52,44 @@
                                      :accumulation-category category)))
 
 (defmethod initial-bindings ((instance list-accumulation-clause))
-  (nconc (d-spec-outer-bindings (var instance))
-         (d-spec-simple-bindings (tail-var instance) '(cons nil nil))))
+  (nconc (d-spec-simple-bindings (head-var instance) '(cons nil nil))
+         (d-spec-simple-bindings (tail-var instance) (var-spec (head-var instance)))))
 
 (defmethod initial-declarations ((instance list-accumulation-clause))
-  (nconc (d-spec-outer-declarations (var instance))
-         (d-spec-outer-declarations (tail-var instance))
-         #+(or)`((dynamic-extent ,(var-spec (tail-var instance))))))
+  (nconc `((dynamic-extent ,(var-spec (head-var instance))))
+         (d-spec-outer-declarations (head-var instance))
+         (d-spec-outer-declarations (tail-var instance))))
 
 (defmethod wrap-forms ((instance list-accumulation-clause) forms)
-  (let ((tail-var (var-spec (tail-var instance)))
+  (let ((head-var (var-spec (head-var instance)))
+        (tail-var (var-spec (tail-var instance)))
         (into-var (var-spec (var instance))))
-    (with-accessors ((collect-func collect-func)
-                     (append-func append-func)
+    (with-accessors ((append-func append-func)
                      (nconc-func nconc-func))
         instance
-      `((flet (,@(when collect-func
-                   `((,collect-func (value)
-                       (rplacd ,tail-var (setq ,tail-var (cons value nil)))
-                       (unless (consp ,into-var)
-                         (setq ,into-var ,tail-var)))))
-               ,@(when append-func
-                   `((,append-func (value)
-                       (tagbody
-                        repeat
-                          (cond ((null value))
-                                ((consp value)
-                                 (rplacd ,tail-var (cons (car value) nil))
-                                 (setq value (cdr value)
-                                       ,tail-var (cdr ,tail-var))
-                                 (unless (consp ,into-var)
-                                   (setq ,into-var ,tail-var))
-                                 (go repeat))
-                                (t
-                                 (rplacd ,tail-var value)
-                                 (unless (consp ,into-var)
-                                   (setq ,into-var (cdr ,tail-var)))))))))
-               ,@(when nconc-func
-                   `((,nconc-func (value)
-                       (rplacd ,tail-var value)
-                       (unless (consp ,into-var)
-                         (setq ,into-var (cdr ,tail-var)))
-                       (setq ,tail-var (last ,tail-var))))))
-          ,@forms)))))
+      `((symbol-macrolet ((,into-var (cdr ,head-var)))
+          ,@(if (or append-func nconc-func)
+                `((flet (,@(when append-func
+                             `((,append-func (value)
+                                 (tagbody
+                                  repeat
+                                    (cond ((consp value)
+                                           (rplacd ,tail-var
+                                                   (setq ,tail-var (cons (car value) nil)))
+                                           (setq value (cdr value))
+                                           (go repeat))
+                                          (t
+                                           (rplacd ,tail-var value)))))))
+                         ,@(when nconc-func
+                             `((,nconc-func (value)
+                                 (tagbody
+                                    (rplacd ,tail-var value)
+                                  repeat
+                                    (when (consp (cdr ,tail-var))
+                                      (setq ,tail-var (cdr ,tail-var))
+                                      (go repeat)))))))
+                    ,@forms))
+                forms))))))
 
 (defclass summation-accumulation-clause (var-mixin)
   ())
@@ -143,14 +132,14 @@
 
 ;;; COLLECT parsers
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclass) (keyword (eql :collect)) tokens)
+(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :collect)) tokens)
   (make-instance 'collect-clause
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
                                      :accumulation-category :list)))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclass) (keyword (eql :collecting)) tokens)
+(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :collecting)) tokens)
   (make-instance 'collect-clause
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
@@ -160,10 +149,9 @@
 ;;; COLLECT expansion methods
 
 (defmethod body-forms ((clause collect-clause))
-  (let* ((form (form clause)))
-    (when (and *it-var* (it-keyword-p form))
-      (setf form *it-var*))
-    `((,(accumulation-reference (var-spec (var clause)) :collect) ,form))))
+  (let ((tail-var (accumulation-reference (var-spec (var clause)) :tail)))
+    `((rplacd ,tail-var
+              (setq ,tail-var (cons ,(it-form (form clause)) nil))))))
 
 ;;; APPEND clause
 
@@ -172,14 +160,14 @@
 
 ;;; APPEND parsers
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclass) (keyword (eql :append)) tokens)
+(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :append)) tokens)
   (make-instance 'append-clause
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
                                      :accumulation-category :list)))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclass) (keyword (eql :appending)) tokens)
+(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :appending)) tokens)
   (make-instance 'append-clause
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
@@ -189,10 +177,7 @@
 ;;; APPEND expansion methods
 
 (defmethod body-forms ((clause append-clause))
-  (let* ((form (form clause)))
-    (when (and *it-var* (it-keyword-p form))
-      (setf form *it-var*))
-    `((,(accumulation-reference (var-spec (var clause)) :append) ,form))))
+  `((,(accumulation-reference (var-spec (var clause)) :append) ,(it-form (form clause)))))
 
 ;;; NCONC clause
 
@@ -201,14 +186,14 @@
 
 ;;; NCONC parsers
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclass) (keyword (eql :nconc)) tokens)
+(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :nconc)) tokens)
   (make-instance 'nconc-clause
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
                                      :accumulation-category :list)))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclass) (keyword (eql :nconcing)) tokens)
+(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :nconcing)) tokens)
   (make-instance 'nconc-clause
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
@@ -218,10 +203,7 @@
 ;;; NCONC expansion methods
 
 (defmethod body-forms ((clause nconc-clause))
-  (let* ((form (form clause)))
-    (when (and *it-var* (it-keyword-p form))
-      (setf form *it-var*))
-    `((,(accumulation-reference (var-spec (var clause)) :nconc) ,form))))
+  `((,(accumulation-reference (var-spec (var clause)) :nconc) ,(it-form (form clause)))))
 
 ;;; COUNT clause
 
@@ -230,7 +212,7 @@
 
 ;;; COUNT parsers
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclass) (keyword (eql :count)) tokens)
+(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :count)) tokens)
   (make-instance 'count-clause
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
@@ -238,7 +220,7 @@
                                      :type-spec (parse-type-spec tokens 'fixnum)                          
                                      :accumulation-category :summation)))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclass) (keyword (eql :counting)) tokens)
+(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :counting)) tokens)
   (make-instance 'count-clause
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
@@ -268,7 +250,7 @@
 
 ;;; MINIMIZE/MAXIMIZE parsers
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclass) (keyword (eql :minimize)) tokens)
+(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :minimize)) tokens)
   (make-instance 'extremum-clause
                  :form (pop-token tokens)
                  :reduce-function 'min
@@ -277,7 +259,7 @@
                                      :type-spec (parse-type-spec tokens 'real)                          
                                      :accumulation-category :extremum)))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclass) (keyword (eql :minimizing)) tokens)
+(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :minimizing)) tokens)
   (make-instance 'extremum-clause
                  :form (pop-token tokens)
                  :reduce-function 'min
@@ -286,7 +268,7 @@
                                      :type-spec (parse-type-spec tokens 'real)                          
                                      :accumulation-category :extremum)))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclass) (keyword (eql :maximize)) tokens)
+(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :maximize)) tokens)
   (make-instance 'extremum-clause
                  :form (pop-token tokens)
                  :reduce-function 'max
@@ -295,7 +277,7 @@
                                      :type-spec (parse-type-spec tokens 'real)                          
                                      :accumulation-category :extremum)))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclass) (keyword (eql :maximizing)) tokens)
+(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :maximizing)) tokens)
   (make-instance 'extremum-clause
                  :form (pop-token tokens)
                  :reduce-function 'max
@@ -327,7 +309,7 @@
 
 ;;; SUM parsers
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclass) (keyword (eql :sum)) tokens)
+(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :sum)) tokens)
   (make-instance 'sum-clause
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
@@ -335,7 +317,7 @@
                                      :type-spec (parse-type-spec tokens 'number)                          
                                      :accumulation-category :summation)))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclass) (keyword (eql :summing)) tokens)
+(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :summing)) tokens)
   (make-instance 'sum-clause
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec

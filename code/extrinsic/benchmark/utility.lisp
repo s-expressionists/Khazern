@@ -52,7 +52,7 @@
         while (< (get-internal-real-time) end)
         do (funcall thunk)))
 
-(defun run ()
+(defun run (&rest names)
   (loop with *overhead-time* = 0
         for name being the hash-key in *benchmarks* using (hash-value benchmark)
         initially (format t "Measuring overhead...~%")
@@ -65,11 +65,13 @@
                                              version)))
                                          
                                results)
-        do (format t "Running ~a...~%" name)
-        collect (list name
-                      (bench (intrinsic-function benchmark))
-                      (bench (extrinsic-function benchmark)))
-        into results))
+        when (or (null names)
+                 (find name names :test #'khazern:symbol-equal))
+          do (format t "Running ~a...~%" name)
+          and collect (list name
+                            (bench (intrinsic-function benchmark))
+                            (bench (extrinsic-function benchmark)))
+                into results))
 
 (defun report ()
   (loop with results = (sort (loop for path in (directory (merge-pathnames "*.sexp" *database-path*))

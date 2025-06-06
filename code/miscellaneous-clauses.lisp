@@ -47,7 +47,7 @@
 ;;; Parser
 
 (defmethod parse-clause
-    (client (scope selectable-superclass) (keyword (eql :return)) tokens)
+    (client (scope selectable-superclause) (keyword (eql :return)) tokens)
   (make-instance 'return-clause :form (pop-token tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

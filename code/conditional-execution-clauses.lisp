@@ -1,6 +1,6 @@
 (cl:in-package #:khazern)
 
-(defclass conditional-clause (selectable-superclass)
+(defclass conditional-clause (selectable-superclause)
   ((%condition :accessor condition
                :initarg :condition)
    (%then-clauses :accessor then-clauses
@@ -31,21 +31,21 @@
   instance)
 
 (defmethod parse-clause
-    (client (scope selectable-superclass) (keyword (eql :if)) tokens)
+    (client (scope selectable-superclause) (keyword (eql :if)) tokens)
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
                                                 :condition (pop-token tokens))
                                  tokens))
 
 (defmethod parse-clause
-    (client (scope selectable-superclass) (keyword (eql :when)) tokens)
+    (client (scope selectable-superclause) (keyword (eql :when)) tokens)
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
                                                 :condition (pop-token tokens))
                                  tokens))
 
 (defmethod parse-clause
-    (client (scope selectable-superclass) (keyword (eql :unless)) tokens)
+    (client (scope selectable-superclause) (keyword (eql :unless)) tokens)
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
                                                 :condition `(not ,(pop-token tokens)))

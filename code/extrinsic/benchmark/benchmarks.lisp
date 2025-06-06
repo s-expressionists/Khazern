@@ -44,6 +44,10 @@
   (loop repeat 100
         nconc (list 1 2 3)))
 
+(define-benchmark repeat/append
+  (loop repeat 100
+        append '(1 2 3)))
+
 (define-benchmark for-as-in-list/maximize
   (loop for i in *random-double-floats*
         maximize i))

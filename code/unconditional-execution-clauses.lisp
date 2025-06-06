@@ -22,12 +22,12 @@
 ;;; Parser
 
 (defmethod parse-clause
-    (client (scope selectable-superclass) (keyword (eql :do)) tokens)
+    (client (scope selectable-superclause) (keyword (eql :do)) tokens)
   (make-instance 'do-clause
                  :forms (parse-compound-form+ tokens)))
 
 (defmethod parse-clause
-    (client (scope selectable-superclass) (keyword (eql :doing)) tokens)
+    (client (scope selectable-superclause) (keyword (eql :doing)) tokens)
   (make-instance 'do-clause
                  :forms (parse-compound-form+ tokens)))
 

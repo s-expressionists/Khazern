@@ -14,16 +14,19 @@
                 :initarg :subclauses
                 :initform nil)))
 
-(defclass sequential-superclass (simple-superclause)
+(defmethod name ((clause simple-superclause))
+  (some #'name (subclauses clause)))
+
+(defclass sequential-superclause (simple-superclause)
   ())
 
 (defclass parallel-superclause (simple-superclause)
   ())
 
-(defclass selectable-superclass ()
+(defclass selectable-superclause ()
   ())
 
-(defclass extended-superclause (selectable-superclass sequential-superclass)
+(defclass extended-superclause (selectable-superclause sequential-superclause)
   ())
 
 (defmethod analyze :before ((clause simple-superclause))
@@ -66,29 +69,27 @@
             (reduce #'wrap-forms (subclauses clause)
                     :from-end t :initial-value forms)))
 
-(defmethod initial-step-forms ((clause sequential-superclass))
+(defmethod initial-step-forms ((clause sequential-superclause))
   (mapcan (lambda (clause)
             (wrap-let* (initial-step-bindings clause)
                        (initial-step-declarations clause)
                        (initial-step-forms clause)))
           (subclauses clause)))
 
-(defmethod subsequent-step-forms ((clause sequential-superclass))
+(defmethod subsequent-step-forms ((clause sequential-superclause))
   (mapcan (lambda (clause)
             (wrap-let* (subsequent-step-bindings clause)
                        (subsequent-step-declarations clause)
                        (subsequent-step-forms clause)))
           (subclauses clause)))
 
-(defmethod wrap-forms ((clause sequential-superclass) forms)
-  (reduce (lambda (clause forms)
-            (wrap-let (initial-bindings clause)
-                      (initial-declarations clause)
-                      (wrap-forms clause forms)))
-          (subclauses clause)
-          :from-end t :initial-value forms))
+(defmethod wrap-forms ((clause sequential-superclause) forms)
+  (wrap-let* (mapcan #'initial-bindings (subclauses clause))
+             (mapcan #'initial-declarations (subclauses clause))
+             (reduce #'wrap-forms (subclauses clause)
+                     :from-end t :initial-value forms)))
 
-(defmethod wrap-forms :around ((clause extended-superclause) forms)
+#+(or)(defmethod wrap-forms :around ((clause extended-superclause) forms)
   (declare (ignore forms))
   (wrap-let (initial-bindings clause)
             (initial-declarations clause)

@@ -122,6 +122,11 @@
     (declare (ignore clause))
     nil))
 
+(defgeneric name (clause)
+  (:method (clause)
+    (declare (ignore clause))
+    nil))
+
 (defgeneric variable-clause-p (clause)
   (:method (clause)
     (declare (ignore clause))
