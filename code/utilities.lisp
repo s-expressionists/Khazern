@@ -1,5 +1,16 @@
 (cl:in-package #:khazern)
 
+(defun nthcdr-form (n form)
+  (case n
+    (0 form)
+    (1 `(cdr ,form))
+    (2 `(cddr ,form))
+    (3 `(cdddr ,form))
+    (4 `(cddddr ,form))
+    (otherwise
+     (nthcdr-form (- n 4)
+                  `(cddddr ,form)))))
+
 (defun type-or-null (type)
   (if (typep nil type)
       type

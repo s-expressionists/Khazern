@@ -91,6 +91,39 @@
                     ,@forms))
                 forms))))))
 
+(defun accumulate-form (var name form)
+  (let ((tail (accumulation-reference var :tail)))
+    (flet ((append-cons (a d)
+             `((rplacd ,tail (setq ,tail (cons ,a ,d)))))
+           (accumulate-func ()
+             `((,(accumulation-reference var name) ,form))))
+      (if (consp form)
+          (case (car form)
+            (cons
+             (if (constantp (third form))
+                 (append-cons (second form) (third form))
+                 (nconc (append-cons (second form) nil)
+                        (accumulate-form var name (third form)))))
+            (list
+             (mapcan (lambda (form)
+                       (append-cons form nil))
+                     (cdr form)))
+            (list*
+             (mapcon (lambda (head)
+                       (cond ((null (cdr head))
+                              (unless (constantp (car head))
+                                (accumulate-form var name (car head))))
+                             ((null (cddr head))
+                              (append-cons (car head)
+                                           (when (constantp (second head))
+                                             (second head))))
+                             (t
+                              (append-cons (car head) nil))))
+                     (cdr form)))
+            (otherwise
+             (accumulate-func)))
+          (accumulate-func)))))
+
 (defclass summation-accumulation-clause (var-mixin)
   ())
 
@@ -177,7 +210,7 @@
 ;;; APPEND expansion methods
 
 (defmethod body-forms ((clause append-clause))
-  `((,(accumulation-reference (var-spec (var clause)) :append) ,(it-form (form clause)))))
+  (accumulate-form (var-spec (var clause)) :append (it-form (form clause))))
 
 ;;; NCONC clause
 
@@ -203,7 +236,7 @@
 ;;; NCONC expansion methods
 
 (defmethod body-forms ((clause nconc-clause))
-  `((,(accumulation-reference (var-spec (var clause)) :nconc) ,(it-form (form clause)))))
+  (accumulate-form (var-spec (var clause)) :nconc (it-form (form clause))))
 
 ;;; COUNT clause
 
