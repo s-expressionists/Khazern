@@ -1,6 +1,6 @@
 (cl:in-package #:khazern-intrinsic)
 
-(defclass intrinsic-client (khazern:intrinsic-client)
+(defclass intrinsic-client (khazern:standard-client)
   ())
 
 (defvar *client* (make-instance 'intrinsic-client))
