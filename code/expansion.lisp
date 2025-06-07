@@ -12,63 +12,17 @@
 
 (defvar *accumulation-variable*)
 
-(defvar *tail-variables*)
-
 (defvar *extended-superclause*)
 
 (defun default-accumulation-variable ()
   (or *accumulation-variable*
       (setf *accumulation-variable* (gensym "ACC"))))
 
-(defun tail-variable (head-variable)
-  (loop for clause in (subclauses *extended-superclause*)
-        for tail = (accumulation-clause-reference clause head-variable :tail)
-        when tail
-          return tail))
-
 (defun accumulation-reference (var ref)
   (loop for clause in (subclauses *extended-superclause*)
         for tail = (accumulation-clause-reference clause var ref)
         when tail
           return tail))
-
-#+(or)(defmethod initial-bindings ((clause extended-superclause))
-  (let ((bindings nil)
-        (variables nil))
-    (map-variables (lambda (name type category)
-                     (unless (or (eq category t)
-                                 (member name variables))
-                       (push name variables)
-                       (push `(,name
-                               ,(case category
-                                  (:summation
-                                   (coerce 0 type))
-                                  (:every
-                                   t)
-                                  (otherwise
-                                   nil)))
-                             bindings)
-                       (when (eq category :list)
-                         (push `(,(tail-variable name) nil)
-                               bindings))))
-                   clause)
-    (nreverse bindings)))
-
-#+(or)(defmethod initial-declarations ((clause extended-superclause))
-  (let ((declarations nil)
-        (variables nil))
-    (map-variables (lambda (name type category)
-                     (unless (or (eq category t)
-                                 (member name variables))
-                       (push name variables)
-                       (push `(type ,(if (or (not (eq category :summation))
-                                                (typep (coerce 0 type) type))
-                                            type
-                                            `(or (integer 0 0) ,type))
-                                       ,name)
-                             declarations)))
-                   clause)
-    (nreverse declarations)))
 
 (defvar *loop-name*)
 
