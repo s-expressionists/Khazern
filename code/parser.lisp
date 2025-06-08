@@ -75,7 +75,7 @@
             type-spec
             default-type-spec))))
 
-(defun parse-d-spec (tokens &key (type-spec t) (accumulation-category t))
+(defun parse-d-spec (tokens &key (type-spec t) (accumulation-category nil))
   (make-instance 'd-spec
                  :var-spec (pop-token tokens)
                  :type-spec (parse-type-spec tokens type-spec)

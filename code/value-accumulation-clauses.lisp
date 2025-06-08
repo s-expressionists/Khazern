@@ -143,7 +143,14 @@
   (d-spec-outer-declarations (var instance)))
 
 (defclass extremum-accumulation-clause (var-mixin)
-  ())
+  ((%first-var :reader first-var
+               :initform (make-instance 'd-spec
+                                        :var-spec (gensym "FIRST")
+                                        :type-spec 'boolean))
+   (%max-func :accessor max-func
+              :initform nil)
+   (%min-func :accessor min-func
+              :initform nil)))
 
 (defmethod make-accumulation-clause (name type (category (eql :extremum)))
   (make-instance 'extremum-accumulation-clause
@@ -152,12 +159,55 @@
                                      :type-spec type
                                      :accumulation-category category)))
 
+(defmethod accumulation-clause-reference ((instance extremum-accumulation-clause) name (ref (eql :max)))
+  (cond ((not (eq name (var-spec (var instance))))
+         nil)
+        ((null (max-func instance))
+         (setf (max-func instance) (gensym "MAX")))
+        (t
+         (max-func instance))))
+
+(defmethod accumulation-clause-reference ((instance extremum-accumulation-clause) name (ref (eql :min)))
+  (cond ((not (eq name (var-spec (var instance))))
+         nil)
+        ((null (min-func instance))
+         (setf (min-func instance) (gensym "MIN")))
+        (t
+         (min-func instance))))
+
 (defmethod initial-bindings ((instance extremum-accumulation-clause))
-  (d-spec-outer-bindings (var instance)))
+  (nconc (d-spec-outer-bindings (var instance))
+         (d-spec-simple-bindings (first-var instance) t)))
 
 (defmethod initial-declarations ((instance extremum-accumulation-clause))
-  (d-spec-outer-declarations (var instance)))
+  (nconc (d-spec-outer-declarations (var instance))
+         (d-spec-simple-declarations (first-var instance))))
 
+(defmethod wrap-forms ((instance extremum-accumulation-clause) forms)
+  (let ((first-var (var-spec (first-var instance)))
+        (into-var (var-spec (var instance)))
+        (into-type (type-spec (var instance))))
+    (with-accessors ((max-func max-func)
+                     (min-func min-func))
+        instance
+      `((flet (,@(when max-func
+                   `((,max-func (value)
+                       (let ((coerced-value (coerce value ',into-type)))
+                         (declare (type ,into-type coerced-value))
+                         (when (or ,first-var
+                                   (> coerced-value ,into-var))
+                           (setq ,into-var coerced-value
+                                 ,first-var nil))))))
+               ,@(when min-func
+                   `((,min-func (value)
+                       (let ((coerced-value (coerce value ',into-type)))
+                         (declare (type ,into-type coerced-value))
+                         (when (or ,first-var
+                                   (< coerced-value ,into-var))
+                           (setq ,into-var coerced-value
+                                 ,first-var nil)))))))
+          ,@forms)))))
+      
 ;;; COLLECT clause
 
 (defclass collect-clause (accumulation-clause)
@@ -267,26 +317,21 @@
   (check-subtype (type-spec (var clause)) 'number))
 
 (defmethod body-forms ((clause count-clause))
-  (let ((form (form clause))
-        (into-var (var-spec (var clause))))
-    `((when ,(if (and *it-var* (it-keyword-p form))
-                 *it-var*
-                 form)
-        (setq ,into-var
-              (1+ ,into-var))))))
+  `((when ,(it-form (form clause))
+      (incf ,(var-spec (var clause))))))
 
 ;;; MINIMIZE/MAXIMIZE clause
 
 (defclass extremum-clause (accumulation-clause)
-  ((%reduce-function :reader reduce-function
-                     :initarg :reduce-function)))
+  ((%func-name :reader func-name
+               :initarg :func-name)))
 
 ;;; MINIMIZE/MAXIMIZE parsers
 
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :minimize)) tokens)
   (make-instance 'extremum-clause
                  :form (pop-token tokens)
-                 :reduce-function 'min
+                 :func-name :min
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
                                      :type-spec (parse-type-spec tokens 'real)                          
@@ -295,7 +340,7 @@
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :minimizing)) tokens)
   (make-instance 'extremum-clause
                  :form (pop-token tokens)
-                 :reduce-function 'min
+                 :func-name :min
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
                                      :type-spec (parse-type-spec tokens 'real)                          
@@ -304,7 +349,7 @@
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :maximize)) tokens)
   (make-instance 'extremum-clause
                  :form (pop-token tokens)
-                 :reduce-function 'max
+                 :func-name :max
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
                                      :type-spec (parse-type-spec tokens 'real)                          
@@ -313,7 +358,7 @@
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :maximizing)) tokens)
   (make-instance 'extremum-clause
                  :form (pop-token tokens)
-                 :reduce-function 'max
+                 :func-name :max
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
                                      :type-spec (parse-type-spec tokens 'real)                          
@@ -322,18 +367,10 @@
 ;;; MINIMIZE/MAXIMIZE expansion methods
 
 (defmethod analyze ((clause extremum-clause))
-  (setf (type-spec (var clause)) (type-or-null (type-spec (var clause))))
-  (check-subtype (type-spec (var clause)) '(or null real)))
+  (check-subtype (type-spec (var clause)) 'real))
 
 (defmethod body-forms ((clause extremum-clause))
-  (let ((form (form clause))
-        (var (var-spec (var clause))))
-    (when (and *it-var* (it-keyword-p form))
-      (setf form *it-var*))
-    `((setq ,var
-            (if ,var
-                (,(reduce-function clause) ,var ,form)
-                ,form)))))
+  `((,(accumulation-reference (var-spec (var clause)) (func-name clause)) ,(it-form (form clause)))))
 
 ;;; SUM clause
 
@@ -364,8 +401,5 @@
   (check-subtype (type-spec (var clause)) 'number))
 
 (defmethod body-forms ((clause sum-clause))
-  (let ((form (form clause)))
-    `((incf ,(var-spec (var clause))
-            ,(if (and *it-var* (it-keyword-p form))
-                 *it-var*
-                 form)))))
+  `((incf ,(var-spec (var clause))
+          ,(it-form (form clause)))))

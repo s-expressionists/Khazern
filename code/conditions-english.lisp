@@ -218,3 +218,13 @@
   (format stream
           "Specified d-var-spec ~s is not a simple-var or NIL."
           (var-spec condition)))
+
+(defmethod acclimation:report-condition
+    ((condition conflicting-types)
+     stream
+     (language acclimation:english))
+  (format stream
+          "Types ~s and ~s are in conflict for~:[ the default~;~] accumulation variable~@[ ~s~]. Using ~s as a replacement type."
+          (type1 condition) (type2 condition)
+          (name condition) (name condition)
+          (replacement-type condition)))

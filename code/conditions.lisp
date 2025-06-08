@@ -91,32 +91,6 @@
 (define-condition conflicting-stepping-directions (loop-parse-error)
   ())
 
-(defun combine-parse-errors (x y)
-  (cond ((and (null x) (null y))
-         nil)
-        ((null x)
-         y)
-        ((or (null y)
-             (< (car (location x)) (car (location y))))
-         x)
-        ((> (car (location x)) (car (location y)))
-         y)
-        ((and (typep x 'expected-token)
-              (typep y 'expected-token))
-         (setf (expected-keywords x) (append (expected-keywords x) (expected-keywords y)))
-         (cond ((and (null (expected-type x))
-                     (null (expected-type y))))
-               ((null (expected-type y)))
-               ((or (null (expected-type x))
-                    (subtypep (expected-type x) (expected-type y)))
-                (setf (expected-type x) (expected-type y)))
-               ((subtypep (expected-type y) (expected-type x)))
-               (t
-                (setf (expected-type x) `(or ,(expected-type x) ,(expected-type y)))))
-         x)
-        (t
-         nil)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Conditions for syntactic and semantic analysis
@@ -184,6 +158,20 @@
              :initarg :subtype)
    (%supertype :reader supertype
                :initarg :supertype)))
+
+(define-condition conflicting-types
+    (style-warning acclimation:condition)
+  ((%name :reader name
+          :initarg :name)
+   (%type1 :reader type1
+           :initarg :type1
+           :initform nil)
+   (%type2 :reader type2
+           :initarg :type2
+           :initform nil)
+   (%replacement-type :reader replacement-type
+                      :initarg :replacement-type
+                      :initform nil)))
 
 ;;; Run Time Conditions
 

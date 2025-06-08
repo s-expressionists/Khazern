@@ -59,49 +59,6 @@
         (t
          forms)))
 
-;;; This function is used in the list accumulation clauses COLLECT,
-;;; APPEND, and NCONC.  The idea is that CONS cells in a suffix of the
-;;; accumulated list must be copied, because they were attached by the
-;;; APPEND clause, and so they weren't copied then, but if more CONS
-;;; cells must be attached, then they do have to be copied in order
-;;; that semantics be preserved.  When LIST-TAIL-ACCUMULATION-VARIABLE
-;;; points to a CONS cell (say, C), then this suffix consists of all
-;;; the CONS cells in the list pointed to by the CDR of C.  When the
-;;; value of LIST-TAIL-ACCUMULATION-VARIABLE is NIL, then the suffix
-;;; consists of all the CONS cell accumulated so far, and they make up
-;;; the list that is the value of ACCUMULATION-VARIABLE.
-(defun copy-cons-cells
-    (accumulation-variable list-tail-accumulation-variable)
-  `(tagbody
-      ;; If the tail variable is NIL, then every CONS cell in the
-      ;; list starting at the accumulation variable must be copied,
-      ;; and we know that there is at least one.  So we can
-      ;; eliminate this special case by copying the first CONS
-      ;; cell, and setting the tail variable to point to it.  We
-      ;; could call COPY-LIST and then LAST, but then we would
-      ;; traverse the list twice, so we do it with a loop instead.
-      (when (null ,list-tail-accumulation-variable)
-        (setf ,accumulation-variable
-              (cons (car ,accumulation-variable)
-                    (cdr ,accumulation-variable))
-              ,list-tail-accumulation-variable
-              ,accumulation-variable))
-      ;; At this point, whether the tail variable was initially NIL or
-      ;; not, now it no longer is.  And every CONS cell after the one
-      ;; that the tail variable points to must be copied.
-    again
-      (unless (atom (cdr ,list-tail-accumulation-variable))
-        ;; We have not copied all of the CONS celll so  we
-        ;; copy the CONS cell pointed to by the
-        ;; CDR of the tail variable and advance the tail
-        ;; variable by one position.
-        (setf (cdr ,list-tail-accumulation-variable)
-              (cons (cadr ,list-tail-accumulation-variable)
-                    (cddr ,list-tail-accumulation-variable))
-              ,list-tail-accumulation-variable
-              (cdr ,list-tail-accumulation-variable))
-        (go again))))
-
 ;;; This is very hacky
 (defun numeric-types ()
   (let ((types (list 'complex 'number)))
@@ -128,8 +85,12 @@
 (defun numeric-type-of (value)
   (find value *numeric-types* :test #'typep))
 
-(defun numeric-super-type (type)
-  (find type *numeric-types* :test #'subtypep))
+(defun numeric-super-type (&rest types)
+  (find-if (lambda (supertype)
+             (every (lambda (subtype)
+                      (subtypep subtype supertype))
+                    types))
+           *numeric-types*))
 
 (defvar +initial-values+
   (remove-duplicates '(nil #\*
@@ -186,7 +147,7 @@
                :initform t)
    (%accumulation-category :accessor accumulation-category
                            :initarg :accumulation-category
-                           :initform t)
+                           :initform nil)
    (%ignorable :accessor ignorablep
                :initarg :ignorable
                :initform nil)

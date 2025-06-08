@@ -102,33 +102,50 @@
   (check-order-variable-clause-main-clause clauses))
 
 (defun check-variables (clause)
-  (let ((variables nil)
-        (accumulation-clauses nil))
+  (let ((variables (make-hash-table)))
     (map-variables (lambda (name type category)
-                     (declare (ignore type))
-                     (let ((current-category (getf variables name)))
-                       (cond ((null current-category)
-                              (setf (getf variables name) category)
-                              (unless (eq category t)
-                                (push (make-accumulation-clause name type category)
-                                      accumulation-clauses)))
-                             ((and (eq category t)
-                                   (eq current-category t))
+                     (multiple-value-bind (pair presentp)
+                         (gethash name variables)
+                       (cond ((not presentp)
+                              (setf (gethash name variables) (cons type category)))
+                             ((and (null category)
+                                   (null (cdr pair)))
                               (error 'multiple-variable-occurrences
                                      :bound-variable name))
-                             ((or (eq category t)
-                                  (eq current-category t))
+                             ((or (null category)
+                                  (null (cdr pair)))
                               (error 'iteration-accumulation-overlap
                                      :bound-variable name))
-                             ((not (eq category current-category))
+                             ((not (eq category (cdr pair)))
                               (error 'multiple-accumulation-occurrences
                                      :bound-variable name
                                      :first-clause category
-                                     :second-clause current-category)))))
+                                     :second-clause (cdr pair)))
+                             (t
+                              (let ((sub12 (subtypep type (car pair)))
+                                    (sub21 (subtypep (car pair) type)))
+                                (unless (and sub12 sub21)
+                                  (let ((replacement-type
+                                          (cond (sub12 (car pair))
+                                                (sub21 type)
+                                                ((and (subtypep type 'number)
+                                                      (subtypep (car pair) 'number))
+                                                 (numeric-super-type type (car pair)))
+                                                (t))))
+                                    (warn 'conflicting-types
+                                          :name (if (eq name *accumulation-variable*)
+                                                    nil
+                                                    name)
+                                          :type1 type
+                                          :type2 (car pair)
+                                          :replacement-type replacement-type)
+                                    (setf (car pair) replacement-type))))))))
                    clause)
-    (setf (subclauses clause)
-          (nconc (nreverse accumulation-clauses)
-                 (subclauses clause)))))
+    (maphash (lambda (name pair)
+               (when (cdr pair)
+                 (push (make-accumulation-clause name (car pair) (cdr pair))
+                       (subclauses clause))))
+             variables)))
 
 ;;; FIXME: Add more analyses.
 (defmethod analyze ((clause extended-superclause))
