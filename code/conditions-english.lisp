@@ -103,16 +103,6 @@
           (found condition)))
 
 (defmethod acclimation:report-condition
-    ((condition too-many-prepositions-from-one-group)
-     stream
-     (language acclimation:english))
-  (format stream
-          "Expected (hash-value other-var), but found~@
-           the following instead:~@
-           ~s"
-          (found condition)))
-
-(defmethod acclimation:report-condition
     ((condition conflicting-stepping-directions)
      stream
      (language acclimation:english))
@@ -148,7 +138,7 @@
      (language acclimation:english))
   (declare (ignorable condition))
   (format stream
-          "Multiple NAME clauses where found."))
+          "Multiple NAME clauses were found."))
 
 (defmethod acclimation:report-condition
     ((condition invalid-clause-order)

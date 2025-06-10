@@ -14,31 +14,11 @@
                 :initarg :subclauses
                 :initform nil)))
 
-(defmethod name ((clause simple-superclause))
-  (some #'name (subclauses clause)))
-
-(defclass sequential-superclause (simple-superclause)
-  ())
-
-(defclass parallel-superclause (simple-superclause)
-  ())
-
-(defclass selectable-superclause ()
-  ())
-
-(defclass extended-superclause (selectable-superclause sequential-superclause)
-  ())
-
 (defmethod analyze :before ((clause simple-superclause))
   (mapc #'analyze (subclauses clause)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Expansion methods for FOR-AS clause.
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the prologue-forms.
+(defmethod map-variables (function (clause simple-superclause))
+  (map-variables function (subclauses clause)))
 
 (defmethod prologue-forms ((clause simple-superclause))
   (mapcan #'prologue-forms (subclauses clause)))
@@ -46,28 +26,14 @@
 (defmethod body-forms ((clause simple-superclause))
   (mapcan #'body-forms (subclauses clause)))
 
-(defmethod map-variables (function (clause simple-superclause))
-  (map-variables function (subclauses clause)))
+(defmethod epilogue-forms ((clause simple-superclause))
+  (mapcan #'epilogue-forms (subclauses clause)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the step forms.
+(defmethod name ((clause simple-superclause))
+  (some #'name (subclauses clause)))
 
-(defmethod initial-step-forms ((clause parallel-superclause))
-  (wrap-let* (mapcan #'initial-step-bindings (subclauses clause))
-             (mapcan #'initial-step-declarations (subclauses clause))
-             (mapcan #'initial-step-forms (subclauses clause))))
-
-(defmethod subsequent-step-forms ((clause parallel-superclause))
-  (wrap-let* (mapcan #'subsequent-step-bindings (subclauses clause))
-             (mapcan #'subsequent-step-declarations (subclauses clause))
-             (mapcan #'subsequent-step-forms (subclauses clause))))
-
-(defmethod wrap-forms ((clause parallel-superclause) forms)
-  (wrap-let (mapcan #'initial-bindings (subclauses clause))
-            (mapcan #'initial-declarations (subclauses clause))
-            (reduce #'wrap-forms (subclauses clause)
-                    :from-end t :initial-value forms)))
+(defclass sequential-superclause (simple-superclause)
+  ())
 
 (defmethod initial-step-forms ((clause sequential-superclause))
   (mapcan (lambda (clause)
@@ -89,21 +55,30 @@
              (reduce #'wrap-forms (subclauses clause)
                      :from-end t :initial-value forms)))
 
-#+(or)(defmethod wrap-forms :around ((clause extended-superclause) forms)
-  (declare (ignore forms))
-  (wrap-let (initial-bindings clause)
-            (initial-declarations clause)
-            (call-next-method)))
+(defclass parallel-superclause (simple-superclause)
+  ())
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the body-forms.
+(defmethod initial-step-forms ((clause parallel-superclause))
+  (wrap-let* (mapcan #'initial-step-bindings (subclauses clause))
+             (mapcan #'initial-step-declarations (subclauses clause))
+             (mapcan #'initial-step-forms (subclauses clause))))
 
-(defmethod body-forms ((clause simple-superclause))
-  (mapcan #'body-forms (subclauses clause)))
+(defmethod subsequent-step-forms ((clause parallel-superclause))
+  (wrap-let* (mapcan #'subsequent-step-bindings (subclauses clause))
+             (mapcan #'subsequent-step-declarations (subclauses clause))
+             (mapcan #'subsequent-step-forms (subclauses clause))))
 
-(defmethod epilogue-forms ((clause simple-superclause))
-  (mapcan #'epilogue-forms (subclauses clause)))
+(defmethod wrap-forms ((clause parallel-superclause) forms)
+  (wrap-let (mapcan #'initial-bindings (subclauses clause))
+            (mapcan #'initial-declarations (subclauses clause))
+            (reduce #'wrap-forms (subclauses clause)
+                    :from-end t :initial-value forms)))
+
+(defclass selectable-superclause ()
+  ())
+
+(defclass extended-superclause (selectable-superclause sequential-superclause)
+  ())
 
 (defclass var-mixin ()
   ((%var :accessor var
@@ -116,20 +91,6 @@
 (defclass compound-forms-mixin ()
   ((%forms :accessor forms
            :initarg :forms)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Mixin for clauses that make the loop return a value.
-
-(defclass loop-return-clause-mixin ()
-  ())
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Mixin for clauses that has an implicit IT argument.
-
-(defclass it-mixin ()
-  ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

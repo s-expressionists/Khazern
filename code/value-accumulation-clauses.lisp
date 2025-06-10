@@ -96,9 +96,29 @@
     (flet ((append-cons (a d)
              `((rplacd ,tail (setq ,tail (cons ,a ,d)))))
            (accumulate-func ()
-             `((,(accumulation-reference var name) ,form))))
+             `((,(accumulation-reference var name) ,form)))
+           (quote-form (form)
+             (if (constantp form)
+                 form
+                 `(quote ,form))))
       (if (consp form)
           (case (car form)
+            (quote
+             (if (and (eq name :append)
+                      (consp (second form)))
+                 (prog ((head (second form))
+                        forms)
+                  next
+                    (unless (consp head)
+                      (return forms))
+                    (setf forms
+                          (nconc forms
+                                 (append-cons (quote-form (car head))
+                                              (unless (consp (cdr head))
+                                                (quote-form (cdr head))))))
+                    (pop head)
+                    (go next))
+                 (accumulate-func)))
             (cons
              (if (constantp (third form))
                  (append-cons (second form) (third form))

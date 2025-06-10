@@ -79,9 +79,12 @@
 ;;; zero.
 (defun check-name-clause-position (clauses)
   (let ((name-clause-position
-          (position-if #'name-clause-p clauses :from-end t)))
-    (when (and (not (null name-clause-position)) (plusp name-clause-position))
-      (error 'name-clause-not-first))))
+          (position-if #'name-clause-p clauses)))
+    (when (and name-clause-position
+               (plusp name-clause-position))
+      (error 'name-clause-not-first)))
+  (when (> (count-if #'name-clause-p clauses) 1)
+    (error 'multiple-name-clauses)))
 
 ;;; Check that there is not a variable-clause following a main clause.
 ;;; Recall that we diverge from the BNF grammar in the HyperSpec so
@@ -149,5 +152,5 @@
 
 ;;; FIXME: Add more analyses.
 (defmethod analyze ((clause extended-superclause))
-  (verify-clause-order (subclauses clause))
+  ;(verify-clause-order (subclauses clause))
   (check-variables clause))

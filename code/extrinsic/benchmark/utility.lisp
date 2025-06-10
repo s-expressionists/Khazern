@@ -38,7 +38,7 @@
                         :extrinsic-function (lambda ()
                                               ,@(make-extrinsic body)))))
 
-(defvar *minimum-bench-time* 15)
+(defvar *minimum-bench-time* 10)
 
 (defvar *overhead-time* 0)
 

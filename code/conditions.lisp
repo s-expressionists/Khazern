@@ -85,9 +85,6 @@
 (define-condition unexpected-token-found (loop-parse-error-found)
   ())
 
-(define-condition too-many-prepositions-from-one-group (loop-parse-error)
-  ())
-
 (define-condition conflicting-stepping-directions (loop-parse-error)
   ())
 
@@ -172,23 +169,6 @@
    (%replacement-type :reader replacement-type
                       :initarg :replacement-type
                       :initform nil)))
-
-;;; Run Time Conditions
-
-(define-condition loop-runtime-error (error acclimation:condition)
-  ())
-
-(define-condition sum-argument-must-be-number (type-error loop-runtime-error)
-  ())
-
-(define-condition max-argument-must-be-real (type-error loop-runtime-error)
-  ())
-
-(define-condition min-argument-must-be-real (type-error loop-runtime-error)
-  ())
-
-(define-condition value-must-be-list (type-error loop-runtime-error)
-  ())
 
 (defun check-subtype (subtype supertype)
   (multiple-value-bind (subtype-p valid-p)
