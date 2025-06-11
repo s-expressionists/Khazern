@@ -116,6 +116,9 @@
 ;;; (other than an initially-clause or a finally-clause).  
 (define-condition invalid-clause-order (loop-syntax-error) ())
 
+(define-condition possible-invalid-clause-order
+    (style-warning acclimation:condition) ())
+
 ;;; This condition is signaled when there are multiple occurrences of
 ;;; a variable to be bound by any loop clause.
 (define-condition multiple-variable-occurrences (loop-syntax-error)

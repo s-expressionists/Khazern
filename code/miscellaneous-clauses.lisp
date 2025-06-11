@@ -19,8 +19,15 @@
   ((%name :reader name
           :initarg :name)))
 
-(defmethod name-clause-p ((clause name-clause))
-  t)
+(defmethod clause-group ((clause name-clause))
+  :name)
+
+
+(defmethod (setf clause-group) (group (clause name-clause))
+  (declare (ignore clause))
+  (if (eq group :name)
+      group
+      (error 'invalid-clause-order)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -69,7 +76,7 @@
 ;;;
 ;;;    initial-clause ::= initially compound-form+
 
-(defclass initial-clause (compound-forms-mixin)
+(defclass initial-clause (body-clause compound-forms-mixin)
   ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -100,7 +107,7 @@
 ;;;
 ;;;    final-clause ::= finally compound-form+
 
-(defclass final-clause (compound-forms-mixin)
+(defclass final-clause (body-clause compound-forms-mixin)
   ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -75,34 +75,21 @@
 ;;;
 ;;; Syntactic and semantic analysis
 
-;;; Check that if there is a name-clause, the last one is in position
-;;; zero.
-(defun check-name-clause-position (clauses)
-  (let ((name-clause-position
-          (position-if #'name-clause-p clauses)))
-    (when (and name-clause-position
-               (plusp name-clause-position))
-      (error 'name-clause-not-first)))
-  (when (> (count-if #'name-clause-p clauses) 1)
-    (error 'multiple-name-clauses)))
-
-;;; Check that there is not a variable-clause following a main clause.
-;;; Recall that we diverge from the BNF grammar in the HyperSpec so
-;;; that INITIALLY and FINALLY are neither main clauses nor variable
-;;; clauses.
-(defun check-order-variable-clause-main-clause (clauses)
-  (let ((last-variable-clause-position
-          (position-if #'variable-clause-p clauses :from-end t))
-        (first-main-clause-position
-          (position-if #'main-clause-p clauses)))
-    (when (and (not (null last-variable-clause-position))
-               (not (null first-main-clause-position))
-               (> last-variable-clause-position first-main-clause-position))
-      (error 'invalid-clause-order))))
-
-(defun verify-clause-order (clauses)
-  (check-name-clause-position clauses)
-  (check-order-variable-clause-main-clause clauses))
+(defun verify-clause-order (clause)
+  (let ((clauses (subclauses clause)))
+    (when (> (count-if (lambda (clause)
+                         (eq (clause-group clause) :name))
+                       clauses)
+             1)
+      (error 'multiple-name-clauses))
+    (when (eq (clause-group (first clauses)) :name)
+      (pop clauses))
+    (reduce (lambda (clause group)
+              (if (eq (clause-group clause) :variable)
+                  :variable
+                  (setf (clause-group clause) group)))
+            clauses
+            :initial-value :main :from-end t)))
 
 (defun check-variables (clause)
   (let ((variables (make-hash-table)))
@@ -152,5 +139,5 @@
 
 ;;; FIXME: Add more analyses.
 (defmethod analyze ((clause extended-superclause))
-  ;(verify-clause-order (subclauses clause))
+  (verify-clause-order clause)
   (check-variables clause))

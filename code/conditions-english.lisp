@@ -146,7 +146,15 @@
      (language acclimation:english))
   (declare (ignorable condition))
   (format stream
-          "Invalid clause order.  Variable clauses must precede main clauses."))
+          "Invalid clause order. Variable clauses must precede main clauses."))
+
+(defmethod acclimation:report-condition
+    ((condition possible-invalid-clause-order)
+     stream
+     (language acclimation:english))
+  (declare (ignorable condition))
+  (format stream
+          "Possible invalid clause order. Variable clauses must precede main clauses but the ANSI specification is ambigious on the location of termination test clauses."))
 
 (defmethod acclimation:report-condition
     ((condition multiple-variable-occurrences)

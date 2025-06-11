@@ -11,8 +11,11 @@
 ;;;                        never form |
 ;;;                        thereis form
 
-(defclass termination-test-clause (main-clause)
+(defclass termination-test-clause (body-clause)
   ())
+
+(defmethod (setf clause-group) :after ((group (eql :variable)) (clause termination-test-clause))
+  (warn 'possible-invalid-clause-order))
 
 (defclass boolean-termination-test-clause (termination-test-clause accumulation-mixin form-mixin)
   ())
@@ -80,21 +83,19 @@
 (defmethod initial-declarations ((clause repeat-clause))
   `((type ,(type-spec (var clause)) ,(var-spec (var clause)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the initial step forms.
+(defun expand-repeat (clause group)
+  (when (eq (clause-group clause) group)
+    `((when (minusp (decf ,(var-spec (var clause))))
+        (go ,*epilogue-tag*)))))
+
+(defmethod body-forms ((clause repeat-clause))
+  (expand-repeat clause :main))
 
 (defmethod initial-step-forms ((clause repeat-clause))
-  `((when (zerop ,(var-spec (var clause)))
-      (go ,*epilogue-tag*))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the subsequent step forms.
+  (expand-repeat clause :variable))
 
 (defmethod subsequent-step-forms ((clause repeat-clause))
-  `((when (zerop (decf ,(var-spec (var clause))))
-      (go ,*epilogue-tag*))))
+  (expand-repeat clause :variable))
 
 (defclass always-clause (boolean-termination-test-clause)
   ()
@@ -114,17 +115,25 @@
 ;;;
 ;;; Compute the body-forms
 
+(defun expand-always (clause group)
+  (when (eq (clause-group clause) group)
+    `((unless ,(form clause)
+        (return-from ,*loop-name* nil)))))
+    
 (defmethod body-forms ((clause always-clause))
-  `((unless ,(form clause)
-      (return-from ,*loop-name* nil))))
-
+  (expand-always clause :main))
+    
+(defmethod initial-step-forms ((clause always-clause))
+  (expand-always clause :variable))
+    
+(defmethod subsequent-step-forms ((clause always-clause))
+  (expand-always clause :variable))
 
 (defclass never-clause (boolean-termination-test-clause)
   ()
   (:default-initargs :var (make-instance 'd-spec
                                          :var-spec (default-accumulation-variable)
                                          :accumulation-category :every)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -138,10 +147,19 @@
 ;;;
 ;;; Compute the body-forms
 
-(defmethod body-forms ((clause never-clause))
-  `((when ,(form clause)
-     (return-from ,*loop-name* nil))))
+(defun expand-never (clause group)
+  (when (eq (clause-group clause) group)
+    `((when ,(form clause)
+        (return-from ,*loop-name* nil)))))
 
+(defmethod body-forms ((clause never-clause))
+  (expand-never clause :main))
+
+(defmethod initial-step-forms ((clause never-clause))
+  (expand-never clause :variable))
+
+(defmethod subsequent-step-forms ((clause never-clause))
+  (expand-never clause :variable))
 
 (defclass thereis-clause (boolean-termination-test-clause)
   ()
@@ -161,11 +179,20 @@
 ;;;
 ;;; Compute the body-forms
 
-(defmethod body-forms ((clause thereis-clause))
-  (let ((var (var-spec (var clause))))
-    `((when (setq ,var ,(form clause))
-        (return-from ,*loop-name* ,var)))))
+(defun expand-thereis (clause group)
+  (when (eq (clause-group clause) group)
+    (let ((var (var-spec (var clause))))
+      `((when (setq ,var ,(form clause))
+          (return-from ,*loop-name* ,var))))))
 
+(defmethod body-forms ((clause thereis-clause))
+  (expand-thereis clause :main))
+
+(defmethod initial-step-forms ((clause thereis-clause))
+  (expand-thereis clause :variable))
+
+(defmethod subsequent-step-forms ((clause thereis-clause))
+  (expand-thereis clause :variable))
 
 (defclass while-clause (termination-test-clause form-mixin)
   ())
@@ -186,6 +213,16 @@
 ;;;
 ;;; Compute the body-forms
 
+(defun expand-while (clause group)
+  (when (eq (clause-group clause) group)
+    `((unless ,(form clause)
+        (go ,*epilogue-tag*)))))
+
 (defmethod body-forms ((clause while-clause))
-  `((unless ,(form clause)
-      (go ,*epilogue-tag*))))
+  (expand-while clause :main))
+
+(defmethod initial-step-forms ((clause while-clause))
+  (expand-while clause :variable))
+
+(defmethod subsequent-step-forms ((clause while-clause))
+  (expand-while clause :variable))

@@ -11,6 +11,7 @@
            #:accumulation-category
            #:analyze
            #:body-forms
+           #:clause-group
            #:copy-cons-cells
            #:d-spec
            #:d-spec-inner-assignments
@@ -26,14 +27,12 @@
            #:initial-step-bindings
            #:initial-step-declarations
            #:initial-step-forms
-           #:main-clause-p
-           #:make-iteration-path
-           #:map-variables
-           #:name-clause-p
            #:iteration-path-preposition
            #:iteration-path-preposition-names
            #:iteration-path-using
            #:iteration-path-using-names
+           #:make-iteration-path
+           #:map-variables
            #:prologue-forms
            #:standard-client
            #:subclauses
@@ -42,5 +41,4 @@
            #:subsequent-step-forms
            #:symbol-equal
            #:var
-           #:variable-clause-p
            #:wrap-forms))

@@ -112,25 +112,14 @@
     (declare (ignore clause))
     forms))
 
-(defgeneric main-clause-p (clause)
-  (:method (clause)
-    (declare (ignore clause))
-    nil))
-
-(defgeneric name-clause-p (clause)
-  (:method (clause)
-    (declare (ignore clause))
-    nil))
-
 (defgeneric name (clause)
   (:method (clause)
     (declare (ignore clause))
     nil))
 
-(defgeneric variable-clause-p (clause)
-  (:method (clause)
-    (declare (ignore clause))
-    nil))
+(defgeneric clause-group (clause))
+
+(defgeneric (setf clause-group) (group clause))
 
 ;;; We define three different accumulation CATEGORIES, each identified
 ;;; by a symbol: LIST, COUNT/SUM, and MAX/MIN.  Accumulation clauses
