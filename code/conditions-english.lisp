@@ -108,8 +108,8 @@
      (language acclimation:english))
   (declare (ignorable condition))
   (format stream
-          "~@<Conflicting stepping directions in `~{~s~^ ~}` ~
-clause.~:@>"
+          "~@<Conflicting stepping directions in clause `~{~s~^ ~
+~}`.~:@>"
           (clause condition)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

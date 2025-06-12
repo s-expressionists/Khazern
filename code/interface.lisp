@@ -3,7 +3,7 @@
 (defclass standard-client ()
   ())
 
-(defgeneric parse-clause (client scope name tokens))
+(defgeneric parse-clause (client scope name))
 
 (defgeneric map-variables (function clause)
   (:method (function clause)

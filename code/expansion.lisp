@@ -46,9 +46,9 @@
 
 (defun expand-extended-loop (client)
   (let* ((*accumulation-variable* nil)
-         (*extended-superclause* (parse-body client
-                                             (make-instance 'token-stream
-                                                            :tokens *body*))))
+         (*index* 0)
+         (*tokens* *body*)
+         (*extended-superclause* (parse-body client)))
     (analyze *extended-superclause*)
     (let ((*loop-name* (name *extended-superclause*)))
       `(block ,*loop-name*

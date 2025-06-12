@@ -22,18 +22,18 @@
 ;;; Parser
 
 (defmethod parse-clause
-    (client (scope selectable-superclause) (keyword (eql :do)) tokens)
+    (client (scope selectable-superclause) (keyword (eql :do)))
   (make-instance 'do-clause
-                 :start (1- (index tokens))
-                 :forms (parse-compound-form+ tokens)
-                 :end (index tokens)))
+                 :start *start*
+                 :forms (parse-compound-form+)
+                 :end *index*))
 
 (defmethod parse-clause
-    (client (scope selectable-superclause) (keyword (eql :doing)) tokens)
+    (client (scope selectable-superclause) (keyword (eql :doing)))
   (make-instance 'do-clause
-                 :start (1- (index tokens))
-                 :forms (parse-compound-form+ tokens)
-                 :end (index tokens)))
+                 :start *start*
+                 :forms (parse-compound-form+)
+                 :end *index*))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

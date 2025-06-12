@@ -17,39 +17,36 @@
   (mapc #'analyze (then-clauses clause))
   (mapc #'analyze (else-clauses clause)))
 
-(defun parse-conditional-clause-tail (client instance tokens)
+(defun parse-conditional-clause-tail (client instance)
   (setf (then-clauses instance)
-        (parse-parallel-clauses client instance tokens))
-  (when (pop-token? tokens :keywords '(:else))
+        (parse-parallel-clauses client instance))
+  (when (pop-token? :keywords '(:else))
     (setf (else-clauses instance)
-          (parse-parallel-clauses client instance tokens)))
-  (pop-token? tokens :keywords '(:end))
-  (setf (end instance) (index tokens))
+          (parse-parallel-clauses client instance)))
+  (pop-token? :keywords '(:end))
+  (setf (end instance) *index*)
   instance)
 
 (defmethod parse-clause
-    (client (scope selectable-superclause) (keyword (eql :if)) tokens)
+    (client (scope selectable-superclause) (keyword (eql :if)))
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
-                                                :start (1- (index tokens))
-                                                :condition (pop-token tokens))
-                                 tokens))
+                                                :start *start*
+                                                :condition (pop-token))))
 
 (defmethod parse-clause
-    (client (scope selectable-superclause) (keyword (eql :when)) tokens)
+    (client (scope selectable-superclause) (keyword (eql :when)))
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
-                                                :start (1- (index tokens))
-                                                :condition (pop-token tokens))
-                                 tokens))
+                                                :start *start*
+                                                :condition (pop-token))))
 
 (defmethod parse-clause
-    (client (scope selectable-superclause) (keyword (eql :unless)) tokens)
+    (client (scope selectable-superclause) (keyword (eql :unless)))
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
-                                                :start (1- (index tokens))
-                                                :condition `(not ,(pop-token tokens)))
-                                 tokens))
+                                                :start *start*
+                                                :condition `(not ,(pop-token)))))
 
 (defmethod body-forms ((clause conditional-clause))
   (let ((*it-var* (gensym)))

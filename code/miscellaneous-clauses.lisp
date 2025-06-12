@@ -29,11 +29,11 @@
              :expected-group :name)))
 
 (defmethod parse-clause
-    (client (scope extended-superclause) (keyword (eql :named)) tokens)
+    (client (scope extended-superclause) (keyword (eql :named)))
   (make-instance 'name-clause
-                 :start (1- (index tokens))
-                 :name (pop-token tokens)
-                 :end (index tokens)))
+                 :start *start*
+                 :name (pop-token)
+                 :end *index*))
 
 ;;; Clause RETURN-CLAUSE.
 ;;;
@@ -46,11 +46,11 @@
   ())
 
 (defmethod parse-clause
-    (client (scope selectable-superclause) (keyword (eql :return)) tokens)
+    (client (scope selectable-superclause) (keyword (eql :return)))
   (make-instance 'return-clause
-                 :start (1- (index tokens))
-                 :form (pop-token tokens)
-                 :end (index tokens)))
+                 :start *start*
+                 :form (pop-token)
+                 :end *index*))
 
 (defmethod body-forms ((clause return-clause))
   `((return-from ,*loop-name*
@@ -67,11 +67,11 @@
   ())
 
 (defmethod parse-clause
-    (client (scope extended-superclause) (keyword (eql :initially)) tokens)
+    (client (scope extended-superclause) (keyword (eql :initially)))
   (make-instance 'initial-clause
-                 :start (1- (index tokens))
-                 :forms (parse-compound-form+ tokens)
-                 :end (index tokens)))
+                 :start *start*
+                 :forms (parse-compound-form+)
+                 :end *index*))
 
 (defmethod prologue-forms ((clause initial-clause))
   (copy-list (forms clause)))
@@ -88,11 +88,11 @@
   ())
 
 (defmethod parse-clause
-    (client (scope extended-superclause) (keyword (eql :finally)) tokens)
+    (client (scope extended-superclause) (keyword (eql :finally)))
   (make-instance 'final-clause
-                 :start (1- (index tokens))
-                 :forms (parse-compound-form+ tokens)
-                 :end (index tokens)))
+                 :start *start*
+                 :forms (parse-compound-form+)
+                 :end *index*))
 
 (defmethod epilogue-forms ((clause final-clause))
   (copy-list (forms clause)))
