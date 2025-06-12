@@ -24,12 +24,16 @@
 (defmethod parse-clause
     (client (scope selectable-superclause) (keyword (eql :do)) tokens)
   (make-instance 'do-clause
-                 :forms (parse-compound-form+ tokens)))
+                 :start (1- (index tokens))
+                 :forms (parse-compound-form+ tokens)
+                 :end (index tokens)))
 
 (defmethod parse-clause
     (client (scope selectable-superclause) (keyword (eql :doing)) tokens)
   (make-instance 'do-clause
-                 :forms (parse-compound-form+ tokens)))
+                 :start (1- (index tokens))
+                 :forms (parse-compound-form+ tokens)
+                 :end (index tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

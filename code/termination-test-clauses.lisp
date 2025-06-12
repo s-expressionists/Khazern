@@ -15,7 +15,10 @@
   ())
 
 (defmethod (setf clause-group) :after ((group (eql :variable)) (clause termination-test-clause))
-  (warn 'possible-invalid-clause-order))
+  (warn 'possible-invalid-clause-order
+        :clause (subseq *body* (start clause) (end clause))
+        :found-group group
+        :expected-group :main))
 
 (defclass boolean-termination-test-clause (termination-test-clause accumulation-mixin form-mixin)
   ())
@@ -64,7 +67,10 @@
 
 (defmethod parse-clause
     (client (scope extended-superclause) (keyword (eql :repeat)) tokens)
-  (make-instance 'repeat-clause :form (pop-token tokens)))
+  (make-instance 'repeat-clause
+                 :start (1- (index tokens))
+                 :form (pop-token tokens)
+                 :end (index tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -109,7 +115,10 @@
 
 (defmethod parse-clause
     (client (scope extended-superclause) (keyword (eql :always)) tokens)
-  (make-instance 'always-clause :form (pop-token tokens)))
+  (make-instance 'always-clause
+                 :start (1- (index tokens))
+                 :form (pop-token tokens)
+                 :end (index tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -141,7 +150,10 @@
 
 (defmethod parse-clause
     (client (scope extended-superclause) (keyword (eql :never)) tokens)
-  (make-instance 'never-clause :form (pop-token tokens)))
+  (make-instance 'never-clause 
+                 :start (1- (index tokens))
+                 :form (pop-token tokens)
+                 :end (index tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -173,7 +185,10 @@
 
 (defmethod parse-clause
     (client (scope extended-superclause) (keyword (eql :thereis)) tokens)
-  (make-instance 'thereis-clause :form (pop-token tokens)))
+  (make-instance 'thereis-clause
+                 :start (1- (index tokens))
+                 :form (pop-token tokens)
+                 :end (index tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -203,11 +218,17 @@
 
 (defmethod parse-clause
     (client (scope extended-superclause) (keyword (eql :while)) tokens)
-  (make-instance 'while-clause :form (pop-token tokens)))
+  (make-instance 'while-clause
+                 :start (1- (index tokens))
+                 :form (pop-token tokens)
+                 :end (index tokens)))
 
 (defmethod parse-clause
     (client (scope extended-superclause) (keyword (eql :until)) tokens)
-  (make-instance 'while-clause :form `(not ,(pop-token tokens))))
+  (make-instance 'while-clause
+                 :start (1- (index tokens))
+                 :form `(not ,(pop-token tokens))
+                 :end (index tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

@@ -42,7 +42,7 @@
 (defclass for-as-clause (variable-clause parallel-superclause)
   ())
 
-(defclass for-as-subclause (var-mixin)
+(defclass for-as-subclause (clause var-mixin)
   ())
 
 (defmethod analyze ((clause for-as-subclause))
@@ -52,12 +52,19 @@
 
 ;;; FOR-AS-CLAUSE parsers
 
-(defmethod parse-clause ((client standard-client) (scope extended-superclause) (keyword (eql :for)) tokens)
-  (prog ((instance (make-instance 'for-as-clause))
+(defvar *subclause-start*)
+
+(defvar *subclause-end*)
+
+(defun parse-for-as (client tokens)
+  (prog ((instance (make-instance 'for-as-clause
+                                  :start (1- (index tokens))))
          subclauses
-         var)
+         var
+         *subclause-start*)
    next
-     (setf var (parse-d-spec tokens
+     (setf *subclause-start* (index tokens)
+           var (parse-d-spec tokens
                              :type-spec *placeholder-result*)
            (ignorablep var) t)
      (push (do-parse-clause client instance tokens)
@@ -65,24 +72,15 @@
      (setf (var (car subclauses)) var)
      (when (pop-token? tokens :keywords '(:and))
        (go next))
-     (setf (subclauses instance) (nreverse subclauses))
+     (setf (subclauses instance) (nreverse subclauses)
+           (end instance) (index tokens))
      (return instance)))
 
+(defmethod parse-clause ((client standard-client) (scope extended-superclause) (keyword (eql :for)) tokens)
+  (parse-for-as client tokens))
+
 (defmethod parse-clause ((client standard-client) (scope extended-superclause) (keyword (eql :as)) tokens)
-  (prog ((instance (make-instance 'for-as-clause))
-         subclauses
-         var)
-   next
-     (setf var (parse-d-spec tokens
-                             :type-spec *placeholder-result*)
-           (ignorablep var) t)
-     (push (do-parse-clause client instance tokens)
-           subclauses)
-     (setf (var (car subclauses)) var)
-     (when (pop-token? tokens :keywords '(:and))
-       (go next))
-     (setf (subclauses instance) (nreverse subclauses))
-     (return instance)))
+  (parse-for-as client tokens))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -274,12 +272,14 @@
   (case name
     ((:upto :upfrom :below)
      (cond ((typep instance 'for-as-arithmetic-down)
-            (error 'conflicting-stepping-directions))
+            (error 'conflicting-stepping-directions
+                   :clause (subseq *body* *subclause-start*)))
            ((not (typep instance 'for-as-arithmetic-up))
             (change-class instance 'for-as-arithmetic-up))))
     ((:downto :downfrom :above)
      (cond ((typep instance 'for-as-arithmetic-up)
-            (error 'conflicting-stepping-directions))
+            (error 'conflicting-stepping-directions
+                   :clause (subseq *body* *subclause-start*)))
            ((not (typep instance 'for-as-arithmetic-down))
             (change-class instance 'for-as-arithmetic-down)))))
   value)
@@ -842,7 +842,7 @@
 (defclass with-clause (variable-clause parallel-superclause)
   ())
 
-(defclass with-subclause (var-mixin)
+(defclass with-subclause (clause var-mixin)
   ())
 
 (defclass with-subclause-no-form (with-subclause)
@@ -855,23 +855,31 @@
 ;;; WITH Parsers
 
 (defmethod parse-clause ((client standard-client) (scope extended-superclause) (keyword (eql :with)) tokens)
-  (prog ((instance (make-instance 'with-clause))
+  (prog ((instance (make-instance 'with-clause
+                                  :start (1- (index tokens))))
          var
-         subclauses)
+         subclauses
+         start)
    next
-     (setf var (parse-d-spec tokens)
+     (setf start (index tokens)
+           var (parse-d-spec tokens)
            (ignorablep var) t)
      (if (pop-token? tokens :keywords '(:=))
          (push (make-instance 'with-subclause-with-form
+                              :start start
                               :var var
-                              :form (pop-token tokens))
+                              :form (pop-token tokens)
+                              :end (index tokens))
                subclauses)
          (push (make-instance 'with-subclause-no-form
-                              :var var)
+                              :start start
+                              :var var
+                              :end (index tokens))
                subclauses))
      (when (pop-token? tokens :keywords '(:and))
        (go next))
-     (setf (subclauses instance) (nreverse subclauses))
+     (setf (subclauses instance) (nreverse subclauses)
+           (end instance) (index tokens))
      (return instance)))  
 
 ;;; WITH expansion methods

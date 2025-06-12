@@ -86,7 +86,8 @@
   ())
 
 (define-condition conflicting-stepping-directions (loop-parse-error)
-  ())
+  ((%clause :reader clause
+            :initarg :clause)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -103,21 +104,28 @@
 ;;; in a simple LOOOP
 (define-condition non-compound-form (loop-syntax-error) ())
 
-;;; This condition is signaled when a name-clause is found
-;;; and the first clause is not a name-clause. 
-(define-condition name-clause-not-first (loop-syntax-error) ())
-
 ;;; This condition is signaled when the first clause is a name-clause
 ;;; but there are other name-clauses. 
-(define-condition multiple-name-clauses (loop-syntax-error) ())
+(define-condition multiple-name-clauses (loop-syntax-error)
+  ((%clauses :reader clauses
+             :initarg :clauses)))
 
-;;; This condition is signaled when a variable-clause (other than an
-;;; initially-clause or a finally-clause) appears after a main-clause
-;;; (other than an initially-clause or a finally-clause).  
-(define-condition invalid-clause-order (loop-syntax-error) ())
+(define-condition invalid-clause-order (loop-syntax-error)
+  ((%clause :reader clause
+            :initarg :clause)
+   (%found-group :reader found-group
+                 :initarg :found-group)
+   (%expected-group :reader expected-group
+                    :initarg :expected-group)))
 
 (define-condition possible-invalid-clause-order
-    (style-warning acclimation:condition) ())
+    (style-warning acclimation:condition)
+  ((%clause :reader clause
+            :initarg :clause)
+   (%found-group :reader found-group
+                 :initarg :found-group)
+   (%expected-group :reader expected-group
+                    :initarg :expected-group)))
 
 ;;; This condition is signaled when there are multiple occurrences of
 ;;; a variable to be bound by any loop clause.

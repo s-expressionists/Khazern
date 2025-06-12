@@ -8,8 +8,16 @@
 ;;;
 ;;; Common classes.
 
+(defclass clause ()
+  ((%start :accessor start
+           :initarg :start
+           :type fixnum)
+   (%end :accessor end
+         :initarg :end
+         :type fixnum)))
+
 ;;;  Clauses that accept `AND'.
-(defclass simple-superclause ()
+(defclass simple-superclause (clause)
   ((%subclauses :accessor subclauses
                 :initarg :subclauses
                 :initform nil)))
@@ -132,17 +140,19 @@
 ;;;
 ;;;   variable-clause ::= with-clause | for-as-clause
 
-(defclass variable-clause ()
+(defclass variable-clause (clause)
   ())
 
 (defmethod clause-group ((clause variable-clause))
   :variable)
 
 (defmethod (setf clause-group) (group (clause variable-clause))
-  (declare (ignore clause))
   (if (eq group :variable)
       group
-      (error 'invalid-clause-order)))
+      (error 'invalid-clause-order
+             :clause (subseq *body* (start clause) (end clause))
+             :found-group group
+             :expected-group :variable)))
 
 ;;; In the dictionary entry for LOOP, the HyperSpec says:
 ;;;
@@ -179,17 +189,19 @@
 ;;;
 ;;;    main-clause ::= selectable-clause | termination-test
 
-(defclass main-clause ()
+(defclass main-clause (clause)
   ())
 
 (defmethod clause-group ((clause main-clause))
   :main)
 
 (defmethod (setf clause-group) (group (clause main-clause))
-  (declare (ignore clause))
   (if (eq group :main)
       group
-      (error 'invalid-clause-order)))
+      (error 'invalid-clause-order
+             :clause (subseq *body* (start clause) (end clause))
+             :found-group group
+             :expected-group :main)))
 
 ;;; Recall that in the dictionary entry for LOOP, the HyperSpec says:
 ;;;
@@ -217,15 +229,9 @@
 (defclass selectable-clause (main-clause)
   ())
 
-(defclass body-clause ()
+(defclass body-clause (clause)
   ((%clause-group :accessor clause-group
                   :initform :main)))
-
-(defmethod (setf clause-group) :around (group (clause body-clause))
-  (declare (ignore clause))
-  (if (member group '(:main :variable))
-      (call-next-method)
-      (error 'invalid-clause-order)))
 
 (defclass selectable-superclause (selectable-clause)
   ())

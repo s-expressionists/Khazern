@@ -17,10 +17,6 @@
   (mapc #'analyze (then-clauses clause))
   (mapc #'analyze (else-clauses clause)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
-
 (defun parse-conditional-clause-tail (client instance tokens)
   (setf (then-clauses instance)
         (parse-parallel-clauses client instance tokens))
@@ -28,12 +24,14 @@
     (setf (else-clauses instance)
           (parse-parallel-clauses client instance tokens)))
   (pop-token? tokens :keywords '(:end))
+  (setf (end instance) (index tokens))
   instance)
 
 (defmethod parse-clause
     (client (scope selectable-superclause) (keyword (eql :if)) tokens)
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
+                                                :start (1- (index tokens))
                                                 :condition (pop-token tokens))
                                  tokens))
 
@@ -41,6 +39,7 @@
     (client (scope selectable-superclause) (keyword (eql :when)) tokens)
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
+                                                :start (1- (index tokens))
                                                 :condition (pop-token tokens))
                                  tokens))
 
@@ -48,12 +47,9 @@
     (client (scope selectable-superclause) (keyword (eql :unless)) tokens)
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
+                                                :start (1- (index tokens))
                                                 :condition `(not ,(pop-token tokens)))
                                  tokens))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute body-forms.
 
 (defmethod body-forms ((clause conditional-clause))
   (let ((*it-var* (gensym)))

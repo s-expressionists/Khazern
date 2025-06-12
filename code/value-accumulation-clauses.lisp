@@ -237,17 +237,21 @@
 
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :collect)) tokens)
   (make-instance 'collect-clause
+                 :start (1- (index tokens))
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
-                                     :accumulation-category :list)))
+                                     :accumulation-category :list)
+                 :end (index tokens)))
 
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :collecting)) tokens)
   (make-instance 'collect-clause
+                 :start (1- (index tokens))
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
-                                     :accumulation-category :list)))
+                                     :accumulation-category :list)
+                 :end (index tokens)))
 
 ;;; COLLECT expansion methods
 
@@ -265,17 +269,21 @@
 
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :append)) tokens)
   (make-instance 'append-clause
+                 :start (1- (index tokens))
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
-                                     :accumulation-category :list)))
+                                     :accumulation-category :list)
+                 :end (index tokens)))
 
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :appending)) tokens)
   (make-instance 'append-clause
+                 :start (1- (index tokens))
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
-                                     :accumulation-category :list)))
+                                     :accumulation-category :list)
+                 :end (index tokens)))
 
 ;;; APPEND expansion methods
 
@@ -291,17 +299,21 @@
 
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :nconc)) tokens)
   (make-instance 'nconc-clause
+                 :start (1- (index tokens))
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
-                                     :accumulation-category :list)))
+                                     :accumulation-category :list)
+                 :end (index tokens)))
 
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :nconcing)) tokens)
   (make-instance 'nconc-clause
+                 :start (1- (index tokens))
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
-                                     :accumulation-category :list)))
+                                     :accumulation-category :list)
+                 :end (index tokens)))
 
 ;;; NCONC expansion methods
 
@@ -317,19 +329,23 @@
 
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :count)) tokens)
   (make-instance 'count-clause
+                 :start (1- (index tokens))
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
                                      :type-spec (parse-type-spec tokens 'fixnum)                          
-                                     :accumulation-category :summation)))
+                                     :accumulation-category :summation)
+                 :end (index tokens)))
 
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :counting)) tokens)
   (make-instance 'count-clause
+                 :start (1- (index tokens))
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
                                      :type-spec (parse-type-spec tokens 'fixnum)                          
-                                     :accumulation-category :summation)))
+                                     :accumulation-category :summation)
+                 :end (index tokens)))
 
 ;;; COUNT expansion methods
 
@@ -350,39 +366,47 @@
 
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :minimize)) tokens)
   (make-instance 'extremum-clause
+                 :start (1- (index tokens))
                  :form (pop-token tokens)
                  :func-name :min
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
                                      :type-spec (parse-type-spec tokens 'real)                          
-                                     :accumulation-category :extremum)))
+                                     :accumulation-category :extremum)
+                 :end (index tokens)))
 
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :minimizing)) tokens)
   (make-instance 'extremum-clause
+                 :start (1- (index tokens))
                  :form (pop-token tokens)
                  :func-name :min
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
                                      :type-spec (parse-type-spec tokens 'real)                          
-                                     :accumulation-category :extremum)))
+                                     :accumulation-category :extremum)
+                 :end (index tokens)))
 
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :maximize)) tokens)
   (make-instance 'extremum-clause
+                 :start (1- (index tokens))
                  :form (pop-token tokens)
                  :func-name :max
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
                                      :type-spec (parse-type-spec tokens 'real)                          
-                                     :accumulation-category :extremum)))
+                                     :accumulation-category :extremum)
+                 :end (index tokens)))
 
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :maximizing)) tokens)
   (make-instance 'extremum-clause
+                 :start (1- (index tokens))
                  :form (pop-token tokens)
                  :func-name :max
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
                                      :type-spec (parse-type-spec tokens 'real)                          
-                                     :accumulation-category :extremum)))
+                                     :accumulation-category :extremum)
+                 :end (index tokens)))
 
 ;;; MINIMIZE/MAXIMIZE expansion methods
 
@@ -401,19 +425,23 @@
 
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :sum)) tokens)
   (make-instance 'sum-clause
+                 :start (1- (index tokens))
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
                                      :type-spec (parse-type-spec tokens 'number)                          
-                                     :accumulation-category :summation)))
+                                     :accumulation-category :summation)
+                 :end (index tokens)))
 
 (defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :summing)) tokens)
   (make-instance 'sum-clause
+                 :start (1- (index tokens))
                  :form (pop-token tokens)
                  :var (make-instance 'd-spec
                                      :var-spec (parse-into tokens)
                                      :type-spec (parse-type-spec tokens 'number)                          
-                                     :accumulation-category :summation)))
+                                     :accumulation-category :summation)
+                 :end (index tokens)))
 
 ;;; SUM expansion methods
 

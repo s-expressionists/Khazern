@@ -1,5 +1,7 @@
 (cl:in-package #:khazern)
 
+(defvar *body*)
+
 ;;; This variable is bound by the code generator for
 ;;; CONDITIONAL-CLAUSE before calling the code generators for the
 ;;; clauses in its THEN and ELSE branches.
@@ -42,34 +44,34 @@
          (return-from ,*loop-name*
            ,*accumulation-variable*)))))
 
-(defun expand-extended-loop (client loop-body)
+(defun expand-extended-loop (client)
   (let* ((*accumulation-variable* nil)
          (*extended-superclause* (parse-body client
                                              (make-instance 'token-stream
-                                                            :tokens loop-body))))
+                                                            :tokens *body*))))
     (analyze *extended-superclause*)
     (let ((*loop-name* (name *extended-superclause*)))
       `(block ,*loop-name*
          ,@(wrap-forms *extended-superclause*
                        (prologue-body-epilogue *extended-superclause*))))))
 
-(defun expand-simple-loop (client loop-body)
+(defun expand-simple-loop (client)
   (declare (ignore client))
   (let ((tag (gensym)))
     `(block nil
        (tagbody
         ,tag
-          ,@loop-body
+          ,@*body*
           (go ,tag)))))
 
-(defun expand-body (client loop-body *epilogue-tag*)
-  (trivial-with-current-source-form:with-current-source-form (loop-body)
-    (cond ((notevery #'listp loop-body)
-           (expand-extended-loop client loop-body))
-          ((some #'null loop-body)
+(defun expand-body (client *body* *epilogue-tag*)
+  (trivial-with-current-source-form:with-current-source-form (*body*)
+    (cond ((notevery #'listp *body*)
+           (expand-extended-loop client))
+          ((some #'null *body*)
            (error 'non-compound-form))
           (t
-           (expand-simple-loop client loop-body)))))
+           (expand-simple-loop client)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -77,11 +79,14 @@
 
 (defun verify-clause-order (clause)
   (let ((clauses (subclauses clause)))
-    (when (> (count-if (lambda (clause)
-                         (eq (clause-group clause) :name))
-                       clauses)
-             1)
-      (error 'multiple-name-clauses))
+    (let ((name-clauses (remove-if (lambda (clause)
+                                     (not (eq (clause-group clause) :name)))
+                                   clauses)))
+      (when (cdr name-clauses)
+        (error 'multiple-name-clauses
+               :clauses (mapcar (lambda (clause)
+                                  (subseq *body* (start clause) (end clause)))
+                                name-clauses))))
     (when (eq (clause-group (first clauses)) :name)
       (pop clauses))
     (reduce (lambda (clause group)

@@ -108,7 +108,9 @@
      (language acclimation:english))
   (declare (ignorable condition))
   (format stream
-          "Conflicting stepping directions."))
+          "~@<Conflicting stepping directions in `~{~s~^ ~}` ~
+clause.~:@>"
+          (clause condition)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -120,17 +122,7 @@
      (language acclimation:english))
   (declare (ignorable condition))
   (format stream
-          "A non-compound form was found in a simple~@
-           loop."))
-
-(defmethod acclimation:report-condition
-    ((condition name-clause-not-first)
-     stream
-     (language acclimation:english))
-  (declare (ignorable condition))
-  (format stream
-          "A NAME loop clause was found, but it was~@
-           not the first clause."))
+          "~@<A non-compound form was found in a simple loop.~:@>"))
 
 (defmethod acclimation:report-condition
     ((condition multiple-name-clauses)
@@ -138,7 +130,10 @@
      (language acclimation:english))
   (declare (ignorable condition))
   (format stream
-          "Multiple NAME clauses were found."))
+          "~@<Multiple NAME clauses were found: ~{~#[~;`~{~s~^ ~
+~}`~;`~{~s~^ ~}` and `~{~s~^ ~}`~:;~@{`~{~s~^ ~}`~#[~;, and ~:;, ~
+~]~}~]~}.~:@>"
+          (clauses condition)))
 
 (defmethod acclimation:report-condition
     ((condition invalid-clause-order)
@@ -146,7 +141,11 @@
      (language acclimation:english))
   (declare (ignorable condition))
   (format stream
-          "Invalid clause order. Variable clauses must precede main clauses."))
+          "~@<Invalid clause order. The clause `~{~s~^ ~}` was found ~
+in the ~a clause group but was expected to be in the ~a clause ~
+group.~:@>"
+          (clause condition) (found-group condition)
+          (expected-group condition)))
 
 (defmethod acclimation:report-condition
     ((condition possible-invalid-clause-order)
@@ -154,15 +153,19 @@
      (language acclimation:english))
   (declare (ignorable condition))
   (format stream
-          "Possible invalid clause order. Variable clauses must precede main clauses but the ANSI specification is ambigious on the location of termination test clauses."))
+          "~@<Possible invalid clause order according to strict ~
+interpretation of ANSI specification. The clause `~{~s~^ ~}` was ~
+found in the ~a clause group but was expected to be in the ~a clause ~
+group.~:@>"
+          (clause condition) (found-group condition)
+          (expected-group condition)))
 
 (defmethod acclimation:report-condition
     ((condition multiple-variable-occurrences)
      stream
      (language acclimation:english))
   (format stream
-          "Multiple occurrences of the following variable were found:~@
-           ~s"
+          "~@<Multiple occurrences of the variable ~s were found.~:@>"
           (bound-variable condition)))
 
 (defmethod acclimation:report-condition
@@ -170,8 +173,8 @@
      stream
      (language acclimation:english))
   (format stream
-          "The variable ~s is used both as an iteration variable~@
-          and as an accumulation variable."
+          "~@<The variable ~s is used both as an iteration variable ~
+and as an accumulation variable.~:@>"
           (bound-variable condition)))
 
 (defmethod acclimation:report-condition
@@ -179,8 +182,8 @@
      stream
      (language acclimation:english))
   (format stream
-          "the accumulation variable~@[ ~s~] is used both~@
-           for ~a accumulation and ~a accumulation."
+          "~@<the accumulation variable~@[ ~s~] is used both for ~a ~
+accumulation and ~a accumulation.~:@>"
           (bound-variable condition)
           (first-clause condition)
           (second-clause condition)))
@@ -190,7 +193,8 @@
      stream
      (language acclimation:english))
   (format stream
-          "Inclusive iteration is not possible with the ~a LOOP iteration path."
+          "~@<Inclusive iteration is not possible with the ~a LOOP ~
+iteration path.~:@>"
           (path condition)))
 
 (defmethod acclimation:report-condition
@@ -198,15 +202,15 @@
      stream
      (language acclimation:english))
   (format stream
-          "Cannot verify that ~s is a subtype of the required type ~s."
-          (subtype condition) (supertype condition)))
+          "~@<Cannot verify that ~s is a subtype of the required type ~
+~s.~:@>"(subtype condition) (supertype condition)))
 
 (defmethod acclimation:report-condition
     ((condition invalid-data-type)
      stream
      (language acclimation:english))
   (format stream
-          "Specified type ~s is not a subtype of ~s."
+          "~@<Specified type ~s is not a subtype of ~s.~:@>"
           (subtype condition) (supertype condition)))
 
 (defmethod acclimation:report-condition
@@ -214,7 +218,7 @@
      stream
      (language acclimation:english))
   (format stream
-          "Specified d-var-spec ~s is not a simple-var or NIL."
+          "~@<Specified d-var-spec ~s is not a simple-var or NIL.~:@>"
           (var-spec condition)))
 
 (defmethod acclimation:report-condition
@@ -222,7 +226,8 @@
      stream
      (language acclimation:english))
   (format stream
-          "Types ~s and ~s are in conflict for~:[ the default~;~] accumulation variable~@[ ~s~]. Using ~s as a replacement type."
+          "~@<Types ~s and ~s are in conflict for~:[ the default~;~] ~
+accumulation variable~@[ ~s~]. Using ~s as a replacement type.~:@>"
           (type1 condition) (type2 condition)
           (name condition) (name condition)
           (replacement-type condition)))
