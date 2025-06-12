@@ -182,4 +182,20 @@
 	            (funcall ,(index-func clause) ,(in-var clause)
 			     ,(iterator-var clause)))))))
 
+(defmacro define-interface (client-class)
+  `(progn
+     (defmethod khazern:make-iteration-path
+         ((client ,client-class) (name (eql :element))
+          &optional (inclusive-form nil inclusive-form-p))
+       (declare (ignore inclusive-form))
+       (if inclusive-form-p
+           (call-next-method)
+           (make-instance 'for-as-elements)))
 
+     (defmethod khazern:make-iteration-path
+         ((client ,client-class) (name (eql :elements))
+          &optional (inclusive-form nil inclusive-form-p))
+       (declare (ignore inclusive-form))
+       (if inclusive-form-p
+           (call-next-method)
+           (make-instance 'for-as-elements)))))

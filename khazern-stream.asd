@@ -1,5 +1,5 @@
-(asdf:defsystem "khazern-elements"
-  :description "Khazern ELEMENTS path extension"
+(asdf:defsystem "khazern-stream"
+  :description "Khazern stream path extensions"
   :license "BSD"
   :author ("Tarn W. Burton")
   :maintainer "Tarn W. Burton"
@@ -8,7 +8,7 @@
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
   :depends-on ("khazern")
   :components ((:module code
-                :pathname "code/elements/"
+                :pathname "code/stream/"
                 :serial t
                 :components ((:file "packages")
-                             (:file "elements")))))
+                             (:file "stream")))))

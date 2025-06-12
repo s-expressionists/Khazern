@@ -1,5 +1,5 @@
 (cl:in-package #:common-lisp-user)
 
-(defpackage #:khazern-elements
+(defpackage #:khazern-stream
   (:use #:common-lisp)
   (:export #:define-interface))
