@@ -160,7 +160,7 @@
 (defmethod khazern:subsequent-step-forms ((clause for-as-stream))
   (for-as-lines/step clause))
 
-(defmacro define-interface (client-class)
+(defmacro define-iteration-path (client-class)
   `(progn
      (defmethod khazern:make-iteration-path
          ((client ,client-class) (name (eql :byte))
