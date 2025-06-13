@@ -25,7 +25,7 @@
 ;;;;   selectable-clause ::= unconditional | accumulation | conditional
 ;;;;
 ;;;; termination-test is included in body-clause because Khazern allows termination test clauses
-;;;; like UNTIL/WHILE to occur inbetween FOR/AS clauses. Khazern signals a STYLE-WARNING to to
+;;;; like UNTIL/WHILE to occur in between FOR/AS clauses. Khazern signals a STYLE-WARNING to
 ;;;; indicate that this "might" be non-standard behavior.
 ;;;;
 ;;;; In 6.1.4 there is the statement "Termination-test control constructs can be used anywhere
