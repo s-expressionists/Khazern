@@ -9,12 +9,14 @@
                                        :var-spec (gensym "TMP")))
    (%preposition-names :accessor khazern:iteration-path-preposition-names
                        :initarg :preposition-names
-                       :initform (list :in :of))
+                       :initform (list :in :of :close))
    (%using-names :accessor khazern:iteration-path-using-names
                  :initarg :using-names
                  :initform (list :stream))
-   (%stream-var :reader stream-var
-            :initform (gensym "STREAM"))
+   (%stream-var :accessor stream-var
+                :initform (gensym "STREAM"))
+   (%close :accessor closep
+           :initform nil)
    (%stream-form :accessor stream-form
                  :initform '*standard-input*)))
 
@@ -37,6 +39,9 @@
 (defmethod (setf khazern:iteration-path-preposition) (expression (instance for-as-stream) (key (eql :of)))
   (setf (stream-form instance) expression))
 
+(defmethod (setf khazern:iteration-path-preposition) (expression (instance for-as-stream) (key (eql :close)))
+  (setf (closep instance) expression))
+
 (defmethod (setf khazern:iteration-path-using) :after (expression (instance for-as-stream) key)
   (setf (khazern:iteration-path-using-names instance)
         (delete key (khazern:iteration-path-using-names instance))))
@@ -53,6 +58,15 @@
   (nconc `((type stream ,(stream-var clause)))
          (khazern:d-spec-outer-declarations (temp-var clause))
          (khazern:d-spec-outer-declarations (var clause))))
+
+(defmethod khazern:wrap-forms ((clause for-as-stream) forms)
+  (if (closep clause)
+      `((unwind-protect
+             ,(if (cdr forms)
+                  `(progn ,@forms)
+                  (car forms))
+          (close ,(stream-var clause))))
+      forms))
 
 (defclass for-as-bytes (for-as-stream) ())
 
@@ -95,7 +109,7 @@
 (defmethod khazern:initial-step-forms ((clause for-as-characters))
   (for-as-characters/step clause))
 
-(defmethod khazern:subsequent-step-forms ((clause for-as-stream))
+(defmethod khazern:subsequent-step-forms ((clause for-as-characters))
   (for-as-characters/step clause))
 
 (defclass for-as-objects (for-as-stream) ())
@@ -118,7 +132,7 @@
 (defmethod khazern:initial-step-forms ((clause for-as-objects))
   (for-as-objects/step clause))
 
-(defmethod khazern:subsequent-step-forms ((clause for-as-stream))
+(defmethod khazern:subsequent-step-forms ((clause for-as-objects))
   (for-as-objects/step clause))
 
 (defclass for-as-lines (for-as-stream)
@@ -157,7 +171,7 @@
 (defmethod khazern:initial-step-forms ((clause for-as-lines))
   (for-as-lines/step clause))
 
-(defmethod khazern:subsequent-step-forms ((clause for-as-stream))
+(defmethod khazern:subsequent-step-forms ((clause for-as-lines))
   (for-as-lines/step clause))
 
 (defmacro define-iteration-path (client-class)
