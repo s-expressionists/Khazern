@@ -27,22 +27,19 @@
   (setf (end instance) *index*)
   instance)
 
-(defmethod parse-clause
-    (client (scope selectable-superclause) (keyword (eql :if)))
+(defmethod parse-clause (client (scope selectable-superclause) (keyword (eql :if)))
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
                                                 :start *start*
                                                 :condition (pop-token))))
 
-(defmethod parse-clause
-    (client (scope selectable-superclause) (keyword (eql :when)))
+(defmethod parse-clause (client (scope selectable-superclause) (keyword (eql :when)))
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
                                                 :start *start*
                                                 :condition (pop-token))))
 
-(defmethod parse-clause
-    (client (scope selectable-superclause) (keyword (eql :unless)))
+(defmethod parse-clause (client (scope selectable-superclause) (keyword (eql :unless)))
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
                                                 :start *start*

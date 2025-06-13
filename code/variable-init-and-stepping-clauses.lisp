@@ -39,7 +39,7 @@
 ;;;    for-as-package-clause ::=
 ;;;      {for | as} for-as-package {and for-as-subclause}* 
 
-(defclass for-as-clause (variable-clause parallel-superclause)
+(defclass for-as-clause (binding-clause parallel-superclause)
   ())
 
 (defclass for-as-subclause (clause var-mixin)
@@ -609,7 +609,8 @@
   (map-variables function (other-var clause)))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :hash-key)) &optional (inclusive-form nil inclusive-form-p))
+    ((client standard-client) (name (eql :hash-key))
+     &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
@@ -617,7 +618,8 @@
                      :start *start*)))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :hash-keys)) &optional (inclusive-form nil inclusive-form-p))
+    ((client standard-client) (name (eql :hash-keys))
+     &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
@@ -625,7 +627,8 @@
                      :start *start*)))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :hash-value)) &optional (inclusive-form nil inclusive-form-p))
+    ((client standard-client) (name (eql :hash-value))
+     &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
@@ -633,15 +636,15 @@
                      :start *start*)))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :hash-values)) &optional (inclusive-form nil inclusive-form-p))
+    ((client standard-client) (name (eql :hash-values))
+     &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-hash-value
                      :start *start*)))
 
-(defmethod (setf iteration-path-preposition)
-    (expression (instance for-as-hash) key)
+(defmethod (setf iteration-path-preposition) (expression (instance for-as-hash) key)
   (when (var-spec (other-var instance))
     (warn 'invalid-iteration-path-preposition-order
           :first-preposition :using
@@ -652,8 +655,7 @@
   (setf (iteration-path-preposition-names instance) nil)
   (setf (form instance) expression))
 
-(defmethod (setf iteration-path-using)
-    (value (instance for-as-hash) key)
+(defmethod (setf iteration-path-using) (value (instance for-as-hash) key)
   (setf (iteration-path-using-names instance) nil)
   (setf (other-var instance) (make-instance 'd-spec
                                             :var-spec value))
@@ -854,7 +856,7 @@
 ;;; type number, the value is 0, and for the type float, the value is
 ;;; 0.0.
 
-(defclass with-clause (variable-clause parallel-superclause)
+(defclass with-clause (binding-clause parallel-superclause)
   ())
 
 (defclass with-subclause (clause var-mixin)

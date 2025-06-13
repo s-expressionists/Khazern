@@ -73,8 +73,6 @@
           (t
            (expand-simple-loop client)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; Syntactic and semantic analysis
 
 (defun verify-clause-order (clause)

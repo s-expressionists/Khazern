@@ -43,8 +43,7 @@
    (%names :reader names
            :initarg :names)))
 
-(define-condition invalid-iteration-path-preposition-order
-    (style-warning acclimation:condition)
+(define-condition invalid-iteration-path-preposition-order (style-warning acclimation:condition)
   ((%name :reader name
           :initarg :name)
    (%inclusive :reader inclusivep
@@ -55,8 +54,7 @@
    (%second-preposition :reader second-preposition
                         :initarg :second-preposition)))
 
-(define-condition unable-to-deduce-initial-value
-    (style-warning acclimation:condition)
+(define-condition unable-to-deduce-initial-value (style-warning acclimation:condition)
   ((%type-spec :reader type-spec
                :initarg :type-spec
                :initform nil)))

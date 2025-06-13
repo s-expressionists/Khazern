@@ -169,18 +169,14 @@ group.~:@>"
           (bound-variable condition)))
 
 (defmethod acclimation:report-condition
-    ((condition iteration-accumulation-overlap)
-     stream
-     (language acclimation:english))
+    ((condition iteration-accumulation-overlap) stream (language acclimation:english))
   (format stream
           "~@<The variable ~s is used both as an iteration variable ~
 and as an accumulation variable.~:@>"
           (bound-variable condition)))
 
 (defmethod acclimation:report-condition
-    ((condition multiple-accumulation-occurrences)
-     stream
-     (language acclimation:english))
+    ((condition multiple-accumulation-occurrences) stream (language acclimation:english))
   (format stream
           "~@<the accumulation variable~@[ ~s~] is used both for ~a ~
 accumulation and ~a accumulation.~:@>"
@@ -226,8 +222,8 @@ iteration path.~:@>"
      stream
      (language acclimation:english))
   (format stream
-          "~@<Types ~s and ~s are in conflict for~:[ the default~;~] ~
-accumulation variable~@[ ~s~]. Using ~s as a replacement type.~:@>"
+          "~@<Types ~s and ~s are in conflict for~:[ the default~;~] accumulation variable~@[ ~
+~s~]. Using ~s as a replacement type.~:@>"
           (type1 condition) (type2 condition)
           (name condition) (name condition)
           (replacement-type condition)))

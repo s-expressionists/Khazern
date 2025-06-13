@@ -28,8 +28,7 @@
              :found-group group
              :expected-group :name)))
 
-(defmethod parse-clause
-    (client (scope extended-superclause) (keyword (eql :named)))
+(defmethod parse-clause (client (scope extended-superclause) (keyword (eql :named)))
   (make-instance 'name-clause
                  :start *start*
                  :name (pop-token)
@@ -45,8 +44,7 @@
 (defclass return-clause (unconditional-clause form-mixin)
   ())
 
-(defmethod parse-clause
-    (client (scope selectable-superclause) (keyword (eql :return)))
+(defmethod parse-clause (client (scope selectable-superclause) (keyword (eql :return)))
   (make-instance 'return-clause
                  :start *start*
                  :form (pop-token)
@@ -58,16 +56,15 @@
 
 ;;; Clause INITIAL-CLAUSE.
 ;;;
-;;; An INITIAL clause does not exist as a separate grammar item in
-;;; the HyperSpec, but we define it here anyway.  The syntax is:
+;;; An INITIAL clause does not exist as a separate grammar item in the HyperSpec, but we define
+;;; it here anyway.  The syntax is:
 ;;;
 ;;;    initial-clause ::= initially compound-form+
 
 (defclass initial-clause (body-clause compound-forms-mixin)
   ())
 
-(defmethod parse-clause
-    (client (scope extended-superclause) (keyword (eql :initially)))
+(defmethod parse-clause (client (scope extended-superclause) (keyword (eql :initially)))
   (make-instance 'initial-clause
                  :start *start*
                  :forms (parse-compound-form+)
@@ -79,16 +76,15 @@
 
 ;;; Clause FINAL-CLAUSE.
 ;;;
-;;; An FINAL clause does not exist as a separate grammar item in
-;;; the HyperSpec, but we define it here anyway.  The syntax is:
+;;; An FINAL clause does not exist as a separate grammar item in the HyperSpec, but we define it
+;;; here anyway.  The syntax is:
 ;;;
 ;;;    final-clause ::= finally compound-form+
 
 (defclass final-clause (body-clause compound-forms-mixin)
   ())
 
-(defmethod parse-clause
-    (client (scope extended-superclause) (keyword (eql :finally)))
+(defmethod parse-clause (client (scope extended-superclause) (keyword (eql :finally)))
   (make-instance 'final-clause
                  :start *start*
                  :forms (parse-compound-form+)

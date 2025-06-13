@@ -15,10 +15,9 @@
           clause)
     nil))
 
-;;; The purpose of this generic function is to extract a list of
-;;; declaration specifiers from the clause.  Notice that it is a list
-;;; of declaration specifiers, not a list of declarations.  In other
-;;; words, the symbol DECLARE is omitted.
+;;; The purpose of this generic function is to extract a list of declaration specifiers from the
+;;; clause.  Notice that it is a list of declaration specifiers, not a list of declarations.  In
+;;; other words, the symbol DECLARE is omitted.
 (defgeneric initial-declarations (clause)
   (:method (clause)
     (declare (ignore clause))
@@ -29,11 +28,10 @@
     (declare (ignore clause))
     '()))
 
-;;; This generic function returns a form for CLAUSE that should go in
-;;; the LOOP prologue.  The INITIALLY clause is an obvious candidate
-;;; for such code.  But the stepping clauses also have code that goes
-;;; in the prologue, namely an initial termination test to determine
-;;; whether any iterations at all should be executed. 
+;;; This generic function returns a form for CLAUSE that should go in the LOOP prologue.  The
+;;; INITIALLY clause is an obvious candidate for such code.  But the stepping clauses also have code
+;;; that goes in the prologue, namely an initial termination test to determine whether any
+;;; iterations at all should be executed.
 (defgeneric prologue-forms (clause)
   (:method (clause)
     (declare (ignore clause))
@@ -54,29 +52,23 @@
     (declare (ignore clause))
     nil))
 
-;;; This generic function returns a form for CLAUSE that should go in
-;;; the main the body code, before the termination test and the
-;;; stepping forms, in the body of the expanded code.  The DO clause
+;;; This generic function returns a form for CLAUSE that should go in the main the body code, before
+;;; the termination test and the stepping forms, in the body of the expanded code.  The DO clause
 ;;; and the accumulation clauses are obvious candidates for such code.
-;;;
-;;; FIXME: Currently,  Investigate whether the WHILE clause should use
-;;; TERMINATION-TEST instead, so that we can eliminate this parameter.
 (defgeneric body-forms (clause)
   (:method (clause)
     (declare (ignore clause))
     nil))
 
-;;; This generic function returns the bindings for CLAUSE that go
-;;; after the main body code and the termination tests in the body of
-;;; the expanded code.
+;;; This generic function returns the bindings for CLAUSE that go after the main body code and the
+;;; termination tests in the body of the expanded code.
 (defgeneric subsequent-step-bindings (clause)
   (:method (clause)
     (declare (ignore clause))
     nil))
 
-;; This generic function returns the declarations for CLAUSE that go
-;;; after the main body code and the termination tests in the body of
-;;; the expanded code.
+;;; This generic function returns the declarations for CLAUSE that go after the main body code and
+;;; the termination tests in the body of the expanded code.
 (defgeneric subsequent-step-declarations (clause)
   (:method (clause)
     (declare (ignore clause))
