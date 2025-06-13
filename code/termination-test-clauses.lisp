@@ -4,12 +4,8 @@
 ;;; clauses.  Recall that a termination-test clause is a main clause,
 ;;; and that the HyperSpec defines TERMINATION-TEST as follows:
 ;;;
-;;;   termination-test ::= while form |
-;;;                        until form |
-;;;                        repeat form |
-;;;                        always form |
-;;;                        never form |
-;;;                        thereis form
+;;;   termination-test ::= WHILE form | UNTIL form | REPEAT form | ALWAYS form | NEVER form |
+;;;                        THEREIS form
 
 (defclass termination-test-clause (body-clause)
   ())
@@ -20,7 +16,8 @@
         :found-group group
         :expected-group :main))
 
-(defclass boolean-termination-test-clause (termination-test-clause accumulation-mixin form-mixin)
+(defclass boolean-termination-test-clause
+    (termination-test-clause accumulation-mixin form-mixin)
   ())
 
 (defclass every-accumulation-clause (var-mixin)
@@ -61,10 +58,6 @@
                                          :var-spec (gensym "REPEAT")
                                          :type-spec 'fixnum)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
-
 (defmethod parse-clause
     (client (scope extended-superclause) (keyword (eql :repeat)))
   (make-instance 'repeat-clause
@@ -72,19 +65,11 @@
                  :form (pop-token)
                  :end *index*))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the bindings.
-
 (defmethod initial-bindings ((clause repeat-clause))
   `((,(var-spec (var clause))
      ,(if (numberp (form clause))
           (max 0 (ceiling (form clause)))
           `(max 0 (ceiling ,(form clause)))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the declarations.
 
 (defmethod initial-declarations ((clause repeat-clause))
   `((type ,(type-spec (var clause)) ,(var-spec (var clause)))))
@@ -109,20 +94,12 @@
                                          :var-spec (default-accumulation-variable)
                                          :accumulation-category :every)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
-
 (defmethod parse-clause
     (client (scope extended-superclause) (keyword (eql :always)))
   (make-instance 'always-clause
                  :start *start*
                  :form (pop-token)
                  :end *index*))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the body-forms
 
 (defun expand-always (clause group)
   (when (eq (clause-group clause) group)
@@ -144,20 +121,12 @@
                                          :var-spec (default-accumulation-variable)
                                          :accumulation-category :every)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
-
 (defmethod parse-clause
     (client (scope extended-superclause) (keyword (eql :never)))
   (make-instance 'never-clause 
                  :start *start*
                  :form (pop-token)
                  :end *index*))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the body-forms
 
 (defun expand-never (clause group)
   (when (eq (clause-group clause) group)
@@ -179,20 +148,12 @@
                                          :var-spec (default-accumulation-variable)
                                          :accumulation-category :some)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
-
 (defmethod parse-clause
     (client (scope extended-superclause) (keyword (eql :thereis)))
   (make-instance 'thereis-clause
                  :start *start*
                  :form (pop-token)
                  :end *index*))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the body-forms
 
 (defun expand-thereis (clause group)
   (when (eq (clause-group clause) group)
@@ -212,10 +173,6 @@
 (defclass while-clause (termination-test-clause form-mixin)
   ())
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers.
-
 (defmethod parse-clause
     (client (scope extended-superclause) (keyword (eql :while)))
   (make-instance 'while-clause
@@ -229,10 +186,6 @@
                  :start *start*
                  :form `(not ,(pop-token))
                  :end *index*))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the body-forms
 
 (defun expand-while (clause group)
   (when (eq (clause-group clause) group)

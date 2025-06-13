@@ -2,55 +2,24 @@
 
 ;;; 6.1.2.1 FOR-AS-CLAUSE clause
 ;;;
-;;; The HyperSpec says that a FOR-AS-CLAUSE has the following syntax:
+;;; The ANSI specification says that a FOR-AS-CLAUSE has the following syntax:
 ;;;
-;;;    for-as-clause ::= {for | as} for-as-subclause {and for-as-subclause}* 
-;;;    for-as-subclause::= for-as-arithmetic | for-as-in-list | 
-;;;                        for-as-on-list | for-as-equals-then | 
-;;;                        for-as-across | for-as-hash | for-as-package 
+;;;   for-as-clause    ::= {FOR | AS} for-as-subclause {and for-as-subclause}* 
+;;;   for-as-subclause ::= for-as-arithmetic | for-as-in-list | for-as-on-list |
+;;;                        for-as-equals-then | for-as-across | for-as-hash | for-as-package 
 ;;;
-;;; For the purpose of specialization, we need different names for the
-;;; main clauses as well as for the subclauses, so we alter this
-;;; grammar a bit and define it like this instead:
+;;; Since Khazern supports for-as-hash and for-as-package via iteration path extensions the
+;;; grammar is modified:
 ;;;
-;;;    for-as-clause::= 
-;;;      for-as-arithmetic-clause | for-as-in-list-clause | 
-;;;      for-as-on-list-clause | for-as-equals-then-clause | 
-;;;      for-as-across-clause | for-as-hash-clause | for-as-package-clause
-;;;    
-;;;    for-as-arithmetic-clause ::=
-;;;      {for | as} for-as-arithmetic {and for-as-subclause}* 
-;;;    
-;;;    for-as-in-list-clause ::=
-;;;      {for | as} for-as-in-list {and for-as-subclause}* 
-;;;    
-;;;    for-as-on-list-clause ::=
-;;;      {for | as} for-as-on-list {and for-as-subclause}* 
-;;;    
-;;;    for-as-equals-then-clause ::=
-;;;      {for | as} for-as-equals-then {and for-as-subclause}* 
-;;;    
-;;;    for-as-across-clause ::=
-;;;      {for | as} for-as-across {and for-as-subclause}* 
-;;;
-;;;    for-as-hash-clause ::=
-;;;      {for | as} for-as-hash {and for-as-subclause}* 
-;;;
-;;;    for-as-package-clause ::=
-;;;      {for | as} for-as-package {and for-as-subclause}* 
+;;;   for-as-clause    ::= {FOR | AS} for-as-subclause {and for-as-subclause}* 
+;;;   for-as-subclause ::= for-as-arithmetic | for-as-in-list | for-as-on-list |
+;;;                        for-as-equals-then | for-as-across | for-as-iteration-path
 
 (defclass for-as-clause (binding-clause parallel-superclause)
   ())
 
 (defclass for-as-subclause (clause var-mixin)
   ())
-
-(defmethod analyze ((clause for-as-subclause))
-  (when (eq (type-spec (var clause)) *placeholder-result*)
-    (setf (type-spec (var clause)) t))
-  (check-type-spec (var clause)))
-
-;;; FOR-AS-CLAUSE parsers
 
 (defun parse-for-as (client)
   (prog ((instance (make-instance 'for-as-clause
@@ -71,27 +40,37 @@
            (end instance) *index*)
      (return instance)))
 
-(defmethod parse-clause ((client standard-client) (scope extended-superclause) (keyword (eql :for)))
+(defmethod parse-clause
+    ((client standard-client) (scope extended-superclause) (keyword (eql :for)))
   (parse-for-as client))
 
-(defmethod parse-clause ((client standard-client) (scope extended-superclause) (keyword (eql :as)))
+(defmethod parse-clause
+    ((client standard-client) (scope extended-superclause) (keyword (eql :as)))
   (parse-for-as client))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmethod analyze ((clause for-as-subclause))
+  (when (eq (type-spec (var clause)) *placeholder-result*)
+    (setf (type-spec (var clause)) t))
+  (check-type-spec (var clause)))
+
+;;; FOR-AS-ITERATION-PATH subclause
 ;;;
-;;; Clause FOR-AS-PATH
+;;; Grammar:
+;;;
+;;;   for-as-iteration-path ::= BEING {path-exclusive | path-inclusive}
+;;;                             {path-using | path-preposition}*
+;;;   path-exclusive        ::= {EACH | THE} path
+;;;   path-inclusive        ::= form AND {ITS | EACH | HIS | HER} path
+;;;   path-using            ::= USING ({simple-var simple-var}+)
+;;;   path-preposition      ::= name form
 
-(defclass for-as-path (for-as-subclause)
+(defclass for-as-iteration-path (for-as-subclause)
   ((%preposition-names :accessor iteration-path-preposition-names
                        :initarg :preposition-names
                        :initform nil)
    (%using-names :accessor iteration-path-using-names
                  :initarg :using-names
                  :initform nil)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parsers
 
 (defun make-iteration-path-name (client token)
   (when (symbolp token)
@@ -152,7 +131,8 @@
                   (iteration-path-preposition instance name) (pop-token))))
      (go next-preposition)))
 
-(defmethod parse-clause ((client standard-client) (instance for-as-clause) (keyword (eql :being)))
+(defmethod parse-clause
+    ((client standard-client) (instance for-as-clause) (keyword (eql :being)))
   (let ((instance (if (pop-token? :keywords '(:each :the))
                       (make-iteration-path client
                                            (make-iteration-path-name client
@@ -167,9 +147,19 @@
     (parse-iteration-path-prepositions instance)
     instance))
 
-;;; 6.1.2.1.1 FOR-AS-ARITHMETIC sublause
+;;; 6.1.2.1.1 FOR-AS-ARITHMETIC subclause
+;;;
+;;; Grammar:
+;;;
+;;;   for-as-arithmetic           ::= var [type-spec] for-as-arithmetic-subclause
+;;;   for-as-arithmetic-subclause ::= arithmetic-up | arithmetic-downto | arithmetic-downfrom
+;;;   arithmetic-up               ::= ⟦{FROM | UPFROM} form1 | {TO | UPTO | BELOW} form2 |
+;;;                                    BY form3⟧+
+;;;   arithmetic-downto           ::= ⟦{FROM form1} | {{DOWNTO | ABOVE} form2}1 | BY form3⟧
+;;;   arithmetic-downfrom         ::= ⟦{DOWNFROM form1} | {TO | DOWNTO | ABOVE} form2 |
+;;;                                    BY form3⟧
 
-(defclass for-as-arithmetic (for-as-path)
+(defclass for-as-arithmetic (for-as-iteration-path)
   (;; The order in which the forms are given.  This is a list of three
    ;; elements FROM, TO, and BY in the order that they were given in
    ;; the clause.
@@ -292,7 +282,8 @@
 (defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :upfrom)))
   (parse-for-as-arithmetic keyword))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :downfrom)))
+(defmethod parse-clause
+    ((client standard-client) (scope for-as-clause) (keyword (eql :downfrom)))
   (parse-for-as-arithmetic keyword))
 
 (defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :to)))
@@ -423,6 +414,11 @@
          (initial-step-forms clause)))
 
 ;;; 6.1.2.1.2/6.1.2.1.3 FOR-AS-IN-LIST/FOR-AS-ON-LIST subclauses
+;;;
+;;; Grammar:
+;;;
+;;; for-as-in-list ::= var [type-spec] IN form [BY step-fun]
+;;; for-as-on-list ::= var [type-spec] ON form [BY step-fun] 
 
 (defclass for-as-list (for-as-subclause form-mixin form-var-mixin)
   ((%by-form :accessor by-form
@@ -438,8 +434,6 @@
 
 (defclass for-as-on-list (for-as-list)
   ())
-
-;;; FOR-AS-IN-LIST/FOR-AS-ON-LIST parsers
 
 (defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :in)))
   (let ((instance (make-instance 'for-as-in-list
@@ -458,8 +452,6 @@
       (setf (by-form instance) (pop-token)))
     (setf (end instance) *index*)
     instance))
-
-;;; FOR-AS-IN-LIST/FOR-AS-ON-LIST expansion methods
 
 (defmethod initial-bindings ((clause for-as-list))
   `((,(rest-var clause) ,(form clause))
@@ -488,14 +480,16 @@
     ,@(initial-step-forms clause)))
 
 ;;; 6.1.2.1.4 FOR-AS-EQUALS-THEN subclause
+;;;
+;;; Grammar:
+;;;
+;;;   for-as-equals-then := var [type-spec] = form [THEN form2]
 
 (defclass for-as-equals-then (for-as-subclause)
   ((%initial-form :reader initial-form
                   :initarg :initial-form)
    (%subsequent-form :reader subsequent-form
                      :initarg :subsequent-form)))
-
-;;; FOR-AS-EQUALS-THEN parsers
 
 (defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :=)))
   (let ((initial-form (pop-token)))
@@ -512,8 +506,6 @@
     (setf (type-spec (var clause)) t))
   (set-d-spec-temps (var clause) t)
   (check-type-spec (var clause)))
-
-;;; FOR-AS-EQUALS-THEN expansion methods
 
 (defmethod initial-bindings ((clause for-as-equals-then))
   (d-spec-outer-bindings (var clause)))
@@ -534,6 +526,10 @@
   `((setq ,@(d-spec-inner-assignments (var clause) (subsequent-form clause)))))
 
 ;;; 6.1.2.1.5 FOR-AS-ACROSS subclause
+;;;
+;;; Grammar:
+;;;
+;;;  for-as-across ::= var [type-spec] ACROSS vector
 
 (defclass for-as-across (for-as-subclause form-mixin form-var-mixin)
   ((%length-var :reader length-var
@@ -541,15 +537,11 @@
    (%index-var :reader index-var
                :initform (gensym "INDEX"))))
 
-;;; FOR-AS-ACROSS parsers
-
 (defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :across)))
   (make-instance 'for-as-across
                  :start *start*
                  :form (pop-token)
                  :end *index*))
-
-;;; FOR-AS-ACROSS expansion methods
 
 (defmethod initial-bindings ((clause for-as-across))
   `((,(form-var clause) ,(form clause))
@@ -579,8 +571,22 @@
                                 ,(index-var clause)))))
 
 ;;; 6.1.2.1.6 FOR-AS-HASH Subclause
+;;;
+;;; Grammar:
+;;;
+;;;   for-as-hash ::= var [type-spec] BEING {EACH | THE} {hash-key | hash-value}
+;;;   hash-key    ::= {HASH-KEY | HASH-KEYS} {IN | OF} hash-table
+;;;                   [USING (HASH-VALUE other-var)]
+;;;   hash-value  ::= {HASH-VALUE | HASH-VALUES} {IN | OF} hash-table
+;;;                   [USING (HASH-KEY other-var)]
+;;;
+;;; FOR-AS-HASH is implemented as either the HASH-KEY/HASH-KEYS iteration path with preposition
+;;; IN/OF and using HASh-VALUE, or the HASH-VALUE/HASH-VALUES iteration path with preposition
+;;; IN/OF and using HASh-KEY. This means that Khazern permits the USING preposition to occur
+;;; before IN/OF. In this case a STYLE-WARNING is signalled since the ANSI specification does
+;;; not permit such an ordering.
 
-(defclass for-as-hash (for-as-path form-mixin form-var-mixin)
+(defclass for-as-hash (for-as-iteration-path form-mixin form-var-mixin)
   ((%temp-entry-p-var :reader temp-entry-p-var
                       :initform (gensym))
    (%temp-key-var :reader temp-key-var
@@ -602,8 +608,6 @@
 (defclass for-as-hash-value (for-as-hash)
   ()
   (:default-initargs :using-names (list :hash-key)))
-
-;;; FOR-AS-HASH path extension support
 
 (defmethod map-variables :after (function (clause for-as-hash))
   (map-variables function (other-var clause)))
@@ -661,8 +665,6 @@
                                             :var-spec value))
   value)
 
-;;; FOR-AS-HASH expansion methods
-
 (defmethod analyze ((clause for-as-hash))
   (when (eq (type-spec (var clause)) *placeholder-result*)
     (setf (type-spec (var clause)) t))
@@ -716,8 +718,17 @@
   (initial-step-forms clause))
 
 ;;; 6.1.2.1.7 FOR-AS-PACKAGE Subclause
+;;;
+;;; Grammar:
+;;;
+;;; for-as-package ::= var [type-spec] BEING {EACH | THE}
+;;;                    {SYMBOL | SYMBOLS | PRESENT-SYMBOL | PRESENT-SYMBOLS | EXTERNAL-SYMBOL |
+;;;                     EXTERNAL-SYMBOLS} [{IN | OF} package]
+;;;
+;;; FOR-AS-PACKAGE is implmented as the SYMBOL(S)/PRESENT-SYMBOL(S)/EXTERNAL-SYMBOL(S) iteration
+;;; path extension.
 
-(defclass for-as-package (for-as-path form-mixin form-var-mixin)
+(defclass for-as-package (for-as-iteration-path form-mixin form-var-mixin)
   ((%temp-entry-p-var :reader temp-entry-p-var
                       :initform (gensym))
    (%temp-symbol-var :reader temp-symbol-var
@@ -729,10 +740,9 @@
   (:default-initargs :form '*package*
                      :preposition-names (list :in :of)))
 
-;;; FOR-AS-PACKAGE path protocol support
-
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :symbol)) &optional (inclusive-form nil inclusive-form-p))
+    ((client standard-client) (name (eql :symbol))
+     &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
@@ -741,7 +751,8 @@
                      :iterator-keywords '(:internal :external :inherited))))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :symbols)) &optional (inclusive-form nil inclusive-form-p))
+    ((client standard-client) (name (eql :symbols))
+     &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
@@ -750,7 +761,8 @@
                      :iterator-keywords '(:internal :external :inherited))))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :present-symbol)) &optional (inclusive-form nil inclusive-form-p))
+    ((client standard-client) (name (eql :present-symbol))
+     &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
@@ -759,7 +771,8 @@
                      :iterator-keywords '(:internal :external))))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :present-symbols)) &optional (inclusive-form nil inclusive-form-p))
+    ((client standard-client) (name (eql :present-symbols))
+     &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
@@ -768,7 +781,8 @@
                      :iterator-keywords '(:internal :external))))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :external-symbol)) &optional (inclusive-form nil inclusive-form-p))
+    ((client standard-client) (name (eql :external-symbol))
+     &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
@@ -777,7 +791,8 @@
                      :iterator-keywords '(:external))))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :external-symbols)) &optional (inclusive-form nil inclusive-form-p))
+    ((client standard-client) (name (eql :external-symbols))
+     &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
@@ -789,8 +804,6 @@
     (expression (instance for-as-package) key)
   (setf (iteration-path-preposition-names instance) nil)
   (setf (form instance) expression))
-
-;;; FOR-AS-PACKAGE expansion methods
 
 (defmethod analyze ((clause for-as-package))
   (when (eq (type-spec (var clause)) *placeholder-result*)
@@ -871,7 +884,8 @@
 
 ;;; WITH Parsers
 
-(defmethod parse-clause ((client standard-client) (scope extended-superclause) (keyword (eql :with)))
+(defmethod parse-clause
+    ((client standard-client) (scope extended-superclause) (keyword (eql :with)))
   (prog ((instance (make-instance 'with-clause
                                   :start *start*))
          var
@@ -898,8 +912,6 @@
      (setf (subclauses instance) (nreverse subclauses)
            (end instance) *index*)
      (return instance)))  
-
-;;; WITH expansion methods
 
 (defmethod analyze ((instance with-subclause))
   (check-type-spec (var instance)))

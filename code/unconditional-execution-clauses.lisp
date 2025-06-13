@@ -17,10 +17,6 @@
 (defclass do-clause (unconditional-clause compound-forms-mixin)
   ())
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Parser
-
 (defmethod parse-clause
     (client (scope selectable-superclause) (keyword (eql :do)))
   (make-instance 'do-clause
@@ -34,10 +30,6 @@
                  :start *start*
                  :forms (parse-compound-form+)
                  :end *index*))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Compute the body-forms.
 
 (defmethod body-forms ((clause do-clause))
   (copy-list (forms clause)))

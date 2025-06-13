@@ -1,6 +1,14 @@
 (cl:in-package #:khazern)
 
 ;;; 6.1.3 Value Accumulation Clauses
+;;;
+;;; Syntax:
+;;;
+;;;   accumulation ::= list-accumulation | numeric-accumulation 
+;;;   list-accumulation ::= {COLLECT | COLLECTING | APPEND | APPENDING | NCONC | NCONCING}
+;;;                         {form | IT} [INTO simple-var] 
+;;;   numeric-accumulation::= {COUNT | COUNTING | SUM | SUMMING | MAXIMIZE | MAXIMIZING |
+;;;                            MINIMIZE | MINIMIZING} {form | IT} [INTO simple-var] [type-spec]
 
 (defclass accumulation-clause (selectable-clause accumulation-mixin form-mixin)
   ())
@@ -24,11 +32,13 @@
    (%nconc-func :accessor nconc-func
                 :initform nil)))
 
-(defmethod accumulation-clause-reference ((instance list-accumulation-clause) name (ref (eql :tail)))
+(defmethod accumulation-clause-reference
+    ((instance list-accumulation-clause) name (ref (eql :tail)))
   (and (eq name (var-spec (var instance)))
        (var-spec (tail-var instance))))
                                        
-(defmethod accumulation-clause-reference ((instance list-accumulation-clause) name (ref (eql :append)))
+(defmethod accumulation-clause-reference
+    ((instance list-accumulation-clause) name (ref (eql :append)))
   (cond ((not (eq name (var-spec (var instance))))
          nil)
         ((null (append-func instance))
@@ -36,7 +46,8 @@
         (t
          (append-func instance))))
 
-(defmethod accumulation-clause-reference ((instance list-accumulation-clause) name (ref (eql :nconc)))
+(defmethod accumulation-clause-reference
+    ((instance list-accumulation-clause) name (ref (eql :nconc)))
   (cond ((not (eq name (var-spec (var instance))))
          nil)
         ((null (nconc-func instance))
@@ -179,7 +190,8 @@
                                      :type-spec type
                                      :accumulation-category category)))
 
-(defmethod accumulation-clause-reference ((instance extremum-accumulation-clause) name (ref (eql :max)))
+(defmethod accumulation-clause-reference
+    ((instance extremum-accumulation-clause) name (ref (eql :max)))
   (cond ((not (eq name (var-spec (var instance))))
          nil)
         ((null (max-func instance))
@@ -187,7 +199,8 @@
         (t
          (max-func instance))))
 
-(defmethod accumulation-clause-reference ((instance extremum-accumulation-clause) name (ref (eql :min)))
+(defmethod accumulation-clause-reference
+    ((instance extremum-accumulation-clause) name (ref (eql :min)))
   (cond ((not (eq name (var-spec (var instance))))
          nil)
         ((null (min-func instance))
@@ -233,9 +246,8 @@
 (defclass collect-clause (accumulation-clause)
   ())
 
-;;; COLLECT parsers
-
-(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :collect)))
+(defmethod parse-clause
+    ((client standard-client) (scope selectable-superclause) (keyword (eql :collect)))
   (make-instance 'collect-clause
                  :start *start*
                  :form (pop-token)
@@ -244,7 +256,8 @@
                                      :accumulation-category :list)
                  :end *index*))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :collecting)))
+(defmethod parse-clause
+    ((client standard-client) (scope selectable-superclause) (keyword (eql :collecting)))
   (make-instance 'collect-clause
                  :start *start*
                  :form (pop-token)
@@ -252,8 +265,6 @@
                                      :var-spec (parse-into)
                                      :accumulation-category :list)
                  :end *index*))
-
-;;; COLLECT expansion methods
 
 (defmethod body-forms ((clause collect-clause))
   (let ((tail-var (accumulation-reference (var-spec (var clause)) :tail)))
@@ -265,9 +276,8 @@
 (defclass append-clause (accumulation-clause)
   ())
 
-;;; APPEND parsers
-
-(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :append)))
+(defmethod parse-clause
+    ((client standard-client) (scope selectable-superclause) (keyword (eql :append)))
   (make-instance 'append-clause
                  :start *start*
                  :form (pop-token)
@@ -276,7 +286,8 @@
                                      :accumulation-category :list)
                  :end *index*))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :appending)))
+(defmethod parse-clause
+    ((client standard-client) (scope selectable-superclause) (keyword (eql :appending)))
   (make-instance 'append-clause
                  :start *start*
                  :form (pop-token)
@@ -284,8 +295,6 @@
                                      :var-spec (parse-into)
                                      :accumulation-category :list)
                  :end *index*))
-
-;;; APPEND expansion methods
 
 (defmethod body-forms ((clause append-clause))
   (accumulate-form (var-spec (var clause)) :append (it-form (form clause))))
@@ -295,9 +304,8 @@
 (defclass nconc-clause (accumulation-clause)
   ())
 
-;;; NCONC parsers
-
-(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :nconc)))
+(defmethod parse-clause
+    ((client standard-client) (scope selectable-superclause) (keyword (eql :nconc)))
   (make-instance 'nconc-clause
                  :start *start*
                  :form (pop-token)
@@ -306,7 +314,8 @@
                                      :accumulation-category :list)
                  :end *index*))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :nconcing)))
+(defmethod parse-clause
+    ((client standard-client) (scope selectable-superclause) (keyword (eql :nconcing)))
   (make-instance 'nconc-clause
                  :start *start*
                  :form (pop-token)
@@ -314,8 +323,6 @@
                                      :var-spec (parse-into)
                                      :accumulation-category :list)
                  :end *index*))
-
-;;; NCONC expansion methods
 
 (defmethod body-forms ((clause nconc-clause))
   (accumulate-form (var-spec (var clause)) :nconc (it-form (form clause))))
@@ -325,9 +332,8 @@
 (defclass count-clause (accumulation-clause)
   ())
 
-;;; COUNT parsers
-
-(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :count)))
+(defmethod parse-clause
+    ((client standard-client) (scope selectable-superclause) (keyword (eql :count)))
   (make-instance 'count-clause
                  :start *start*
                  :form (pop-token)
@@ -337,7 +343,8 @@
                                      :accumulation-category :summation)
                  :end *index*))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :counting)))
+(defmethod parse-clause
+    ((client standard-client) (scope selectable-superclause) (keyword (eql :counting)))
   (make-instance 'count-clause
                  :start *start*
                  :form (pop-token)
@@ -346,8 +353,6 @@
                                      :type-spec (parse-type-spec 'fixnum)                          
                                      :accumulation-category :summation)
                  :end *index*))
-
-;;; COUNT expansion methods
 
 (defmethod analyze ((clause count-clause))
   (check-subtype (type-spec (var clause)) 'number))
@@ -364,7 +369,8 @@
 
 ;;; MINIMIZE/MAXIMIZE parsers
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :minimize)))
+(defmethod parse-clause
+    ((client standard-client) (scope selectable-superclause) (keyword (eql :minimize)))
   (make-instance 'extremum-clause
                  :start *start*
                  :form (pop-token)
@@ -375,7 +381,8 @@
                                      :accumulation-category :extremum)
                  :end *index*))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :minimizing)))
+(defmethod parse-clause
+    ((client standard-client) (scope selectable-superclause) (keyword (eql :minimizing)))
   (make-instance 'extremum-clause
                  :start *start*
                  :form (pop-token)
@@ -386,7 +393,8 @@
                                      :accumulation-category :extremum)
                  :end *index*))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :maximize)))
+(defmethod parse-clause
+    ((client standard-client) (scope selectable-superclause) (keyword (eql :maximize)))
   (make-instance 'extremum-clause
                  :start *start*
                  :form (pop-token)
@@ -397,7 +405,8 @@
                                      :accumulation-category :extremum)
                  :end *index*))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :maximizing)))
+(defmethod parse-clause
+    ((client standard-client) (scope selectable-superclause) (keyword (eql :maximizing)))
   (make-instance 'extremum-clause
                  :start *start*
                  :form (pop-token)
@@ -407,23 +416,21 @@
                                      :type-spec (parse-type-spec 'real)                          
                                      :accumulation-category :extremum)
                  :end *index*))
-
-;;; MINIMIZE/MAXIMIZE expansion methods
 
 (defmethod analyze ((clause extremum-clause))
   (check-subtype (type-spec (var clause)) 'real))
 
 (defmethod body-forms ((clause extremum-clause))
-  `((,(accumulation-reference (var-spec (var clause)) (func-name clause)) ,(it-form (form clause)))))
+  `((,(accumulation-reference (var-spec (var clause)) (func-name clause))
+      ,(it-form (form clause)))))
 
 ;;; SUM clause
 
 (defclass sum-clause (accumulation-clause)
   ())
 
-;;; SUM parsers
-
-(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :sum)))
+(defmethod parse-clause
+    ((client standard-client) (scope selectable-superclause) (keyword (eql :sum)))
   (make-instance 'sum-clause
                  :start *start*
                  :form (pop-token)
@@ -433,7 +440,8 @@
                                      :accumulation-category :summation)
                  :end *index*))
 
-(defmethod parse-clause ((client standard-client) (scope selectable-superclause) (keyword (eql :summing)))
+(defmethod parse-clause
+    ((client standard-client) (scope selectable-superclause) (keyword (eql :summing)))
   (make-instance 'sum-clause
                  :start *start*
                  :form (pop-token)
@@ -442,8 +450,6 @@
                                      :type-spec (parse-type-spec 'number)                          
                                      :accumulation-category :summation)
                  :end *index*))
-
-;;; SUM expansion methods
 
 (defmethod analyze ((clause sum-clause))
   (check-subtype (type-spec (var clause)) 'number))

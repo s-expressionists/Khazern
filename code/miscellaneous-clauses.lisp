@@ -39,7 +39,7 @@
 ;;; An RETURN clause does not exist as a separate grammar item in
 ;;; the HyperSpec, but we define it here anyway.  The syntax is:
 ;;;
-;;;    return-clause ::= return {form | it}
+;;;    return-clause ::= RETURN {form | IT}
 
 (defclass return-clause (unconditional-clause form-mixin)
   ())
@@ -59,7 +59,7 @@
 ;;; An INITIAL clause does not exist as a separate grammar item in the HyperSpec, but we define
 ;;; it here anyway.  The syntax is:
 ;;;
-;;;    initial-clause ::= initially compound-form+
+;;;    initial-clause ::= INITIALLY compound-form+
 
 (defclass initial-clause (body-clause compound-forms-mixin)
   ())
@@ -79,7 +79,7 @@
 ;;; An FINAL clause does not exist as a separate grammar item in the HyperSpec, but we define it
 ;;; here anyway.  The syntax is:
 ;;;
-;;;    final-clause ::= finally compound-form+
+;;;    final-clause ::= FINALLY compound-form+
 
 (defclass final-clause (body-clause compound-forms-mixin)
   ())

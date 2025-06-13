@@ -8,7 +8,7 @@
 ;;;;
 ;;;; In the dictionary entry for LOOP, the HyperSpec says:
 ;;;;
-;;;; loop [name-clause] {variable-clause}* {main-clause}*
+;;;; LOOP [name-clause] {variable-clause}* {main-clause}*
 ;;;;   variable-clause   ::= with-clause | initial-final | for-as-clause
 ;;;;   main-clause       ::= unconditional | accumulation | conditional | termination-test |
 ;;;;                         initial-final
@@ -17,7 +17,7 @@
 ;;;; Since initial-final can be either a variable-clause or a main-clause we introduce new
 ;;;; clause groups called body-clause and binding-clause so the overall BNF of LOOP becomes:
 ;;;;
-;;;; loop [name-clause] {variable-clause}* {main-clause}*
+;;;; LOOP [name-clause] {variable-clause}* {main-clause}*
 ;;;;   variable-clause   ::= body-clause | binding-clause
 ;;;;   main-clause       ::= body-clause | selectable-clause
 ;;;;   body-clause       ::= initial-final | termination-test
@@ -25,8 +25,8 @@
 ;;;;   selectable-clause ::= unconditional | accumulation | conditional
 ;;;;
 ;;;; termination-test is included in body-clause because Khazern allows termination test clauses
-;;;; like UNTIL/WHILE to occur in between FOR/AS clauses. Khazern signals a STYLE-WARNING to
-;;;; indicate that this "might" be non-standard behavior.
+;;;; like UNTIL/WHILE to occur in between FOR/AS/WITH clauses. Khazern signals a STYLE-WARNING
+;;;; to indicate that this "might" be non-standard behavior.
 ;;;;
 ;;;; In 6.1.4 there is the statement "Termination-test control constructs can be used anywhere
 ;;;; within the loop body." This at best ambiguous in respect to the BNF grammar in the LOOP
