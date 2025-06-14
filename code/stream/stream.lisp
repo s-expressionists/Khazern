@@ -23,7 +23,8 @@
 (defmethod khazern:map-variables (function (clause for-as-stream))
   (khazern:map-variables function (khazern:var clause)))
 
-(defmethod (setf khazern:iteration-path-preposition) :after (expression (instance for-as-stream) key)
+(defmethod (setf khazern:iteration-path-preposition) :after
+    (expression (instance for-as-stream) key)
   (setf (khazern:iteration-path-preposition-names instance)
         (delete-if (lambda (name)
                      (or (eq name key)
@@ -33,20 +34,24 @@
                               (eq name :in))))
                    (khazern:iteration-path-preposition-names instance))))
 
-(defmethod (setf khazern:iteration-path-preposition) (expression (instance for-as-stream) (key (eql :in)))
+(defmethod (setf khazern:iteration-path-preposition)
+    (expression (instance for-as-stream) (key (eql :in)))
   (setf (stream-form instance) expression))
 
-(defmethod (setf khazern:iteration-path-preposition) (expression (instance for-as-stream) (key (eql :of)))
+(defmethod (setf khazern:iteration-path-preposition)
+    (expression (instance for-as-stream) (key (eql :of)))
   (setf (stream-form instance) expression))
 
-(defmethod (setf khazern:iteration-path-preposition) (expression (instance for-as-stream) (key (eql :close)))
+(defmethod (setf khazern:iteration-path-preposition)
+    (expression (instance for-as-stream) (key (eql :close)))
   (setf (closep instance) expression))
 
 (defmethod (setf khazern:iteration-path-using) :after (expression (instance for-as-stream) key)
   (setf (khazern:iteration-path-using-names instance)
         (delete key (khazern:iteration-path-using-names instance))))
 
-(defmethod (setf khazern:iteration-path-using) (value (instance for-as-stream) (key (eql :stream)))
+(defmethod (setf khazern:iteration-path-using)
+    (value (instance for-as-stream) (key (eql :stream)))
   (setf (stream-var instance) value))
 
 (defmethod khazern:initial-bindings ((clause for-as-stream))
@@ -140,7 +145,8 @@
                            :initform (gensym "MISS")))
   (:default-initargs :using-names (list :stream :missing-newline-p)))
 
-(defmethod (setf khazern:iteration-path-using) (value (instance for-as-lines) (key (eql :missing-newline-p)))
+(defmethod (setf khazern:iteration-path-using)
+    (value (instance for-as-lines) (key (eql :missing-newline-p)))
   (setf (missing-newline-p-var instance) value))
 
 (defmethod khazern:analyze ((instance for-as-lines))
