@@ -30,10 +30,10 @@
                                      :type-spec type
                                      :accumulation-category category)))
 
-(defmethod initial-bindings ((instance every-accumulation-clause))
+(defmethod initial-bindings nconc ((instance every-accumulation-clause))
   (d-spec-simple-bindings (var instance) t))
 
-(defmethod initial-declarations ((instance every-accumulation-clause))
+(defmethod initial-declarations nconc ((instance every-accumulation-clause))
   (d-spec-outer-declarations (var instance)))
 
 (defclass some-accumulation-clause (var-mixin)
@@ -46,37 +46,32 @@
                                      :type-spec type
                                      :accumulation-category category)))
 
-(defmethod initial-bindings ((instance some-accumulation-clause))
+(defmethod initial-bindings nconc ((instance some-accumulation-clause))
   (d-spec-outer-bindings (var instance)))
 
-(defmethod initial-declarations ((instance some-accumulation-clause))
+(defmethod initial-declarations nconc ((instance some-accumulation-clause))
   (d-spec-outer-declarations (var instance)))
 
-(defclass repeat-clause (termination-test-clause var-mixin form-mixin)
-  ()
-  (:default-initargs :var (make-instance 'd-spec
-                                         :var-spec (gensym "REPEAT")
-                                         :type-spec 'fixnum)))
+(defclass repeat-clause (termination-test-clause)
+  ((%count-ref :accessor count-ref)))
 
 (defmethod parse-clause
     (client (scope extended-superclause) (keyword (eql :repeat)))
-  (make-instance 'repeat-clause
-                 :start *start*
-                 :form (pop-token)
-                 :end *index*))
-
-(defmethod initial-bindings ((clause repeat-clause))
-  `((,(var-spec (var clause))
-     ,(if (numberp (form clause))
-          (max 0 (ceiling (form clause)))
-          `(max 0 (ceiling ,(form clause)))))))
-
-(defmethod initial-declarations ((clause repeat-clause))
-  `((type ,(type-spec (var clause)) ,(var-spec (var clause)))))
+  (let ((form (pop-token))
+        (instance (make-instance 'repeat-clause
+                                 :start *start*
+                                 :end *index*)))
+    (setf (count-ref instance) (add-binding instance
+                                            :var (gensym "REPEAT")
+                                            :type 'fixnum
+                                            :form (if (numberp form)
+                                                      (max 0 (ceiling form))
+                                                      `(max 0 (ceiling ,form)))))
+    instance))
 
 (defun expand-repeat (clause group)
   (when (eq (clause-group clause) group)
-    `((when (minusp (decf ,(var-spec (var clause))))
+    `((when (minusp (decf ,(count-ref clause)))
         (go ,*epilogue-tag*)))))
 
 (defmethod body-forms ((clause repeat-clause))

@@ -62,11 +62,11 @@
                                      :type-spec type
                                      :accumulation-category category)))
 
-(defmethod initial-bindings ((instance list-accumulation-clause))
+(defmethod initial-bindings nconc ((instance list-accumulation-clause))
   (nconc (d-spec-simple-bindings (head-var instance) '(cons nil nil))
          (d-spec-simple-bindings (tail-var instance) (var-spec (head-var instance)))))
 
-(defmethod initial-declarations ((instance list-accumulation-clause))
+(defmethod initial-declarations nconc ((instance list-accumulation-clause))
   (nconc `((dynamic-extent ,(var-spec (head-var instance))))
          (d-spec-outer-declarations (head-var instance))
          (d-spec-outer-declarations (tail-var instance))))
@@ -167,10 +167,10 @@
                                                     type)
                                      :accumulation-category category)))
 
-(defmethod initial-bindings ((instance summation-accumulation-clause))
+(defmethod initial-bindings nconc ((instance summation-accumulation-clause))
   (d-spec-outer-bindings (var instance)))
 
-(defmethod initial-declarations ((instance summation-accumulation-clause))
+(defmethod initial-declarations nconc ((instance summation-accumulation-clause))
   (d-spec-outer-declarations (var instance)))
 
 (defclass extremum-accumulation-clause (var-mixin)
@@ -208,11 +208,11 @@
         (t
          (min-func instance))))
 
-(defmethod initial-bindings ((instance extremum-accumulation-clause))
+(defmethod initial-bindings nconc ((instance extremum-accumulation-clause))
   (nconc (d-spec-outer-bindings (var instance))
          (d-spec-simple-bindings (first-var instance) t)))
 
-(defmethod initial-declarations ((instance extremum-accumulation-clause))
+(defmethod initial-declarations nconc ((instance extremum-accumulation-clause))
   (nconc (d-spec-outer-declarations (var instance))
          (d-spec-simple-declarations (first-var instance))))
 

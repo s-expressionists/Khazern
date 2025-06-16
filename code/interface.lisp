@@ -19,12 +19,14 @@
 ;;; clause.  Notice that it is a list of declaration specifiers, not a list of declarations.  In
 ;;; other words, the symbol DECLARE is omitted.
 (defgeneric initial-declarations (clause)
-  (:method (clause)
+  (:method-combination nconc)
+  (:method nconc (clause)
     (declare (ignore clause))
     '()))
 
 (defgeneric initial-bindings (clause)
-  (:method (clause)
+  (:method-combination nconc)
+  (:method nconc (clause)
     (declare (ignore clause))
     '()))
 

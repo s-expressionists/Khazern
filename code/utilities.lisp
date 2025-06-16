@@ -308,10 +308,10 @@
     (nreverse result)))
 
 (defun d-spec-simple-declarations (d-spec
-                                   &key ((:ignorable ignorablep) nil)
-                                        ((:nullable nullablep) nil))
+                                   &key ((:nullable nullablep) nil))
   (with-accessors ((var-spec var-spec)
-                   (type-spec type-spec))
+                   (type-spec type-spec)
+                   (ignorablep ignorablep))
       d-spec
     (let (decl)
       (when var-spec

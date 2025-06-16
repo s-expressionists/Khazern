@@ -54,12 +54,12 @@
     (value (instance for-as-stream) (key (eql :stream)))
   (setf (stream-var instance) value))
 
-(defmethod khazern:initial-bindings ((clause for-as-stream))
+(defmethod khazern:initial-bindings nconc ((clause for-as-stream))
   (nconc `((,(stream-var clause) ,(stream-form clause)))
          (khazern:d-spec-outer-bindings (temp-var clause))
          (khazern:d-spec-outer-bindings (var clause))))
 
-(defmethod khazern:initial-declarations ((clause for-as-stream))
+(defmethod khazern:initial-declarations nconc ((clause for-as-stream))
   (nconc `((type stream ,(stream-var clause)))
          (khazern:d-spec-outer-declarations (temp-var clause))
          (khazern:d-spec-outer-declarations (var clause))))
@@ -156,13 +156,11 @@
     (setf (khazern::type-spec (temp-var instance))
           `(or stream ,(khazern::type-spec (var instance))))))
 
-(defmethod khazern:initial-bindings ((clause for-as-lines))
-  (list* `(,(missing-newline-p-var clause) nil)
-         (call-next-method)))
+(defmethod khazern:initial-bindings nconc ((clause for-as-lines))
+  `((,(missing-newline-p-var clause) nil)))
 
-(defmethod khazern:initial-declarations ((clause for-as-lines))
-  (list* `(ignorable ,(missing-newline-p-var clause))
-         (call-next-method)))
+(defmethod khazern:initial-declarations nconc ((clause for-as-lines))
+  `((ignorable ,(missing-newline-p-var clause))))
 
 (defun for-as-lines/step (clause)
   (let ((temp-var (khazern::var-spec (temp-var clause)))

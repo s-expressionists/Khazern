@@ -160,44 +160,20 @@
 ;;;                                    BY form3⟧
 
 (defclass for-as-arithmetic (for-as-iteration-path)
-  (;; The order in which the forms are given.  This is a list of three
-   ;; elements FROM, TO, and BY in the order that they were given in
-   ;; the clause.
-   (%order :accessor order
-           :initarg :order
-           :initform '())
-   ;; The form that was given after one of the LOOP keywords FROM,
-   ;; UPFROM, or DOWNFROM, or 0 if none of these LOOP keywords was
-   ;; given.
-   (%start-form :accessor start-form
-                :initarg :start-form
-                :initform 0)
-   ;; The form that was after one of the LOOP keywords TO, UPTO,
-   ;; DOWNTO, BELOW, or ABOVE, or NIL if none of these LOOP keywords
-   ;; was given.
-   (%end-form :accessor end-form
-              :initarg :end-form
+  ((%next-ref :accessor next-ref
               :initform nil)
-   ;; The form that was after the LOOP keyword BY, or 0 if this
-   ;; keyword was not given.
-   (%by-form :accessor by-form
-             :initarg :by-form
-             :initform 1)
-   ;; This variable is one step ahead of the iteration variable, and
-   ;; when the iteration variable is NIL, the value of this variable
-   ;; is never assigned to any iteration variable.
-   (%next-var :reader next-var
-              :initform (make-instance 'd-spec
-                                       :var-spec (gensym "NEXT")
-                                       :type-spec 'number))
-   (%end-var :reader end-var
-             :initform (make-instance 'd-spec
-                                      :var-spec (gensym "END")
-                                      :type-spec 'number))
-   (%by-var :reader by-var
-            :initform (make-instance 'd-spec
-                                     :var-spec (gensym "BY")
-                                     :type-spec 'number))
+   (%next-var :accessor next-var
+              :initform nil)
+   (%end-ref :accessor end-ref
+             :initform nil)
+   (%end-var :accessor end-var
+            :initform nil)
+   (%by-ref :accessor by-ref
+            :initform 1)
+   (%by-var :accessor by-var
+            :initform nil)
+   (%numeric-value :accessor numeric-value
+                   :initform nil)
    ;; If termination is TO, UPTO, or DOWNTO, then this slot contains
    ;; the symbol <=.  If termination is ABOVE or BELOW, then this slot
    ;; contains the symbol <.  If there is TO/UPTO/DOWNTO/ABOVE/BELOW,
@@ -230,22 +206,22 @@
   ;; parse the form
   (ecase name
     ((:to :upto :downto :above :below)
-     (setf (end-form instance) value
+     (setf (values (end-ref instance) (end-var instance))
+               (add-binding instance :var (gensym "END") :type 'number :form value :fold t)
            (iteration-path-preposition-names instance)
                (nset-difference (iteration-path-preposition-names instance)
-                                +to-keywords+))
-     (push :to (order instance)))
+                                +to-keywords+)))
     ((:from :downfrom :upfrom)
-     (setf (start-form instance) value
+     (setf (values (next-ref instance) (next-var instance))
+               (add-binding instance :var (gensym "NEXT") :type 'number :form value)
            (iteration-path-preposition-names instance)
                (nset-difference (iteration-path-preposition-names instance)
-                                +from-keywords+))
-     (push :from (order instance)))
+                                +from-keywords+)))
     (:by
-     (setf (by-form instance) value
+     (setf (values (by-ref instance) (by-var instance))
+               (add-binding instance :var (gensym "BY") :type 'number :form value :fold t)
            (iteration-path-preposition-names instance)
-           (delete :by (iteration-path-preposition-names instance)))
-     (push :by (order instance))))
+               (delete :by (iteration-path-preposition-names instance)))))
   ;; set the termination test
   (case name
     ((:to :upto :downto)
@@ -310,80 +286,54 @@
   (map-variables function (var clause)))
 
 (defmethod analyze ((clause for-as-arithmetic))
-  (setf (order clause) (nreverse (order clause)))
-  (pushnew :from (order clause))
-  (pushnew :to (order clause))
-  (pushnew :by (order clause))
   (unless (typep clause '(or for-as-arithmetic-down for-as-arithmetic-up))
     (change-class clause 'for-as-arithmetic-up))
   (with-accessors ((next-var next-var)
                    (by-var by-var)
                    (var var)
-                   (start-form start-form)
-                   (by-form by-form)
-                   (end-form end-form))
+                   (by-ref by-ref))
       clause
     (with-accessors ((var-type type-spec))
         var
+      (unless next-var
+        (setf (iteration-path-preposition clause :from) 0))
       (with-accessors ((next-type type-spec))
           next-var
-        (with-accessors ((by-type type-spec))
-            by-var
-          (check-nullable-simple-var-spec (var clause))
+        (check-nullable-simple-var-spec (var clause))
+        (let ((val nil))
           (cond ((not (eq var-type *placeholder-result*))
                  (check-subtype var-type 'number)
-                 (setf next-type (numeric-super-type var-type)
-                       by-type next-type)
-                 (when (numberp start-form)
-                   (setf start-form (coerce start-form next-type)))
-                 (when (numberp by-form)
-                   (setf by-form (coerce by-form by-type))))
-                ((numberp start-form)
-                 (let ((val start-form))
-                   (when (numberp by-form)
-                     (incf val by-form))
-                   (setf next-type (numeric-type-of val)
-                         by-type next-type
-                         var-type next-type))
-                 (setf start-form (coerce start-form next-type))
-                 (when (numberp by-form)
-                   (setf by-form (coerce by-form by-type))))
+                 (setf next-type (numeric-super-type var-type)))
+                ((setf val (find-if #'numberp (forms clause)))
+                 (when (numberp by-ref)
+                   (incf val by-ref))
+                 (setf next-type (numeric-type-of val)
+                       var-type next-type))
                 (t
                  (setf var-type 'number
-                       by-type 'number)))))))
-  (check-type-spec (var clause)))
+                       next-type 'number))))
+        (when by-var
+          (setf (type-spec by-var) next-type))
+        (setf (forms clause) (mapcar (lambda (form)
+                                       (if (numberp form)
+                                           (coerce form next-type)
+                                           form))
+                                     (forms clause)))
+        (when (numberp by-ref)
+          (setf by-ref (coerce by-ref next-type)))
+        (check-type-spec var)))))
  
-(defmethod initial-bindings ((clause for-as-arithmetic))
-  (nconc (mapcan (lambda (name)
-                   (ecase name
-                     (:from
-                      (d-spec-simple-bindings (next-var clause) (start-form clause)))
-                     (:to
-                      (when (and (end-form clause)
-                                     (not (numberp (end-form clause))))
-                        (d-spec-simple-bindings (end-var clause) (end-form clause))))
-                     (:by
-                      (unless (numberp (by-form clause))
-                        (d-spec-simple-bindings (by-var clause) (by-form clause))))))
-                 (order clause))
-         (d-spec-outer-bindings (var clause))))
+(defmethod initial-bindings nconc ((clause for-as-arithmetic))
+  (d-spec-outer-bindings (var clause)))
 
-(defmethod initial-declarations ((clause for-as-arithmetic))
-  (nconc (d-spec-simple-declarations (next-var clause))
-         (unless (numberp (by-form clause))
-           (d-spec-simple-declarations (by-var clause)))
-         (unless (or (null (end-form clause))
-                     (numberp (end-form clause)))
-           (d-spec-simple-declarations (end-var clause)))
-         (d-spec-outer-declarations (var clause))))
+(defmethod initial-declarations nconc ((clause for-as-arithmetic))
+  (d-spec-outer-declarations (var clause)))
 
 (defmethod initial-step-forms ((clause for-as-arithmetic-up))
   (nconc (when (termination-test clause)
            `((unless (,(termination-test clause)
-                      ,(var-spec (next-var clause))
-                      ,(if (numberp (end-form clause))
-                           (end-form clause)
-                           (var-spec (end-var clause))))
+                      ,(next-ref clause)
+                      ,(end-ref clause))
                (go ,*epilogue-tag*))))
          (when (var-spec (var clause))
            `((setq ,(var-spec (var clause)) ,(var-spec (next-var clause)))))))
@@ -391,26 +341,18 @@
 (defmethod initial-step-forms ((clause for-as-arithmetic-down))
   (nconc (when (termination-test clause)
            `((unless (,(termination-test clause)
-                      ,(if (numberp (end-form clause))
-                           (end-form clause)
-                           (var-spec (end-var clause)))
-                      ,(var-spec (next-var clause)))
+                      ,(end-ref clause)
+                      ,(next-ref clause))
                (go ,*epilogue-tag*))))
          (when (var-spec (var clause))
            `((setq ,(var-spec (var clause)) ,(var-spec (next-var clause)))))))
 
 (defmethod subsequent-step-forms ((clause for-as-arithmetic-up))
-  (nconc `((incf ,(var-spec (next-var clause))
-                 ,(if (numberp (by-form clause))
-                      (by-form clause)
-                      (var-spec (by-var clause)))))
+  (nconc `((incf ,(var-spec (next-var clause)) ,(by-ref clause)))
          (initial-step-forms clause)))
 
 (defmethod subsequent-step-forms ((clause for-as-arithmetic-down))
-  (nconc `((decf ,(var-spec (next-var clause))
-                 ,(if (numberp (by-form clause))
-                      (by-form clause)
-                      (var-spec (by-var clause)))))
+  (nconc `((decf ,(var-spec (next-var clause)) ,(by-ref clause)))
          (initial-step-forms clause)))
 
 ;;; 6.1.2.1.2/6.1.2.1.3 FOR-AS-IN-LIST/FOR-AS-ON-LIST subclauses
@@ -453,13 +395,13 @@
     (setf (end instance) *index*)
     instance))
 
-(defmethod initial-bindings ((clause for-as-list))
+(defmethod initial-bindings nconc ((clause for-as-list))
   `((,(rest-var clause) ,(form clause))
     ,@(unless (function-operator-p (by-form clause))
         `((,(by-var clause) ,(by-form clause))))
     ,.(d-spec-outer-bindings (var clause))))
 
-(defmethod initial-declarations ((clause for-as-list))
+(defmethod initial-declarations nconc ((clause for-as-list))
   (d-spec-outer-declarations (var clause)))
 
 (defmethod initial-step-forms ((clause for-as-in-list))
@@ -507,10 +449,10 @@
   (set-d-spec-temps (var clause) t)
   (check-type-spec (var clause)))
 
-(defmethod initial-bindings ((clause for-as-equals-then))
+(defmethod initial-bindings nconc ((clause for-as-equals-then))
   (d-spec-outer-bindings (var clause)))
 
-(defmethod initial-declarations ((clause for-as-equals-then))
+(defmethod initial-declarations nconc ((clause for-as-equals-then))
   (d-spec-outer-declarations (var clause)))
 
 (defmethod initial-step-bindings ((clause for-as-equals-then))
@@ -543,13 +485,13 @@
                  :form (pop-token)
                  :end *index*))
 
-(defmethod initial-bindings ((clause for-as-across))
+(defmethod initial-bindings nconc ((clause for-as-across))
   `((,(form-var clause) ,(form clause))
     (,(index-var clause) 0)
     (,(length-var clause) 0)
     ,.(d-spec-outer-bindings (var clause))))
 
-(defmethod initial-declarations ((clause for-as-across))
+(defmethod initial-declarations nconc ((clause for-as-across))
   `((type vector ,(form-var clause))
     (type fixnum ,(index-var clause))
     (type fixnum ,(length-var clause))
@@ -676,7 +618,7 @@
                      :hash-value)))
   (check-type-spec (var clause)))
 
-(defmethod initial-bindings ((clause for-as-hash))
+(defmethod initial-bindings nconc ((clause for-as-hash))
   `((,(form-var clause) ,(form clause))
     (,(temp-entry-p-var clause) nil)
     (,(temp-key-var clause) nil)
@@ -684,7 +626,7 @@
     ,.(d-spec-outer-bindings (var clause))
     ,.(d-spec-outer-bindings (other-var clause))))
 
-(defmethod initial-declarations ((clause for-as-hash))
+(defmethod initial-declarations nconc ((clause for-as-hash))
   (d-spec-outer-declarations (var clause)))
   
 (defmethod wrap-forms ((subclause for-as-hash) forms)
@@ -810,13 +752,13 @@
     (setf (type-spec (var clause)) t))
   (check-type-spec (var clause)))
 
-(defmethod initial-bindings ((clause for-as-package))
+(defmethod initial-bindings nconc ((clause for-as-package))
   `((,(form-var clause) ,(form clause))
     (,(temp-entry-p-var clause) nil)
     (,(temp-symbol-var clause) nil)
     ,.(d-spec-outer-bindings (var clause))))
 
-(defmethod initial-declarations ((clause for-as-package))
+(defmethod initial-declarations nconc ((clause for-as-package))
   (d-spec-outer-declarations (var clause)))
   
 (defmethod wrap-forms ((subclause for-as-package) forms)
@@ -916,16 +858,16 @@
 (defmethod analyze ((instance with-subclause))
   (check-type-spec (var instance)))
 
-(defmethod initial-bindings ((clause with-subclause-with-form))
+(defmethod initial-bindings nconc ((clause with-subclause-with-form))
   (list* `(,(form-var clause) ,(form clause))
          (d-spec-outer-bindings (var clause))))
 
-(defmethod initial-bindings ((clause with-subclause-no-form))
+(defmethod initial-bindings nconc ((clause with-subclause-no-form))
   (d-spec-outer-bindings (var clause)))
 
 (defmethod wrap-forms ((subclause with-subclause-with-form) forms)
   (nconc (d-spec-inner-form (var subclause) (form-var subclause))
          forms))
 
-(defmethod initial-declarations ((clause with-subclause))
+(defmethod initial-declarations nconc ((clause with-subclause))
   (d-spec-outer-declarations (var clause)))

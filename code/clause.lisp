@@ -78,8 +78,31 @@
            :type fixnum)
    (%end :accessor end
          :initarg :end
-         :type fixnum)))
+         :type fixnum)
+   (%variables :accessor variables
+               :initform nil)
+   (%forms :accessor forms
+           :initform nil)))
 
+(defun add-binding (clause
+                    &key (var (gensym "FORM")) (type t) form ((:ignorable ignorablep) nil)
+                         ((:fold foldp) nil))
+  (if (and foldp (constantp form))
+      (values form nil)
+      (let ((d-spec (make-instance 'd-spec
+                                   :var-spec var
+                                   :type-spec type
+                                   :ignorable ignorablep)))
+        (setf (variables clause) (nconc (variables clause) (list d-spec))
+              (forms clause) (nconc (forms clause) (list form)))
+        (values var d-spec))))
+
+(defmethod initial-bindings nconc ((clause clause))
+  (mapcan #'d-spec-simple-bindings (variables clause) (forms clause)))
+  
+(defmethod initial-declarations nconc ((clause clause))
+  (mapcan #'d-spec-simple-declarations (variables clause)))
+  
 (defclass simple-superclause (clause)
   ((%subclauses :accessor subclauses
                 :initarg :subclauses

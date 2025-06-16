@@ -114,7 +114,7 @@
 ;;;
 ;;; Compute bindings.
 
-(defmethod khazern:initial-bindings ((clause for-as-elements))
+(defmethod khazern:initial-bindings nconc ((clause for-as-elements))
   (nconc `((,(in-var clause) ,(in-form clause))
            (,(start-var clause) ,(start-form clause))
            (,(end-var clause) ,(end-form clause))
@@ -134,7 +134,7 @@
 ;;;
 ;;; Compute declarations.
 
-(defmethod khazern:initial-declarations ((clause for-as-elements))
+(defmethod khazern:initial-declarations nconc ((clause for-as-elements))
   (list* `(ignorable ,(write-func clause) ,(index-func clause))
          (khazern:d-spec-outer-declarations (var clause))))
 
