@@ -8,7 +8,7 @@
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
   :depends-on ("khazern")
-  :in-order-to ((asdf:test-op (asdf:test-op #:khazern-extrinsic/test)))
+  :in-order-to ((asdf:test-op (asdf:test-op "khazern-extrinsic/test")))
   :components ((:module code
                 :pathname "code/extrinsic/"
                 :serial t

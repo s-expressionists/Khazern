@@ -1,4 +1,4 @@
-(cl:in-package #:khazern-elements-extrinsic/test)
+(cl:in-package #:khazern-extension-extrinsic/test)
 
 (define-test loop-vector-01
   (is equal

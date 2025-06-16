@@ -1,4 +1,4 @@
-(cl:in-package #:khazern-elements)
+(cl:in-package #:khazern-extension)
 
 #+abcl (require :extensible-sequences)
 
@@ -181,21 +181,3 @@
             `((setq ,(index-var clause)
 	            (funcall ,(index-func clause) ,(in-var clause)
 			     ,(iterator-var clause)))))))
-
-(defmacro define-iteration-path (client-class)
-  `(progn
-     (defmethod khazern:make-iteration-path
-         ((client ,client-class) (name (eql :element))
-          &optional (inclusive-form nil inclusive-form-p))
-       (declare (ignore inclusive-form))
-       (if inclusive-form-p
-           (call-next-method)
-           (make-instance 'for-as-elements)))
-
-     (defmethod khazern:make-iteration-path
-         ((client ,client-class) (name (eql :elements))
-          &optional (inclusive-form nil inclusive-form-p))
-       (declare (ignore inclusive-form))
-       (if inclusive-form-p
-           (call-next-method)
-           (make-instance 'for-as-elements)))))

@@ -1,4 +1,4 @@
-(asdf:defsystem :khazern-environment
+(asdf:defsystem "khazern-environment"
   :description "Khazern's initial environment contents for bootstrapping."
   :author ("Robert Strandh"
            "Tarn W. Burton")

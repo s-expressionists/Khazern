@@ -1,3 +1,3 @@
-(cl:in-package #:khazern-elements)
+(cl:in-package #:khazern-extension)
 
 (define-iteration-path khazern-extrinsic:extrinsic-client)

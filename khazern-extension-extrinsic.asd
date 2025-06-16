@@ -1,34 +1,34 @@
-(asdf:defsystem :khazern-elements-extrinsic
-  :description "Khazern ELEMENTS extrinsic path extension"
+(asdf:defsystem "khazern-extension-extrinsic"
+  :description "Khazern iteration path extrinsic extensions"
   :license "BSD"
-  :author ("Robert Strandh"
-           "Tarn W. Burton")
+  :author ("Tarn W. Burton")
   :maintainer "Tarn W. Burton"
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
-  :depends-on (:khazern-extrinsic :khazern-elements)
-  :in-order-to ((asdf:test-op (asdf:test-op #:khazern-elements-extrinsic/test)))
+  :depends-on ("khazern-extrinsic"
+               "khazern-extension")
+  :in-order-to ((asdf:test-op (asdf:test-op "khazern-extension-extrinsic/test")))
   :components ((:module code
-                :pathname "code/elements/"
+                :pathname "code/extension/"
                 :serial t
                 :components ((:file "extrinsic")))))
 
-(asdf:defsystem :khazern-elements-extrinsic/test
-  :description "Test system Khazern ELEMENTS extrinsic path extension"
+(asdf:defsystem "khazern-extension-extrinsic/test"
+  :description "Test system for Khazern iteration path extrinsic extensions"
   :license "BSD"
-  :author ("Robert Strandh"
-           "Tarn W. Burton")
+  :author ("Tarn W. Burton")
   :maintainer "Tarn W. Burton"
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
-  :depends-on (:khazern-elements-extrinsic :parachute)
+  :depends-on ("khazern-extension-extrinsic"
+               "parachute")
   :perform (asdf:test-op (op c)
              (defparameter cl-user::*exit-on-test-failures* t)
-             (uiop:symbol-call :parachute :test :khazern-elements-extrinsic/test))
+             (uiop:symbol-call :parachute :test :khazern-extension-extrinsic/test))
   :components ((:module code
-                :pathname "code/elements/test/"
+                :pathname "code/extension/test/"
                 :serial t
                 :components ((:file "packages")
                              (:file "test")))))

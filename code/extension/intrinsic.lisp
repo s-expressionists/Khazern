@@ -1,3 +1,3 @@
-(cl:in-package #:khazern-stream)
+(cl:in-package #:khazern-extension)
 
 (define-iteration-path khazern-intrinsic:intrinsic-client)

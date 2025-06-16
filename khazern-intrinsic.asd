@@ -1,4 +1,4 @@
-(asdf:defsystem :khazern-intrinsic
+(asdf:defsystem "khazern-intrinsic"
   :description "System for loading Khazern intrinsically into an implementation."
   :license "BSD"
   :author ("Robert Strandh"
@@ -7,15 +7,16 @@
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
-  :depends-on (:khazern #:trivial-package-locks)
-  :in-order-to ((asdf:test-op (asdf:test-op #:khazern-intrinsic/test)))
+  :depends-on ("khazern"
+               "trivial-package-locks")
+  :in-order-to ((asdf:test-op (asdf:test-op "khazern-intrinsic/test")))
   :components ((:module code
                 :pathname "code/intrinsic/"
                 :serial t
                 :components ((:file "packages")
                              (:file "loop")))))
 
-(asdf:defsystem :khazern-intrinsic/test
+(asdf:defsystem "khazern-intrinsic/test"
   :description "ANSI Test system for Khazern"
   :license "BSD"
   :author ("Robert Strandh"
