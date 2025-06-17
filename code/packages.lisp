@@ -9,8 +9,10 @@
            #:*it-var*
            #:*loop-name*
            #:accumulation-category
+           #:add-binding
            #:analyze
            #:body-forms
+           #:clause
            #:clause-group
            #:copy-cons-cells
            #:d-spec
@@ -22,6 +24,7 @@
            #:define-interface
            #:epilogue-forms
            #:expand-body
+           #:for-as-iteration-path
            #:initial-bindings
            #:initial-declarations
            #:initial-step-bindings

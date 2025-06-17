@@ -23,6 +23,7 @@
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
   :depends-on ("khazern-extension-extrinsic"
+               "nontrivial-gray-streams"
                "parachute")
   :perform (asdf:test-op (op c)
              (defparameter cl-user::*exit-on-test-failures* t)
@@ -31,4 +32,6 @@
                 :pathname "code/extension/test/"
                 :serial t
                 :components ((:file "packages")
-                             (:file "test")))))
+                             (:file "utility")
+                             (:file "elements")
+                             (:file "stream")))))
