@@ -61,7 +61,7 @@
 
 (defclass accumulation-mixin (var-mixin)
   ()
-  (:default-initargs :var (make-instance 'd-spec
+  (:default-initargs :var (make-instance 'simple-binding
                                          :var-spec (default-accumulation-variable)
                                          :accumulation-category nil)))
 
@@ -80,25 +80,25 @@
          :initarg :end
          :type fixnum)
    (%variables :accessor variables
-               :initform nil)
-   (%forms :accessor forms
-           :initform nil)))
+               :initform nil)))
 
 (defun add-binding (clause
                     &key (var (gensym "FORM")) (type t) form ((:ignorable ignorablep) nil)
                          ((:fold foldp) nil))
   (if (and foldp (constantp form))
       (values form nil)
-      (let ((d-spec (make-instance 'd-spec
+      (let ((d-spec (make-instance 'simple-binding
                                    :var-spec var
                                    :type-spec type
+                                   :form form
                                    :ignorable ignorablep)))
-        (setf (variables clause) (nconc (variables clause) (list d-spec))
-              (forms clause) (nconc (forms clause) (list form)))
+        (setf (variables clause) (nconc (variables clause) (list d-spec)))
         (values var d-spec))))
 
 (defmethod initial-bindings nconc ((clause clause))
-  (mapcan #'d-spec-simple-bindings (variables clause) (forms clause)))
+  (mapcan (lambda (binding)
+            (d-spec-simple-bindings binding (form binding)))
+          (variables clause)))
   
 (defmethod initial-declarations nconc ((clause clause))
   (mapcan #'d-spec-simple-declarations (variables clause)))

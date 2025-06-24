@@ -139,19 +139,26 @@
            (d-var-spec-p (car object))
            (d-var-spec-p (cdr object)))))
 
-(defclass d-spec ()
+(defclass binding ()
   ((%var-spec :accessor var-spec
               :initarg :var-spec)
    (%type-spec :accessor type-spec
                :initarg :type-spec
                :initform t)
-   (%accumulation-category :accessor accumulation-category
-                           :initarg :accumulation-category
-                           :initform nil)
    (%ignorable :accessor ignorablep
                :initarg :ignorable
-               :initform nil)
-   (%temps :accessor temps)))
+               :initform nil)))
+
+(defclass simple-binding (binding)
+  ((%accumulation-category :accessor accumulation-category
+                           :initarg :accumulation-category
+                           :initform nil)
+   (%form :accessor form
+          :initarg :form
+          :initform nil)))
+
+(defclass destructuring-binding (binding)
+  ((%temps :accessor temps)))
 
 (defun set-d-spec-temps (d-spec &optional temp-var-p)
   (let ((temps (make-hash-table)))
@@ -175,10 +182,10 @@
       (setf (temps d-spec) temps))))
 
 (defmethod initialize-instance :after
-    ((clause d-spec) &rest initargs &key ((:temp-var temp-var-p) nil))
+    ((clause destructuring-binding) &rest initargs &key ((:temp-var temp-var-p) nil))
   (declare (ignore initargs))
   (set-d-spec-temps clause temp-var-p))
-
+  
 (defun d-spec-inner-bindings (d-spec form &optional bind-all-p)
   (let ((bindings '())
         (temps (temps d-spec)))
@@ -229,7 +236,7 @@
              nil
              `((setq ,@(d-spec-inner-assignments d-spec form)))))
 
-(defmethod map-variables (function (d-spec d-spec))
+(defmethod map-variables (function (d-spec binding))
   (labels ((traverse (var-spec type-spec)
              (cond ((null var-spec))
                    ((symbolp var-spec)

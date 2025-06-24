@@ -18,24 +18,25 @@
       (pop-token :type 'symbol)
       (default-accumulation-variable)))
 
-(defclass list-accumulation-clause (var-mixin)
-  ((%head-var :reader head-var
-              :initform (make-instance 'd-spec
-                                       :var-spec (gensym "HEAD")
-                                       :type-spec 'cons))
-   (%tail-var :reader tail-var
-              :initform (make-instance 'd-spec
-                                       :var-spec (gensym "TAIL")
-                                       :type-spec 'cons))
+(defclass list-accumulation-clause (clause var-mixin)
+  ((%head-ref :accessor head-ref)
+   (%tail-ref :accessor tail-ref)
    (%append-func :accessor append-func
                  :initform nil)
    (%nconc-func :accessor nconc-func
                 :initform nil)))
 
+(defmethod initialize-instance :after ((instance list-accumulation-clause) &rest initargs &key)
+  (declare (ignore initargs))
+  (setf (head-ref instance) (add-binding instance :var (gensym "HEAD") :type 'cons
+                                                  :form '(cons nil nil))
+        (tail-ref instance) (add-binding instance :var (gensym "TAIL") :type 'cons
+                                                  :form (head-ref instance))))
+
 (defmethod accumulation-clause-reference
     ((instance list-accumulation-clause) name (ref (eql :tail)))
   (and (eq name (var-spec (var instance)))
-       (var-spec (tail-var instance))))
+       (tail-ref instance)))
                                        
 (defmethod accumulation-clause-reference
     ((instance list-accumulation-clause) name (ref (eql :append)))
@@ -57,47 +58,41 @@
 
 (defmethod make-accumulation-clause (name type (category (eql :list)))
   (make-instance 'list-accumulation-clause
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec name
                                      :type-spec type
                                      :accumulation-category category)))
 
-(defmethod initial-bindings nconc ((instance list-accumulation-clause))
-  (nconc (d-spec-simple-bindings (head-var instance) '(cons nil nil))
-         (d-spec-simple-bindings (tail-var instance) (var-spec (head-var instance)))))
-
 (defmethod initial-declarations nconc ((instance list-accumulation-clause))
-  (nconc `((dynamic-extent ,(var-spec (head-var instance))))
-         (d-spec-outer-declarations (head-var instance))
-         (d-spec-outer-declarations (tail-var instance))))
+  `((dynamic-extent ,(head-ref instance))))
 
 (defmethod wrap-forms ((instance list-accumulation-clause) forms)
-  (let ((head-var (var-spec (head-var instance)))
-        (tail-var (var-spec (tail-var instance)))
+  (let ((head-ref (head-ref instance))
+        (tail-ref (tail-ref instance))
         (into-var (var-spec (var instance))))
     (with-accessors ((append-func append-func)
                      (nconc-func nconc-func))
         instance
-      `((symbol-macrolet ((,into-var (cdr ,head-var)))
+      `((symbol-macrolet ((,into-var (cdr ,head-ref)))
           ,@(if (or append-func nconc-func)
                 `((flet (,@(when append-func
                              `((,append-func (value)
                                  (tagbody
                                   repeat
                                     (cond ((consp value)
-                                           (rplacd ,tail-var
-                                                   (setq ,tail-var (cons (car value) nil)))
+                                           (rplacd ,tail-ref
+                                                   (setq ,tail-ref (cons (car value) nil)))
                                            (setq value (cdr value))
                                            (go repeat))
                                           (t
-                                           (rplacd ,tail-var value)))))))
+                                           (rplacd ,tail-ref value)))))))
                          ,@(when nconc-func
                              `((,nconc-func (value)
                                  (tagbody
-                                    (rplacd ,tail-var value)
+                                    (rplacd ,tail-ref value)
                                   repeat
-                                    (when (consp (cdr ,tail-var))
-                                      (setq ,tail-var (cdr ,tail-var))
+                                    (when (consp (cdr ,tail-ref))
+                                      (setq ,tail-ref (cdr ,tail-ref))
                                       (go repeat)))))))
                     ,@forms))
                 forms))))))
@@ -160,7 +155,7 @@
 
 (defmethod make-accumulation-clause (name type (category (eql :summation)))
   (make-instance 'summation-accumulation-clause
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec name
                                      :type-spec (if (eq type 'complex)
                                                     'number
@@ -175,7 +170,7 @@
 
 (defclass extremum-accumulation-clause (var-mixin)
   ((%first-var :reader first-var
-               :initform (make-instance 'd-spec
+               :initform (make-instance 'simple-binding
                                         :var-spec (gensym "FIRST")
                                         :type-spec 'boolean))
    (%max-func :accessor max-func
@@ -185,7 +180,7 @@
 
 (defmethod make-accumulation-clause (name type (category (eql :extremum)))
   (make-instance 'extremum-accumulation-clause
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec name
                                      :type-spec type
                                      :accumulation-category category)))
@@ -251,7 +246,7 @@
   (make-instance 'collect-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec (parse-into)
                                      :accumulation-category :list)
                  :end *index*))
@@ -261,15 +256,15 @@
   (make-instance 'collect-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec (parse-into)
                                      :accumulation-category :list)
                  :end *index*))
 
 (defmethod body-forms ((clause collect-clause))
-  (let ((tail-var (accumulation-reference (var-spec (var clause)) :tail)))
-    `((rplacd ,tail-var
-              (setq ,tail-var (cons ,(it-form (form clause)) nil))))))
+  (let ((tail-ref (accumulation-reference (var-spec (var clause)) :tail)))
+    `((rplacd ,tail-ref
+              (setq ,tail-ref (cons ,(it-form (form clause)) nil))))))
 
 ;;; APPEND clause
 
@@ -281,7 +276,7 @@
   (make-instance 'append-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec (parse-into)
                                      :accumulation-category :list)
                  :end *index*))
@@ -291,7 +286,7 @@
   (make-instance 'append-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec (parse-into)
                                      :accumulation-category :list)
                  :end *index*))
@@ -309,7 +304,7 @@
   (make-instance 'nconc-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec (parse-into)
                                      :accumulation-category :list)
                  :end *index*))
@@ -319,7 +314,7 @@
   (make-instance 'nconc-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec (parse-into)
                                      :accumulation-category :list)
                  :end *index*))
@@ -337,7 +332,7 @@
   (make-instance 'count-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec (parse-into)
                                      :type-spec (parse-type-spec 'fixnum)                          
                                      :accumulation-category :summation)
@@ -348,7 +343,7 @@
   (make-instance 'count-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec (parse-into)
                                      :type-spec (parse-type-spec 'fixnum)                          
                                      :accumulation-category :summation)
@@ -375,7 +370,7 @@
                  :start *start*
                  :form (pop-token)
                  :func-name :min
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec (parse-into)
                                      :type-spec (parse-type-spec 'real)                          
                                      :accumulation-category :extremum)
@@ -387,7 +382,7 @@
                  :start *start*
                  :form (pop-token)
                  :func-name :min
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec (parse-into)
                                      :type-spec (parse-type-spec 'real)                          
                                      :accumulation-category :extremum)
@@ -399,7 +394,7 @@
                  :start *start*
                  :form (pop-token)
                  :func-name :max
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec (parse-into)
                                      :type-spec (parse-type-spec 'real)                          
                                      :accumulation-category :extremum)
@@ -411,7 +406,7 @@
                  :start *start*
                  :form (pop-token)
                  :func-name :max
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec (parse-into)
                                      :type-spec (parse-type-spec 'real)                          
                                      :accumulation-category :extremum)
@@ -434,7 +429,7 @@
   (make-instance 'sum-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec (parse-into)
                                      :type-spec (parse-type-spec 'number)                          
                                      :accumulation-category :summation)
@@ -445,7 +440,7 @@
   (make-instance 'sum-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec (parse-into)
                                      :type-spec (parse-type-spec 'number)                          
                                      :accumulation-category :summation)

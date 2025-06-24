@@ -25,7 +25,7 @@
 
 (defmethod make-accumulation-clause (name type (category (eql :every)))
   (make-instance 'every-accumulation-clause
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec name
                                      :type-spec type
                                      :accumulation-category category)))
@@ -41,7 +41,7 @@
 
 (defmethod make-accumulation-clause (name type (category (eql :some)))
   (make-instance 'summation-accumulation-clause
-                 :var (make-instance 'd-spec
+                 :var (make-instance 'simple-binding
                                      :var-spec name
                                      :type-spec type
                                      :accumulation-category category)))
@@ -85,7 +85,7 @@
 
 (defclass always-clause (boolean-termination-test-clause)
   ()
-  (:default-initargs :var (make-instance 'd-spec
+  (:default-initargs :var (make-instance 'simple-binding
                                          :var-spec (default-accumulation-variable)
                                          :accumulation-category :every)))
 
@@ -112,7 +112,7 @@
 
 (defclass never-clause (boolean-termination-test-clause)
   ()
-  (:default-initargs :var (make-instance 'd-spec
+  (:default-initargs :var (make-instance 'simple-binding
                                          :var-spec (default-accumulation-variable)
                                          :accumulation-category :every)))
 
@@ -139,7 +139,7 @@
 
 (defclass thereis-clause (boolean-termination-test-clause)
   ()
-  (:default-initargs :var (make-instance 'd-spec
+  (:default-initargs :var (make-instance 'simple-binding
                                          :var-spec (default-accumulation-variable)
                                          :accumulation-category :some)))
 

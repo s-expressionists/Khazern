@@ -304,7 +304,8 @@
           (cond ((not (eq var-type *placeholder-result*))
                  (check-subtype var-type 'number)
                  (setf next-type (numeric-super-type var-type)))
-                ((setf val (find-if #'numberp (forms clause)))
+                ((numberp (form (next-var clause)))
+                 (setf val (form (next-var clause)))
                  (when (numberp by-ref)
                    (incf val by-ref))
                  (setf next-type (numeric-type-of val)
@@ -314,11 +315,10 @@
                        next-type 'number))))
         (when by-var
           (setf (type-spec by-var) next-type))
-        (setf (forms clause) (mapcar (lambda (form)
-                                       (if (numberp form)
-                                           (coerce form next-type)
-                                           form))
-                                     (forms clause)))
+        (mapc (lambda (binding)
+                (when (numberp (form binding))
+                  (setf (form binding) (coerce (form binding) next-type))))
+              (variables clause))
         (when (numberp by-ref)
           (setf by-ref (coerce by-ref next-type)))
         (check-type-spec var)))))
@@ -539,7 +539,7 @@
                   :initform (gensym))
    (%other-var :accessor other-var
                :initarg :other-var
-               :initform (make-instance 'd-spec
+               :initform (make-instance 'destructuring-binding
                                         :var-spec nil)))
   (:default-initargs :preposition-names (list :in :of)))
 
@@ -603,7 +603,7 @@
 
 (defmethod (setf iteration-path-using) (value (instance for-as-hash) key)
   (setf (iteration-path-using-names instance) nil)
-  (setf (other-var instance) (make-instance 'd-spec
+  (setf (other-var instance) (make-instance 'destructuring-binding
                                             :var-spec value))
   value)
 

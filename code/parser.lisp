@@ -74,11 +74,10 @@
             type-spec
             default-type-spec))))
 
-(defun parse-d-spec (&key (type-spec t) (accumulation-category nil))
-  (make-instance 'd-spec
+(defun parse-d-spec (&key (type-spec t))
+  (make-instance 'destructuring-binding
                  :var-spec (pop-token)
-                 :type-spec (parse-type-spec type-spec)
-                 :accumulation-category accumulation-category))
+                 :type-spec (parse-type-spec type-spec)))
 
 (defun parse-compound-form+ ()
   (prog (forms)

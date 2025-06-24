@@ -120,7 +120,9 @@
 ;;; within a category are compatible in that they can be mixed, even
 ;;; when they accumulate into the same variable.  This generic
 ;;; function takes an accumulation clause and returns the category.
-(defgeneric accumulation-category (clause))
+(defgeneric accumulation-category (clause)
+  (:method (clause)
+    (declare (ignore clause))))
 
 (defgeneric make-accumulation-clause (name type category))
 
