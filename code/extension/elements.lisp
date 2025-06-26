@@ -41,9 +41,6 @@
   (:default-initargs :preposition-names (list :in :of :start :end :from-end)
                      :using-names (list :index)))
 
-(defmethod khazern:map-variables (function (clause for-as-elements))
-  (khazern:map-variables function (khazern:var clause)))
-
 (defmethod (setf khazern:iteration-path-preposition)
     :after (value (instance for-as-elements) key)
   (declare (ignore value))
@@ -111,14 +108,12 @@
          #-(or abcl clasp sbcl)
          (list (step-var clause))
          (when (index-var clause)
-           `((,(index-var clause) nil)))
-         (khazern:d-spec-outer-bindings (khazern:var clause))))
+           `((,(index-var clause) nil)))))
 
 (defmethod khazern:initial-declarations nconc ((clause for-as-elements))
-  (list* #+(or abcl clasp sbcl)
-         `(ignorable ,(write-func clause) ,(index-func clause) ,(from-end-var clause))
-         (khazern:d-spec-outer-declarations (khazern:var clause))))
-
+  #+(or abcl clasp sbcl)
+  `((ignorable ,(write-func clause) ,(index-func clause) ,(from-end-var clause))))
+               
 (defun do-assign (clause)
   #+(or abcl clasp sbcl)
   `((when (funcall ,(endp-func clause) ,(in-ref clause) ,(iterator-var clause)

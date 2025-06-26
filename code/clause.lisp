@@ -109,7 +109,7 @@
               :initform nil)))
 
 (defun add-simple-binding (clause
-                           &key (var "FORM") (type t) accumulation-category form
+                           &key (var "FORM") (type t) accumulation-category (form nil formp)
                                 ((:ignorable ignorablep) nil)
                                 ((:dynamic-extent dynamic-extent-p) nil)
                                 ((:fold foldp) nil) (fold-test 'constantp))
@@ -122,7 +122,9 @@
                                      :var-spec ref
                                      :type-spec type
                                      :accumulation-category accumulation-category
-                                     :form form
+                                     :form (if formp
+                                               form
+                                               (deduce-initial-value type))
                                      :ignorable ignorablep
                                      :dynamic-extent dynamic-extent-p)))
         (setf (bindings clause) (nconc (bindings clause) (list binding)))

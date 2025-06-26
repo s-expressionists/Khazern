@@ -1,9 +1,8 @@
 (cl:in-package #:khazern-extension)
 
 (defclass for-as-stream (khazern:for-as-iteration-path)
-  ((%temp-var :reader temp-var
-              :initform (make-instance 'khazern:d-spec
-                                       :var-spec (gensym "TMP")))
+  ((%temp-ref :accessor temp-ref)
+   (%temp-var :accessor temp-var)
    (%stream-ref :accessor stream-ref
                 :initform nil)
    (%stream-d-spec :accessor stream-d-spec
@@ -14,9 +13,6 @@
                 :initform nil))
   (:default-initargs :preposition-names (list :in :of :close)
                      :using-names (list :stream)))
-
-(defmethod khazern:map-variables (function (clause for-as-stream))
-  (khazern:map-variables function (khazern:var clause)))
 
 (defmethod (setf khazern:iteration-path-preposition) :after
     (expression (instance for-as-stream) key)
@@ -69,13 +65,9 @@
         (t
          (setf (stream-ref instance) '*standard-input*))))
 
-(defmethod khazern:initial-bindings nconc ((clause for-as-stream))
-  (nconc (khazern:d-spec-outer-bindings (temp-var clause))
-         (khazern:d-spec-outer-bindings (khazern:var clause))))
-
-(defmethod khazern:initial-declarations nconc ((clause for-as-stream))
-  (nconc (khazern:d-spec-outer-declarations (temp-var clause))
-         (khazern:d-spec-outer-declarations (khazern:var clause))))
+(defmethod khazern:analyze :after ((instance for-as-stream))
+  (setf (values (temp-ref instance) (temp-var instance))
+        (khazern:add-simple-binding instance :var "NEXT" :type `(or stream ,(khazern::type-spec (khazern:var instance))))))
 
 (defmethod khazern:wrap-forms ((clause for-as-stream) forms)
   (if (close-ref clause)
@@ -91,9 +83,7 @@
 
 (defmethod khazern:analyze ((instance for-as-bytes))
   (when (eq (khazern::type-spec (khazern:var instance)) khazern::*placeholder-result*)
-    (setf (khazern::type-spec (khazern:var instance)) 'integer))
-  (setf (khazern::type-spec (temp-var instance))
-        `(or stream ,(khazern::type-spec (khazern:var instance)))))
+    (setf (khazern::type-spec (khazern:var instance)) 'integer)))
 
 (defun for-as-bytes/step (clause)
   (let ((temp-var (khazern::var-spec (temp-var clause)))
@@ -113,9 +103,7 @@
 
 (defmethod khazern:analyze ((instance for-as-characters))
   (when (eq (khazern::type-spec (khazern:var instance)) khazern::*placeholder-result*)
-    (setf (khazern::type-spec (khazern:var instance)) 'character))
-  (setf (khazern::type-spec (temp-var instance))
-        `(or stream ,(khazern::type-spec (khazern:var instance)))))
+    (setf (khazern::type-spec (khazern:var instance)) 'character)))
 
 (defun for-as-characters/step (clause)
   (let ((temp-var (khazern::var-spec (temp-var clause)))
@@ -135,10 +123,7 @@
 
 (defmethod khazern:analyze ((instance for-as-objects))
   (when (eq (khazern::type-spec (khazern:var instance)) khazern::*placeholder-result*)
-    (setf (khazern::type-spec (khazern:var instance)) t))
-  (unless (eq (khazern::type-spec (khazern:var instance)) t)
-    (setf (khazern::type-spec (temp-var instance))
-          `(or stream ,(khazern::type-spec (khazern:var instance))))))
+    (setf (khazern::type-spec (khazern:var instance)) t)))
 
 (defun for-as-objects/step (clause)
   (let ((temp-var (khazern::var-spec (temp-var clause)))
@@ -167,10 +152,7 @@
 
 (defmethod khazern:analyze ((instance for-as-lines))
   (when (eq (khazern::type-spec (khazern:var instance)) khazern::*placeholder-result*)
-    (setf (khazern::type-spec (khazern:var instance)) 'string))
-  (unless (eq (khazern::type-spec (khazern:var instance)) t)
-    (setf (khazern::type-spec (temp-var instance))
-          `(or stream ,(khazern::type-spec (khazern:var instance))))))
+    (setf (khazern::type-spec (khazern:var instance)) 'string)))
 
 (defun for-as-lines/step (clause)
   (let ((temp-var (khazern::var-spec (temp-var clause)))
