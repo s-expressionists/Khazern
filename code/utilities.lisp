@@ -147,7 +147,10 @@
                :initform t)
    (%ignorable :accessor ignorablep
                :initarg :ignorable
-               :initform nil)))
+               :initform nil)
+   (%dynamic-extent :accessor dynamic-extent-p
+                    :initarg :dynamic-extent
+                    :initform nil)))
 
 (defclass simple-binding (binding)
   ((%accumulation-category :accessor accumulation-category
@@ -185,7 +188,30 @@
     ((clause destructuring-binding) &rest initargs &key ((:temp-var temp-var-p) nil))
   (declare (ignore initargs))
   (set-d-spec-temps clause temp-var-p))
-  
+
+(defun make-simple-binding (name
+                            &key (type t) form ((:ignorable ignorablep) nil)
+                                 accumulation-category
+                                 ((:dynamic-extent dynamic-extent-p) nil))
+  (make-instance 'simple-binding
+                 :var-spec (if (symbolp name)
+                               name
+                               (gensym name))
+                 :type-spec type
+                 :form form
+                 :accumulation-category accumulation-category
+                 :ignorable ignorablep
+                 :dynamic-extent dynamic-extent-p))
+
+(defun make-destructuring-binding (spec
+                                   &key (type t) ((:ignorable ignorablep) nil)
+                                        ((:dynamic-extent dynamic-extent-p) nil))
+  (make-instance 'destructuring-binding
+                 :var-spec spec
+                 :type-spec type
+                 :ignorable ignorablep
+                 :dynamic-extent dynamic-extent-p))
+
 (defun d-spec-inner-bindings (d-spec form &optional bind-all-p)
   (let ((bindings '())
         (temps (temps d-spec)))
@@ -292,17 +318,18 @@
 (defun d-spec-outer-declarations
     (d-spec)
   (let ((result '())
-        (ignorables '())
-        (ignorablep (ignorablep d-spec)))
+        (variables '()))
     (map-variables (lambda (var type category)
                      (declare (ignore category))
                      (unless (eq type t)
                        (push `(type ,type ,var) result))
-                     (when ignorablep
-                       (push var ignorables)))
+                     (push var variables))
                    d-spec)
-    (when ignorables
-      (push `(ignorable ,.(nreverse ignorables)) result))
+    (setf variables (nreverse variables))
+    (when (ignorablep d-spec)
+      (push `(ignorable ,@variables) result))
+    (when (dynamic-extent-p d-spec)
+      (push `(dynamic-extent ,@variables) result))
     (nreverse result)))
 
 (defun d-spec-outer-bindings (d-spec)
@@ -318,7 +345,8 @@
                                    &key ((:nullable nullablep) nil))
   (with-accessors ((var-spec var-spec)
                    (type-spec type-spec)
-                   (ignorablep ignorablep))
+                   (ignorablep ignorablep)
+                   (dynamic-extent-p dynamic-extent-p))
       d-spec
     (let (decl)
       (when var-spec
@@ -329,7 +357,9 @@
                           ,var-spec)
                 decl))
         (when ignorablep
-          (push `(ignorable ,var-spec) decl)))
+          (push `(ignorable ,var-spec) decl))
+        (when dynamic-extent-p
+          (push `(dynamic-extent ,var-spec) decl)))
       decl)))
 
 (defun d-spec-simple-bindings (d-spec &optional form)

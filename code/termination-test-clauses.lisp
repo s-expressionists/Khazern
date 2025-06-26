@@ -61,12 +61,12 @@
         (instance (make-instance 'repeat-clause
                                  :start *start*
                                  :end *index*)))
-    (setf (count-ref instance) (add-binding instance
-                                            :var (gensym "REPEAT")
-                                            :type 'fixnum
-                                            :form (if (numberp form)
-                                                      (max 0 (ceiling form))
-                                                      `(max 0 (ceiling ,form)))))
+    (setf (count-ref instance) (add-simple-binding instance
+                                                   :var "REPEAT"
+                                                   :type 'fixnum
+                                                   :form (if (numberp form)
+                                                             (max 0 (ceiling form))
+                                                             `(max 0 (ceiling ,form)))))
     instance))
 
 (defun expand-repeat (clause group)

@@ -55,9 +55,11 @@
   ((%form :accessor form
           :initarg :form)))
 
-(defclass form-var-mixin ()
-  ((%form-var :accessor form-var
-              :initform (gensym "FORM"))))
+(defclass form-ref-mixin ()
+  ((%form-ref :accessor form-ref
+              :initarg :form-ref
+              :initform nil
+              :type symbol)))
 
 (defclass accumulation-mixin (var-mixin)
   ()
@@ -79,29 +81,53 @@
    (%end :accessor end
          :initarg :end
          :type fixnum)
-   (%variables :accessor variables
-               :initform nil)))
+   (%bindings :accessor bindings
+              :initform nil)))
 
-(defun add-binding (clause
-                    &key (var (gensym "FORM")) (type t) form ((:ignorable ignorablep) nil)
-                         ((:fold foldp) nil))
-  (if (and foldp (constantp form))
+(defun add-simple-binding (clause
+                           &key (var "FORM") (type t) accumulation-category form
+                                ((:ignorable ignorablep) nil)
+                                ((:dynamic-extent dynamic-extent-p) nil)
+                                ((:fold foldp) nil) (fold-test 'constantp))
+  (if (and foldp (funcall fold-test form))
       (values form nil)
-      (let ((d-spec (make-instance 'simple-binding
-                                   :var-spec var
-                                   :type-spec type
-                                   :form form
-                                   :ignorable ignorablep)))
-        (setf (variables clause) (nconc (variables clause) (list d-spec)))
-        (values var d-spec))))
+      (let* ((ref (if (symbolp var)
+                       var
+                       (gensym var)))
+             (binding (make-instance 'simple-binding
+                                     :var-spec ref
+                                     :type-spec type
+                                     :accumulation-category accumulation-category
+                                     :form form
+                                     :ignorable ignorablep
+                                     :dynamic-extent dynamic-extent-p)))
+        (setf (bindings clause) (nconc (bindings clause) (list binding)))
+        (values ref binding))))
+
+(defun add-destructuring-binding (clause
+                                  &key var (type t) ((:ignorable ignorablep) nil)
+                                       ((:dynamic-extent dynamic-extent-p) nil))
+  (let ((binding (make-instance 'simple-binding
+                                :var-spec var
+                                :type-spec type
+                                :ignorable ignorablep
+                                :dynamic-extent dynamic-extent-p)))
+    (setf (bindings clause) (nconc (bindings clause) (list binding)))
+    binding))
 
 (defmethod initial-bindings nconc ((clause clause))
   (mapcan (lambda (binding)
-            (d-spec-simple-bindings binding (form binding)))
-          (variables clause)))
+            (if (typep binding 'simple-binding)
+                (d-spec-simple-bindings binding (form binding))
+                (d-spec-outer-bindings binding)))
+          (bindings clause)))
   
 (defmethod initial-declarations nconc ((clause clause))
-  (mapcan #'d-spec-simple-declarations (variables clause)))
+  (mapcan (lambda (binding)
+            (if (typep binding 'simple-binding)
+                (d-spec-simple-declarations binding)
+                (d-spec-outer-declarations binding)))
+          (bindings clause)))
   
 (defclass simple-superclause (clause)
   ((%subclauses :accessor subclauses

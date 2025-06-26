@@ -74,10 +74,13 @@
             type-spec
             default-type-spec))))
 
-(defun parse-d-spec (&key (type-spec t))
+(defun parse-d-spec (&key (type-spec t) ((:ignorable ignorablep) nil)
+                          ((:dynamic-extent dynamic-extent-p) nil))
   (make-instance 'destructuring-binding
                  :var-spec (pop-token)
-                 :type-spec (parse-type-spec type-spec)))
+                 :type-spec (parse-type-spec type-spec)
+                 :ignorable ignorablep
+                 :dynamic-extent dynamic-extent-p))
 
 (defun parse-compound-form+ ()
   (prog (forms)

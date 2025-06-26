@@ -207,19 +207,19 @@
   (ecase name
     ((:to :upto :downto :above :below)
      (setf (values (end-ref instance) (end-var instance))
-               (add-binding instance :var (gensym "END") :type 'number :form value :fold t)
+               (add-simple-binding instance :var "END" :type 'number :form value :fold t)
            (iteration-path-preposition-names instance)
                (nset-difference (iteration-path-preposition-names instance)
                                 +to-keywords+)))
     ((:from :downfrom :upfrom)
      (setf (values (next-ref instance) (next-var instance))
-               (add-binding instance :var (gensym "NEXT") :type 'number :form value)
+               (add-simple-binding instance :var "NEXT" :type 'number :form value)
            (iteration-path-preposition-names instance)
                (nset-difference (iteration-path-preposition-names instance)
                                 +from-keywords+)))
     (:by
      (setf (values (by-ref instance) (by-var instance))
-               (add-binding instance :var (gensym "BY") :type 'number :form value :fold t)
+               (add-simple-binding instance :var "BY" :type 'number :form value :fold t)
            (iteration-path-preposition-names instance)
                (delete :by (iteration-path-preposition-names instance)))))
   ;; set the termination test
@@ -318,7 +318,7 @@
         (mapc (lambda (binding)
                 (when (numberp (form binding))
                   (setf (form binding) (coerce (form binding) next-type))))
-              (variables clause))
+              (bindings clause))
         (when (numberp by-ref)
           (setf by-ref (coerce by-ref next-type)))
         (check-type-spec var)))))
@@ -362,14 +362,10 @@
 ;;; for-as-in-list ::= var [type-spec] IN form [BY step-fun]
 ;;; for-as-on-list ::= var [type-spec] ON form [BY step-fun] 
 
-(defclass for-as-list (for-as-subclause form-mixin form-var-mixin)
-  ((%by-form :accessor by-form
-             :initarg :by-form
-             :initform '#'cdr)
-   (%by-var :reader by-var
-            :initform (gensym "BY"))
-   (%rest-var :reader rest-var
-              :initform (gensym "REST"))))
+(defclass for-as-list (for-as-subclause)
+  ((%by-ref :accessor by-ref
+            :initform '#'cdr)
+   (%rest-var :accessor rest-var)))
 
 (defclass for-as-in-list (for-as-list)
   ())
@@ -377,29 +373,22 @@
 (defclass for-as-on-list (for-as-list)
   ())
 
+(defun parse-for-as-list (instance)
+  (setf (rest-var instance) (add-simple-binding instance :var "REST" :form (pop-token)))
+  (when (pop-token? :keywords '(:by))
+    (setf (by-ref instance) (add-simple-binding instance :var "BY" :form (pop-token) :fold t
+                                                         :fold-test 'function-operator-p)))
+  (setf (end instance) *index*)
+  instance)
+
 (defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :in)))
-  (let ((instance (make-instance 'for-as-in-list
-                                 :start *start*
-                                 :form (pop-token))))
-    (when (pop-token? :keywords '(:by))
-      (setf (by-form instance) (pop-token)))
-    (setf (end instance) *index*)
-    instance))
+  (parse-for-as-list (make-instance 'for-as-in-list :start *start*)))
 
 (defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :on)))
-  (let ((instance (make-instance 'for-as-on-list
-                                 :start *start*
-                                 :form (pop-token))))
-    (when (pop-token? :keywords '(:by))
-      (setf (by-form instance) (pop-token)))
-    (setf (end instance) *index*)
-    instance))
+  (parse-for-as-list (make-instance 'for-as-on-list :start *start*)))
 
 (defmethod initial-bindings nconc ((clause for-as-list))
-  `((,(rest-var clause) ,(form clause))
-    ,@(unless (function-operator-p (by-form clause))
-        `((,(by-var clause) ,(by-form clause))))
-    ,.(d-spec-outer-bindings (var clause))))
+  (d-spec-outer-bindings (var clause)))
 
 (defmethod initial-declarations nconc ((clause for-as-list))
   (d-spec-outer-declarations (var clause)))
@@ -416,9 +405,9 @@
 
 (defmethod subsequent-step-forms ((clause for-as-list))
   `((setq ,(rest-var clause)
-          ,(if (function-operator-p (by-form clause))
-               `(,(second (by-form clause)) ,(rest-var clause))
-               `(funcall ,(by-var clause) ,(rest-var clause))))
+          ,(if (function-operator-p (by-ref clause))
+               `(,(second (by-ref clause)) ,(rest-var clause))
+               `(funcall ,(by-ref clause) ,(rest-var clause))))
     ,@(initial-step-forms clause)))
 
 ;;; 6.1.2.1.4 FOR-AS-EQUALS-THEN subclause
@@ -473,44 +462,45 @@
 ;;;
 ;;;  for-as-across ::= var [type-spec] ACROSS vector
 
-(defclass for-as-across (for-as-subclause form-mixin form-var-mixin)
-  ((%length-var :reader length-var
-                :initform (gensym "LENGTH"))
-   (%index-var :reader index-var
-               :initform (gensym "INDEX"))))
+(defclass for-as-across (for-as-subclause form-ref-mixin)
+  ((%length-ref :accessor length-ref)
+   (%index-ref :accessor index-ref)))
+
+(defmethod initialize-instance :after ((instance for-as-across) &rest initargs &key)
+  (declare (ignore initargs))
+  (setf (length-ref instance) (add-simple-binding instance :var "LENGTH" :form 0
+                                                           :type 'fixnum)
+        (index-ref instance) (add-simple-binding instance :var "INDEX" :form 0
+                                                          :type 'fixnum)))
 
 (defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :across)))
-  (make-instance 'for-as-across
-                 :start *start*
-                 :form (pop-token)
-                 :end *index*))
+  (let ((instance (make-instance 'for-as-across
+                                 :start *start*)))
+    (setf (form-ref instance) (add-simple-binding instance :var "VECTOR" :form (pop-token)
+                                                           :type 'vector)
+          (end instance) *index*)
+    instance))
 
 (defmethod initial-bindings nconc ((clause for-as-across))
-  `((,(form-var clause) ,(form clause))
-    (,(index-var clause) 0)
-    (,(length-var clause) 0)
-    ,.(d-spec-outer-bindings (var clause))))
+  (d-spec-outer-bindings (var clause)))
 
 (defmethod initial-declarations nconc ((clause for-as-across))
-  `((type vector ,(form-var clause))
-    (type fixnum ,(index-var clause))
-    (type fixnum ,(length-var clause))
-    ,.(d-spec-outer-declarations (var clause))))
+  (d-spec-outer-declarations (var clause)))
 
 (defmethod initial-step-forms ((clause for-as-across))
-  `((setq ,(length-var clause) (length ,(form-var clause)))
-    (when (>= ,(index-var clause) ,(length-var clause))
+  `((setq ,(length-ref clause) (length ,(form-ref clause)))
+    (when (>= ,(index-ref clause) ,(length-ref clause))
       (go ,*epilogue-tag*))
     ,@(d-spec-inner-form (var clause)
-                         `(aref ,(form-var clause)
-                                ,(index-var clause)))))
+                         `(aref ,(form-ref clause)
+                                ,(index-ref clause)))))
 
 (defmethod subsequent-step-forms ((clause for-as-across))
-  `((when (>= (incf ,(index-var clause)) ,(length-var clause))
+  `((when (>= (incf ,(index-ref clause)) ,(length-ref clause))
       (go ,*epilogue-tag*))
     ,@(d-spec-inner-form (var clause)
-                         `(aref ,(form-var clause)
-                                ,(index-var clause)))))
+                         `(aref ,(form-ref clause)
+                                ,(index-ref clause)))))
 
 ;;; 6.1.2.1.6 FOR-AS-HASH Subclause
 ;;;
@@ -528,7 +518,7 @@
 ;;; before IN/OF. In this case a STYLE-WARNING is signalled since the ANSI specification does
 ;;; not permit such an ordering.
 
-(defclass for-as-hash (for-as-iteration-path form-mixin form-var-mixin)
+(defclass for-as-hash (for-as-iteration-path form-ref-mixin)
   ((%temp-entry-p-var :reader temp-entry-p-var
                       :initform (gensym))
    (%temp-key-var :reader temp-key-var
@@ -598,8 +588,10 @@
           :name (if (typep instance 'for-as-hash-key)
                     :hash-key
                     :hash-value)))
-  (setf (iteration-path-preposition-names instance) nil)
-  (setf (form instance) expression))
+  (setf (iteration-path-preposition-names instance) nil
+        (form-ref instance) (add-simple-binding instance :var "HT" :form expression
+                                                         :type 'hash-table))
+  expression)
 
 (defmethod (setf iteration-path-using) (value (instance for-as-hash) key)
   (setf (iteration-path-using-names instance) nil)
@@ -610,7 +602,7 @@
 (defmethod analyze ((clause for-as-hash))
   (when (eq (type-spec (var clause)) *placeholder-result*)
     (setf (type-spec (var clause)) t))
-  (unless (slot-boundp clause '%form)
+  (unless (form-ref clause)
     (error 'missing-iteration-path-prepositions
            :names '(:in)
            :name (if (typep clause 'for-as-hash-key)
@@ -619,8 +611,7 @@
   (check-type-spec (var clause)))
 
 (defmethod initial-bindings nconc ((clause for-as-hash))
-  `((,(form-var clause) ,(form clause))
-    (,(temp-entry-p-var clause) nil)
+  `((,(temp-entry-p-var clause) nil)
     (,(temp-key-var clause) nil)
     (,(temp-value-var clause) nil)
     ,.(d-spec-outer-bindings (var clause))
@@ -631,7 +622,7 @@
   
 (defmethod wrap-forms ((subclause for-as-hash) forms)
   `((with-hash-table-iterator
-        (,(iterator-var subclause) ,(form-var subclause))
+        (,(iterator-var subclause) ,(form-ref subclause))
       ,@forms)))
 
 (defmethod initial-step-forms ((clause for-as-hash))
@@ -670,7 +661,7 @@
 ;;; FOR-AS-PACKAGE is implmented as the SYMBOL(S)/PRESENT-SYMBOL(S)/EXTERNAL-SYMBOL(S) iteration
 ;;; path extension.
 
-(defclass for-as-package (for-as-iteration-path form-mixin form-var-mixin)
+(defclass for-as-package (for-as-iteration-path form-ref-mixin)
   ((%temp-entry-p-var :reader temp-entry-p-var
                       :initform (gensym))
    (%temp-symbol-var :reader temp-symbol-var
@@ -679,7 +670,7 @@
                   :initform (gensym))
    (%iterator-keywords :reader iterator-keywords
                        :initarg :iterator-keywords))
-  (:default-initargs :form '*package*
+  (:default-initargs :form-ref '*package*
                      :preposition-names (list :in :of)))
 
 (defmethod make-iteration-path
@@ -744,8 +735,11 @@
 
 (defmethod (setf iteration-path-preposition)
     (expression (instance for-as-package) key)
-  (setf (iteration-path-preposition-names instance) nil)
-  (setf (form instance) expression))
+  (setf (iteration-path-preposition-names instance) nil
+        (form-ref instance) (add-simple-binding instance :var "PKG" :form expression
+                                                         :type '(or character string symbol
+                                                                    package)))
+  expression)
 
 (defmethod analyze ((clause for-as-package))
   (when (eq (type-spec (var clause)) *placeholder-result*)
@@ -753,8 +747,7 @@
   (check-type-spec (var clause)))
 
 (defmethod initial-bindings nconc ((clause for-as-package))
-  `((,(form-var clause) ,(form clause))
-    (,(temp-entry-p-var clause) nil)
+  `((,(temp-entry-p-var clause) nil)
     (,(temp-symbol-var clause) nil)
     ,.(d-spec-outer-bindings (var clause))))
 
@@ -764,7 +757,7 @@
 (defmethod wrap-forms ((subclause for-as-package) forms)
   `((with-package-iterator
         (,(iterator-var subclause)
-         ,(form-var subclause)
+         ,(form-ref subclause)
          ,@(iterator-keywords subclause))
       ,@forms)))
 
@@ -817,11 +810,7 @@
 (defclass with-subclause (clause var-mixin)
   ())
 
-(defclass with-subclause-no-form (with-subclause)
-  ())
-
-(defclass with-subclause-with-form
-    (with-subclause form-mixin form-var-mixin)
+(defclass with-subclause-with-form (with-subclause form-ref-mixin)
   ())
 
 ;;; WITH Parsers
@@ -830,25 +819,19 @@
     ((client standard-client) (scope extended-superclause) (keyword (eql :with)))
   (prog ((instance (make-instance 'with-clause
                                   :start *start*))
-         var
+         subclause
          subclauses
          *start*)
    next
      (setf *start* *index*
-           var (parse-d-spec)
-           (ignorablep var) t)
-     (if (pop-token? :keywords '(:=))
-         (push (make-instance 'with-subclause-with-form
-                              :start *start*
-                              :var var
-                              :form (pop-token)
-                              :end *index*)
-               subclauses)
-         (push (make-instance 'with-subclause-no-form
-                              :start *start*
-                              :var var
-                              :end *index*)
-               subclauses))
+           subclause (make-instance 'with-subclause
+                                    :start *start*
+                                    :var (parse-d-spec :ignorable t)))
+     (when (pop-token? :keywords '(:=))
+       (change-class subclause 'with-subclause-with-form)
+       (setf (form-ref subclause) (add-simple-binding subclause :form (pop-token))))
+     (setf (end subclause) *index*)
+     (push subclause subclauses)
      (when (pop-token? :keywords '(:and))
        (go next))
      (setf (subclauses instance) (nreverse subclauses)
@@ -858,15 +841,11 @@
 (defmethod analyze ((instance with-subclause))
   (check-type-spec (var instance)))
 
-(defmethod initial-bindings nconc ((clause with-subclause-with-form))
-  (list* `(,(form-var clause) ,(form clause))
-         (d-spec-outer-bindings (var clause))))
-
-(defmethod initial-bindings nconc ((clause with-subclause-no-form))
+(defmethod initial-bindings nconc ((clause with-subclause))
   (d-spec-outer-bindings (var clause)))
 
 (defmethod wrap-forms ((subclause with-subclause-with-form) forms)
-  (nconc (d-spec-inner-form (var subclause) (form-var subclause))
+  (nconc (d-spec-inner-form (var subclause) (form-ref subclause))
          forms))
 
 (defmethod initial-declarations nconc ((clause with-subclause))

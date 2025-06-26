@@ -58,32 +58,32 @@
 
 (defmethod (setf khazern:iteration-path-preposition)
     (value (instance for-as-elements) (key (eql :in)))
-  (setf (in-ref instance) (khazern:add-binding instance :var (gensym "IN") :form value
-                                               :type 'sequence))
+  (setf (in-ref instance) (khazern:add-simple-binding instance :var "IN" :form value
+                                                               :type 'sequence))
   value)
 
 (defmethod (setf khazern:iteration-path-preposition)
     (value (instance for-as-elements) (key (eql :of)))
-  (setf (in-ref instance) (khazern:add-binding instance :var (gensym "IN") :form value
-                                               :type 'sequence))
+  (setf (in-ref instance) (khazern:add-simple-binding instance :var "IN" :form value
+                                                               :type 'sequence))
   value)
 
 (defmethod (setf khazern:iteration-path-preposition)
     (value (instance for-as-elements) (key (eql :start)))
-  (setf (start-ref instance) (khazern:add-binding instance :var (gensym "START") :form value
-                                                           :fold t :type 'fixnum))
+  (setf (start-ref instance) (khazern:add-simple-binding instance :var "START" :form value
+                                                                  :fold t :type 'fixnum))
   value)
 
 (defmethod (setf khazern:iteration-path-preposition)
     (value (instance for-as-elements) (key (eql :end)))
-  (setf (end-ref instance) (khazern:add-binding instance :var (gensym "END") :form value
-                                                         :fold t :type 'fixnum))
+  (setf (end-ref instance) (khazern:add-simple-binding instance :var "END" :form value
+                                                                :fold t :type 'fixnum))
   value)
 
 (defmethod (setf khazern:iteration-path-preposition)
     (value (instance for-as-elements) (key (eql :from-end)))
-  (setf (from-end-ref instance) (khazern:add-binding instance :var (gensym "FROM-END-")
-                                                              :form value :fold t))
+  (setf (from-end-ref instance) (khazern:add-simple-binding instance :var "FROM-END-"
+                                                                     :form value :fold t))
   value)
 
 (defmethod (setf khazern:iteration-path-using) :after

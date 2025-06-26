@@ -9,7 +9,7 @@
            #:*it-var*
            #:*loop-name*
            #:accumulation-category
-           #:add-binding
+           #:add-simple-binding
            #:analyze
            #:body-forms
            #:clause
@@ -34,7 +34,9 @@
            #:iteration-path-preposition-names
            #:iteration-path-using
            #:iteration-path-using-names
+           #:make-destructuring-binding
            #:make-iteration-path
+           #:make-simple-binding
            #:map-variables
            #:prologue-forms
            #:standard-client

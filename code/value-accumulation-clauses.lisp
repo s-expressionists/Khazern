@@ -19,8 +19,8 @@
       (default-accumulation-variable)))
 
 (defclass list-accumulation-clause (clause var-mixin)
-  ((%head-ref :accessor head-ref)
-   (%tail-ref :accessor tail-ref)
+  ((%head :accessor head)
+   (%tail :accessor tail)
    (%append-func :accessor append-func
                  :initform nil)
    (%nconc-func :accessor nconc-func
@@ -28,15 +28,15 @@
 
 (defmethod initialize-instance :after ((instance list-accumulation-clause) &rest initargs &key)
   (declare (ignore initargs))
-  (setf (head-ref instance) (add-binding instance :var (gensym "HEAD") :type 'cons
-                                                  :form '(cons nil nil))
-        (tail-ref instance) (add-binding instance :var (gensym "TAIL") :type 'cons
-                                                  :form (head-ref instance))))
+  (setf (head instance) (add-simple-binding instance :var "HEAD" :type 'cons
+                                                     :form '(cons nil nil) :dynamic-extent t)
+        (tail instance) (add-simple-binding instance :var "TAIL" :type 'cons
+                                                     :form (head instance))))
 
 (defmethod accumulation-clause-reference
     ((instance list-accumulation-clause) name (ref (eql :tail)))
   (and (eq name (var-spec (var instance)))
-       (tail-ref instance)))
+       (tail instance)))
                                        
 (defmethod accumulation-clause-reference
     ((instance list-accumulation-clause) name (ref (eql :append)))
@@ -58,41 +58,37 @@
 
 (defmethod make-accumulation-clause (name type (category (eql :list)))
   (make-instance 'list-accumulation-clause
-                 :var (make-instance 'simple-binding
-                                     :var-spec name
-                                     :type-spec type
-                                     :accumulation-category category)))
-
-(defmethod initial-declarations nconc ((instance list-accumulation-clause))
-  `((dynamic-extent ,(head-ref instance))))
+                 :var (make-simple-binding name
+                                           :type type
+                                           :accumulation-category category)))
 
 (defmethod wrap-forms ((instance list-accumulation-clause) forms)
-  (let ((head-ref (head-ref instance))
-        (tail-ref (tail-ref instance))
+  (let ((head (head instance))
+        (tail (tail instance))
         (into-var (var-spec (var instance))))
     (with-accessors ((append-func append-func)
                      (nconc-func nconc-func))
         instance
-      `((symbol-macrolet ((,into-var (cdr ,head-ref)))
+      `((symbol-macrolet ((,into-var (cdr ,head)))
           ,@(if (or append-func nconc-func)
                 `((flet (,@(when append-func
                              `((,append-func (value)
                                  (tagbody
                                   repeat
                                     (cond ((consp value)
-                                           (rplacd ,tail-ref
-                                                   (setq ,tail-ref (cons (car value) nil)))
+                                           (rplacd ,tail
+                                                   (setq ,tail (cons (car value) nil)))
                                            (setq value (cdr value))
                                            (go repeat))
                                           (t
-                                           (rplacd ,tail-ref value)))))))
+                                           (rplacd ,tail value)))))))
                          ,@(when nconc-func
                              `((,nconc-func (value)
                                  (tagbody
-                                    (rplacd ,tail-ref value)
+                                    (rplacd ,tail value)
                                   repeat
-                                    (when (consp (cdr ,tail-ref))
-                                      (setq ,tail-ref (cdr ,tail-ref))
+                                    (when (consp (cdr ,tail))
+                                      (setq ,tail (cdr ,tail))
                                       (go repeat)))))))
                     ,@forms))
                 forms))))))
@@ -262,9 +258,9 @@
                  :end *index*))
 
 (defmethod body-forms ((clause collect-clause))
-  (let ((tail-ref (accumulation-reference (var-spec (var clause)) :tail)))
-    `((rplacd ,tail-ref
-              (setq ,tail-ref (cons ,(it-form (form clause)) nil))))))
+  (let ((tail (accumulation-reference (var-spec (var clause)) :tail)))
+    `((rplacd ,tail
+              (setq ,tail (cons ,(it-form (form clause)) nil))))))
 
 ;;; APPEND clause
 

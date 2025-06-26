@@ -32,22 +32,20 @@
 (defmethod (setf khazern:iteration-path-preposition)
     (value (instance for-as-stream) (key (eql :in)))
   (setf (values (stream-ref instance) (stream-d-spec instance))
-        (khazern:add-binding instance :var (or (stream-var instance)
-                                               (gensym "STREAM"))
-                                      :form value :type 'stream))
+        (khazern:add-simple-binding instance :var (or (stream-var instance) "STREAM")
+                                             :form value :type 'stream))
   value)
 
 (defmethod (setf khazern:iteration-path-preposition)
     (value (instance for-as-stream) (key (eql :of)))
   (setf (values (stream-ref instance) (stream-d-spec instance))
-        (khazern:add-binding instance :var (or (stream-var instance)
-                                               (gensym "STREAM"))
-                                      :form value :type 'stream))
+        (khazern:add-simple-binding instance :var (or (stream-var instance) "STREAM")
+                                             :form value :type 'stream))
   value)
 
 (defmethod (setf khazern:iteration-path-preposition)
     (value (instance for-as-stream) (key (eql :close)))
-  (setf (close-ref instance) (khazern:add-binding instance :var (gensym "CLOSEP") :form value))
+  (setf (close-ref instance) (khazern:add-simple-binding instance :var "CLOSEP" :form value))
   value)
 
 (defmethod (setf khazern:iteration-path-using) :after (expression (instance for-as-stream) key)
@@ -64,9 +62,10 @@
 (defmethod khazern:analyze :before ((instance for-as-stream))
   (cond ((stream-ref instance))
         ((stream-var instance)
-         (setf (stream-ref instance) (khazern:add-binding instance :var (stream-var instance)
-                                                                   :form '*standard-input*
-                                                                   :type 'stream)))
+         (setf (stream-ref instance) (khazern:add-simple-binding instance
+                                                                 :var (stream-var instance)
+                                                                 :form '*standard-input*
+                                                                 :type 'stream)))
         (t
          (setf (stream-ref instance) '*standard-input*))))
 
