@@ -519,19 +519,22 @@
 ;;; not permit such an ordering.
 
 (defclass for-as-hash (for-as-iteration-path form-ref-mixin)
-  ((%temp-entry-p-var :reader temp-entry-p-var
-                      :initform (gensym))
-   (%temp-key-var :reader temp-key-var
-                  :initform (gensym))
-   (%temp-value-var :reader temp-value-var
-                    :initform (gensym))
+  ((%temp-entry-p-var :accessor temp-entry-p-var)
+   (%temp-key-var :accessor temp-key-var)
+   (%temp-value-var :accessor temp-value-var)
    (%iterator-var :reader iterator-var
-                  :initform (gensym))
+                  :initform (gensym "ITER"))
    (%other-var :accessor other-var
                :initarg :other-var
                :initform (make-instance 'destructuring-binding
                                         :var-spec nil)))
   (:default-initargs :preposition-names (list :in :of)))
+
+(defmethod initialize-instance :after ((instance for-as-hash) &rest initargs &key)
+  (declare (ignore initargs))
+  (setf (temp-entry-p-var instance) (add-simple-binding instance :var "ENTRYP")
+        (temp-key-var instance) (add-simple-binding instance :var "KEY")
+        (temp-value-var instance) (add-simple-binding instance :var "VALUE")))
 
 (defclass for-as-hash-key (for-as-hash)
   ()
@@ -611,10 +614,7 @@
   (check-type-spec (var clause)))
 
 (defmethod initial-bindings nconc ((clause for-as-hash))
-  `((,(temp-entry-p-var clause) nil)
-    (,(temp-key-var clause) nil)
-    (,(temp-value-var clause) nil)
-    ,.(d-spec-outer-bindings (var clause))
+  `(,.(d-spec-outer-bindings (var clause))
     ,.(d-spec-outer-bindings (other-var clause))))
 
 (defmethod initial-declarations nconc ((clause for-as-hash))
@@ -662,16 +662,20 @@
 ;;; path extension.
 
 (defclass for-as-package (for-as-iteration-path form-ref-mixin)
-  ((%temp-entry-p-var :reader temp-entry-p-var
-                      :initform (gensym))
-   (%temp-symbol-var :reader temp-symbol-var
-                     :initform (gensym))
+  ((%temp-entry-p-var :accessor temp-entry-p-var)
+   (%temp-symbol-var :accessor temp-symbol-var)
    (%iterator-var :reader iterator-var
-                  :initform (gensym))
+                  :initform (gensym "ITER"))
    (%iterator-keywords :reader iterator-keywords
                        :initarg :iterator-keywords))
   (:default-initargs :form-ref '*package*
                      :preposition-names (list :in :of)))
+
+
+(defmethod initialize-instance :after ((instance for-as-package) &rest initargs &key)
+  (declare (ignore initargs))
+  (setf (temp-entry-p-var instance) (add-simple-binding instance :var "ENTRYP")
+        (temp-symbol-var instance) (add-simple-binding instance :var "SYMBOL")))
 
 (defmethod make-iteration-path
     ((client standard-client) (name (eql :symbol))
@@ -747,9 +751,7 @@
   (check-type-spec (var clause)))
 
 (defmethod initial-bindings nconc ((clause for-as-package))
-  `((,(temp-entry-p-var clause) nil)
-    (,(temp-symbol-var clause) nil)
-    ,.(d-spec-outer-bindings (var clause))))
+  (d-spec-outer-bindings (var clause)))
 
 (defmethod initial-declarations nconc ((clause for-as-package))
   (d-spec-outer-declarations (var clause)))

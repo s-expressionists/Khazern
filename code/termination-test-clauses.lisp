@@ -20,37 +20,21 @@
     (termination-test-clause accumulation-mixin form-mixin)
   ())
 
-(defclass every-accumulation-clause (var-mixin)
+(defclass every-accumulation-clause (clause)
   ())
 
 (defmethod make-accumulation-clause (name type (category (eql :every)))
-  (make-instance 'every-accumulation-clause
-                 :var (make-instance 'simple-binding
-                                     :var-spec name
-                                     :type-spec type
-                                     :accumulation-category category)))
+  (let ((instance (make-instance 'every-accumulation-clause)))
+    (add-simple-binding instance :var name :type type :accumulation-category category :form t)
+    instance))
 
-(defmethod initial-bindings nconc ((instance every-accumulation-clause))
-  (d-spec-simple-bindings (var instance) t))
-
-(defmethod initial-declarations nconc ((instance every-accumulation-clause))
-  (d-spec-outer-declarations (var instance)))
-
-(defclass some-accumulation-clause (var-mixin)
+(defclass some-accumulation-clause (clause)
   ())
 
 (defmethod make-accumulation-clause (name type (category (eql :some)))
-  (make-instance 'summation-accumulation-clause
-                 :var (make-instance 'simple-binding
-                                     :var-spec name
-                                     :type-spec type
-                                     :accumulation-category category)))
-
-(defmethod initial-bindings nconc ((instance some-accumulation-clause))
-  (d-spec-outer-bindings (var instance)))
-
-(defmethod initial-declarations nconc ((instance some-accumulation-clause))
-  (d-spec-outer-declarations (var instance)))
+  (let ((instance (make-instance 'some-accumulation-clause)))
+    (add-simple-binding instance :var name :type type :accumulation-category category :form nil)
+    instance))
 
 (defclass repeat-clause (termination-test-clause)
   ((%count-ref :accessor count-ref)))
@@ -85,9 +69,9 @@
 
 (defclass always-clause (boolean-termination-test-clause)
   ()
-  (:default-initargs :var (make-instance 'simple-binding
-                                         :var-spec (default-accumulation-variable)
-                                         :accumulation-category :every)))
+  (:default-initargs :accum-var (make-instance 'simple-binding
+                                               :var-spec (default-accumulation-variable)
+                                               :accumulation-category :every)))
 
 (defmethod parse-clause
     (client (scope extended-superclause) (keyword (eql :always)))
@@ -112,9 +96,9 @@
 
 (defclass never-clause (boolean-termination-test-clause)
   ()
-  (:default-initargs :var (make-instance 'simple-binding
-                                         :var-spec (default-accumulation-variable)
-                                         :accumulation-category :every)))
+  (:default-initargs :accum-var (make-instance 'simple-binding
+                                               :var-spec (default-accumulation-variable)
+                                               :accumulation-category :every)))
 
 (defmethod parse-clause
     (client (scope extended-superclause) (keyword (eql :never)))
@@ -139,9 +123,9 @@
 
 (defclass thereis-clause (boolean-termination-test-clause)
   ()
-  (:default-initargs :var (make-instance 'simple-binding
-                                         :var-spec (default-accumulation-variable)
-                                         :accumulation-category :some)))
+  (:default-initargs :accum-var (make-instance 'simple-binding
+                                               :var-spec (default-accumulation-variable)
+                                               :accumulation-category :some)))
 
 (defmethod parse-clause
     (client (scope extended-superclause) (keyword (eql :thereis)))
@@ -152,7 +136,7 @@
 
 (defun expand-thereis (clause group)
   (when (eq (clause-group clause) group)
-    (let ((var (var-spec (var clause))))
+    (let ((var (var-spec (accum-var clause))))
       `((when (setq ,var ,(form clause))
           (return-from ,*loop-name* ,var))))))
 

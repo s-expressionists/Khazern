@@ -161,7 +161,9 @@
 
 (defmethod (setf khazern:iteration-path-using)
     (value (instance for-as-lines) (key (eql :missing-newline-p)))
-  (setf (missing-newline-p-var instance) value))
+  (setf (missing-newline-p-var instance)
+        (khazern:add-simple-binding instance :var value :ignorable t))
+  value)
 
 (defmethod khazern:analyze ((instance for-as-lines))
   (when (eq (khazern::type-spec (khazern:var instance)) khazern::*placeholder-result*)
@@ -169,12 +171,6 @@
   (unless (eq (khazern::type-spec (khazern:var instance)) t)
     (setf (khazern::type-spec (temp-var instance))
           `(or stream ,(khazern::type-spec (khazern:var instance))))))
-
-(defmethod khazern:initial-bindings nconc ((clause for-as-lines))
-  `((,(missing-newline-p-var clause) nil)))
-
-(defmethod khazern:initial-declarations nconc ((clause for-as-lines))
-  `((ignorable ,(missing-newline-p-var clause))))
 
 (defun for-as-lines/step (clause)
   (let ((temp-var (khazern::var-spec (temp-var clause)))

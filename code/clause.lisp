@@ -61,16 +61,21 @@
               :initform nil
               :type symbol)))
 
-(defclass accumulation-mixin (var-mixin)
-  ()
-  (:default-initargs :var (make-instance 'simple-binding
-                                         :var-spec (default-accumulation-variable)
-                                         :accumulation-category nil)))
+(defclass accumulation-mixin ()
+  ((%accum-var :accessor accum-var
+               :initarg :accum-var
+               :initform (make-instance 'simple-binding
+                                        :var-spec (default-accumulation-variable)
+                                        :accumulation-category nil))))
 
 (defmethod initialize-instance :after ((instance accumulation-mixin) &rest initargs &key)
   (declare (ignore initargs))
-  (unless (var-spec (var instance))
-    (setf (var-spec (var instance)) (default-accumulation-variable))))
+  (unless (var-spec (accum-var instance))
+    (setf (var-spec (accum-var instance)) (default-accumulation-variable))))
+
+
+(defmethod map-variables (function (clause accumulation-mixin))
+  (map-variables function (accum-var clause)))
 
 ;;; Clause classes
 

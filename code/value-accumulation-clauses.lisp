@@ -18,9 +18,10 @@
       (pop-token :type 'symbol)
       (default-accumulation-variable)))
 
-(defclass list-accumulation-clause (clause var-mixin)
+(defclass list-accumulation-clause (clause)
   ((%head :accessor head)
    (%tail :accessor tail)
+   (%accum :accessor accum)
    (%append-func :accessor append-func
                  :initform nil)
    (%nconc-func :accessor nconc-func
@@ -35,12 +36,12 @@
 
 (defmethod accumulation-clause-reference
     ((instance list-accumulation-clause) name (ref (eql :tail)))
-  (and (eq name (var-spec (var instance)))
+  (and (eq name (accum instance))
        (tail instance)))
                                        
 (defmethod accumulation-clause-reference
     ((instance list-accumulation-clause) name (ref (eql :append)))
-  (cond ((not (eq name (var-spec (var instance))))
+  (cond ((not (eq name (accum instance)))
          nil)
         ((null (append-func instance))
          (setf (append-func instance) (gensym "APPEND")))
@@ -49,7 +50,7 @@
 
 (defmethod accumulation-clause-reference
     ((instance list-accumulation-clause) name (ref (eql :nconc)))
-  (cond ((not (eq name (var-spec (var instance))))
+  (cond ((not (eq name (accum instance)))
          nil)
         ((null (nconc-func instance))
          (setf (nconc-func instance) (gensym "NCONC")))
@@ -57,15 +58,17 @@
          (nconc-func instance))))
 
 (defmethod make-accumulation-clause (name type (category (eql :list)))
-  (make-instance 'list-accumulation-clause
-                 :var (make-simple-binding name
-                                           :type type
-                                           :accumulation-category category)))
+  (let ((instance (make-instance 'list-accumulation-clause)))
+    (setf (accum instance) (add-simple-binding instance :var name
+                                                        :type type
+                                                        :accumulation-category category
+                                                        :ignorable t))
+    instance))
 
 (defmethod wrap-forms ((instance list-accumulation-clause) forms)
   (let ((head (head instance))
         (tail (tail instance))
-        (into-var (var-spec (var instance))))
+        (into-var (accum instance)))
     (with-accessors ((append-func append-func)
                      (nconc-func nconc-func))
         instance
@@ -146,44 +149,44 @@
              (accumulate-func)))
           (accumulate-func)))))
 
-(defclass summation-accumulation-clause (var-mixin)
+(defclass summation-accumulation-clause (clause)
   ())
 
 (defmethod make-accumulation-clause (name type (category (eql :summation)))
-  (make-instance 'summation-accumulation-clause
-                 :var (make-instance 'simple-binding
-                                     :var-spec name
-                                     :type-spec (if (eq type 'complex)
-                                                    'number
-                                                    type)
-                                     :accumulation-category category)))
+  (let ((instance (make-instance 'summation-accumulation-clause)))
+    (add-simple-binding instance :var name
+                                 :type (if (eq type 'complex)
+                                           'number
+                                           type)
+                                 :form (coerce 0 type)
+                                 :accumulation-category category)
+    instance))
 
-(defmethod initial-bindings nconc ((instance summation-accumulation-clause))
-  (d-spec-outer-bindings (var instance)))
-
-(defmethod initial-declarations nconc ((instance summation-accumulation-clause))
-  (d-spec-outer-declarations (var instance)))
-
-(defclass extremum-accumulation-clause (var-mixin)
-  ((%first-var :reader first-var
-               :initform (make-instance 'simple-binding
-                                        :var-spec (gensym "FIRST")
-                                        :type-spec 'boolean))
+(defclass extremum-accumulation-clause (clause)
+  ((%first-var :accessor first-var)
+   (%accum-var :accessor accum-var)
    (%max-func :accessor max-func
               :initform nil)
    (%min-func :accessor min-func
               :initform nil)))
 
+(defmethod initialize-instance :after ((instance extremum-accumulation-clause) &rest initargs &key)
+  (declare (ignore initargs))
+  (setf (first-var instance) (add-simple-binding instance :var "FIRST" :type 'boolean :form t)))
+
 (defmethod make-accumulation-clause (name type (category (eql :extremum)))
-  (make-instance 'extremum-accumulation-clause
-                 :var (make-instance 'simple-binding
-                                     :var-spec name
-                                     :type-spec type
-                                     :accumulation-category category)))
+  (let ((instance (make-instance 'extremum-accumulation-clause)))
+    (setf (accum-var instance)
+          (nth-value 1 (add-simple-binding instance :var name
+                                                    :type type
+                                                    :form (coerce 0 type)
+                                                    :accumulation-category category
+                                                    :ignorable t)))
+    instance))
 
 (defmethod accumulation-clause-reference
     ((instance extremum-accumulation-clause) name (ref (eql :max)))
-  (cond ((not (eq name (var-spec (var instance))))
+  (cond ((not (eq name (var-spec (accum-var instance))))
          nil)
         ((null (max-func instance))
          (setf (max-func instance) (gensym "MAX")))
@@ -192,25 +195,17 @@
 
 (defmethod accumulation-clause-reference
     ((instance extremum-accumulation-clause) name (ref (eql :min)))
-  (cond ((not (eq name (var-spec (var instance))))
+  (cond ((not (eq name (var-spec (accum-var instance))))
          nil)
         ((null (min-func instance))
          (setf (min-func instance) (gensym "MIN")))
         (t
          (min-func instance))))
 
-(defmethod initial-bindings nconc ((instance extremum-accumulation-clause))
-  (nconc (d-spec-outer-bindings (var instance))
-         (d-spec-simple-bindings (first-var instance) t)))
-
-(defmethod initial-declarations nconc ((instance extremum-accumulation-clause))
-  (nconc (d-spec-outer-declarations (var instance))
-         (d-spec-simple-declarations (first-var instance))))
-
 (defmethod wrap-forms ((instance extremum-accumulation-clause) forms)
-  (let ((first-var (var-spec (first-var instance)))
-        (into-var (var-spec (var instance)))
-        (into-type (type-spec (var instance))))
+  (let ((first-var (first-var instance))
+        (into-var (var-spec (accum-var instance)))
+        (into-type (type-spec (accum-var instance))))
     (with-accessors ((max-func max-func)
                      (min-func min-func))
         instance
@@ -242,9 +237,9 @@
   (make-instance 'collect-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'simple-binding
-                                     :var-spec (parse-into)
-                                     :accumulation-category :list)
+                 :accum-var (make-instance 'simple-binding
+                                           :var-spec (parse-into)
+                                           :accumulation-category :list)
                  :end *index*))
 
 (defmethod parse-clause
@@ -252,13 +247,13 @@
   (make-instance 'collect-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'simple-binding
-                                     :var-spec (parse-into)
-                                     :accumulation-category :list)
+                 :accum-var (make-instance 'simple-binding
+                                           :var-spec (parse-into)
+                                           :accumulation-category :list)
                  :end *index*))
 
 (defmethod body-forms ((clause collect-clause))
-  (let ((tail (accumulation-reference (var-spec (var clause)) :tail)))
+  (let ((tail (accumulation-reference (var-spec (accum-var clause)) :tail)))
     `((rplacd ,tail
               (setq ,tail (cons ,(it-form (form clause)) nil))))))
 
@@ -272,9 +267,9 @@
   (make-instance 'append-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'simple-binding
-                                     :var-spec (parse-into)
-                                     :accumulation-category :list)
+                 :accum-var (make-instance 'simple-binding
+                                           :var-spec (parse-into)
+                                           :accumulation-category :list)
                  :end *index*))
 
 (defmethod parse-clause
@@ -282,13 +277,13 @@
   (make-instance 'append-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'simple-binding
-                                     :var-spec (parse-into)
-                                     :accumulation-category :list)
+                 :accum-var (make-instance 'simple-binding
+                                           :var-spec (parse-into)
+                                           :accumulation-category :list)
                  :end *index*))
 
 (defmethod body-forms ((clause append-clause))
-  (accumulate-form (var-spec (var clause)) :append (it-form (form clause))))
+  (accumulate-form (var-spec (accum-var clause)) :append (it-form (form clause))))
 
 ;;; NCONC clause
 
@@ -300,9 +295,9 @@
   (make-instance 'nconc-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'simple-binding
-                                     :var-spec (parse-into)
-                                     :accumulation-category :list)
+                 :accum-var (make-instance 'simple-binding
+                                           :var-spec (parse-into)
+                                           :accumulation-category :list)
                  :end *index*))
 
 (defmethod parse-clause
@@ -310,13 +305,13 @@
   (make-instance 'nconc-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'simple-binding
-                                     :var-spec (parse-into)
-                                     :accumulation-category :list)
+                 :accum-var (make-instance 'simple-binding
+                                           :var-spec (parse-into)
+                                           :accumulation-category :list)
                  :end *index*))
 
 (defmethod body-forms ((clause nconc-clause))
-  (accumulate-form (var-spec (var clause)) :nconc (it-form (form clause))))
+  (accumulate-form (var-spec (accum-var clause)) :nconc (it-form (form clause))))
 
 ;;; COUNT clause
 
@@ -328,10 +323,10 @@
   (make-instance 'count-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'simple-binding
-                                     :var-spec (parse-into)
-                                     :type-spec (parse-type-spec 'fixnum)                          
-                                     :accumulation-category :summation)
+                 :accum-var (make-instance 'simple-binding
+                                           :var-spec (parse-into)
+                                           :type-spec (parse-type-spec 'fixnum)                          
+                                           :accumulation-category :summation)
                  :end *index*))
 
 (defmethod parse-clause
@@ -339,18 +334,18 @@
   (make-instance 'count-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'simple-binding
-                                     :var-spec (parse-into)
-                                     :type-spec (parse-type-spec 'fixnum)                          
-                                     :accumulation-category :summation)
+                 :accum-var (make-instance 'simple-binding
+                                           :var-spec (parse-into)
+                                           :type-spec (parse-type-spec 'fixnum)                          
+                                           :accumulation-category :summation)
                  :end *index*))
 
 (defmethod analyze ((clause count-clause))
-  (check-subtype (type-spec (var clause)) 'number))
+  (check-subtype (type-spec (accum-var clause)) 'number))
 
 (defmethod body-forms ((clause count-clause))
   `((when ,(it-form (form clause))
-      (incf ,(var-spec (var clause))))))
+      (incf ,(var-spec (accum-var clause))))))
 
 ;;; MINIMIZE/MAXIMIZE clause
 
@@ -366,10 +361,10 @@
                  :start *start*
                  :form (pop-token)
                  :func-name :min
-                 :var (make-instance 'simple-binding
-                                     :var-spec (parse-into)
-                                     :type-spec (parse-type-spec 'real)                          
-                                     :accumulation-category :extremum)
+                 :accum-var (make-instance 'simple-binding
+                                           :var-spec (parse-into)
+                                           :type-spec (parse-type-spec 'real)                          
+                                           :accumulation-category :extremum)
                  :end *index*))
 
 (defmethod parse-clause
@@ -378,10 +373,10 @@
                  :start *start*
                  :form (pop-token)
                  :func-name :min
-                 :var (make-instance 'simple-binding
-                                     :var-spec (parse-into)
-                                     :type-spec (parse-type-spec 'real)                          
-                                     :accumulation-category :extremum)
+                 :accum-var (make-instance 'simple-binding
+                                           :var-spec (parse-into)
+                                           :type-spec (parse-type-spec 'real)                          
+                                           :accumulation-category :extremum)
                  :end *index*))
 
 (defmethod parse-clause
@@ -390,10 +385,10 @@
                  :start *start*
                  :form (pop-token)
                  :func-name :max
-                 :var (make-instance 'simple-binding
-                                     :var-spec (parse-into)
-                                     :type-spec (parse-type-spec 'real)                          
-                                     :accumulation-category :extremum)
+                 :accum-var (make-instance 'simple-binding
+                                           :var-spec (parse-into)
+                                           :type-spec (parse-type-spec 'real)                          
+                                           :accumulation-category :extremum)
                  :end *index*))
 
 (defmethod parse-clause
@@ -402,17 +397,17 @@
                  :start *start*
                  :form (pop-token)
                  :func-name :max
-                 :var (make-instance 'simple-binding
-                                     :var-spec (parse-into)
-                                     :type-spec (parse-type-spec 'real)                          
-                                     :accumulation-category :extremum)
+                 :accum-var (make-instance 'simple-binding
+                                           :var-spec (parse-into)
+                                           :type-spec (parse-type-spec 'real)                          
+                                           :accumulation-category :extremum)
                  :end *index*))
 
 (defmethod analyze ((clause extremum-clause))
-  (check-subtype (type-spec (var clause)) 'real))
+  (check-subtype (type-spec (accum-var clause)) 'real))
 
 (defmethod body-forms ((clause extremum-clause))
-  `((,(accumulation-reference (var-spec (var clause)) (func-name clause))
+  `((,(accumulation-reference (var-spec (accum-var clause)) (func-name clause))
       ,(it-form (form clause)))))
 
 ;;; SUM clause
@@ -425,10 +420,10 @@
   (make-instance 'sum-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'simple-binding
-                                     :var-spec (parse-into)
-                                     :type-spec (parse-type-spec 'number)                          
-                                     :accumulation-category :summation)
+                 :accum-var (make-instance 'simple-binding
+                                           :var-spec (parse-into)
+                                           :type-spec (parse-type-spec 'number)                          
+                                           :accumulation-category :summation)
                  :end *index*))
 
 (defmethod parse-clause
@@ -436,15 +431,15 @@
   (make-instance 'sum-clause
                  :start *start*
                  :form (pop-token)
-                 :var (make-instance 'simple-binding
-                                     :var-spec (parse-into)
-                                     :type-spec (parse-type-spec 'number)                          
-                                     :accumulation-category :summation)
+                 :accum-var (make-instance 'simple-binding
+                                           :var-spec (parse-into)
+                                           :type-spec (parse-type-spec 'number)                          
+                                           :accumulation-category :summation)
                  :end *index*))
 
 (defmethod analyze ((clause sum-clause))
-  (check-subtype (type-spec (var clause)) 'number))
+  (check-subtype (type-spec (accum-var clause)) 'number))
 
 (defmethod body-forms ((clause sum-clause))
-  `((incf ,(var-spec (var clause))
+  `((incf ,(var-spec (accum-var clause))
           ,(it-form (form clause)))))
