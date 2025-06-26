@@ -9,7 +9,7 @@
                   :initarg :else-clauses
                   :initform nil)))
 
-(defmethod map-variables (function (clause conditional-clause))
+(defmethod map-variables progn (function (clause conditional-clause))
   (map-variables function (then-clauses clause))
   (map-variables function (else-clauses clause)))
 

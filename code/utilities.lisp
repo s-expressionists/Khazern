@@ -262,7 +262,7 @@
              nil
              `((setq ,@(d-spec-inner-assignments d-spec form)))))
 
-(defmethod map-variables (function (d-spec binding))
+(defmethod map-variables progn (function (d-spec binding))
   (labels ((traverse (var-spec type-spec)
              (cond ((null var-spec))
                    ((symbolp var-spec)

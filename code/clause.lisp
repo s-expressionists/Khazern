@@ -44,8 +44,27 @@
   ((%var :accessor var
          :initarg :var)))
 
-(defmethod map-variables (function (clause var-mixin))
+(defmethod map-variables progn (function (clause var-mixin))
   (map-variables function (var clause)))
+
+(defmethod initial-bindings nconc ((clause var-mixin))
+  (d-spec-outer-bindings (var clause)))
+
+(defmethod initial-declarations nconc ((clause var-mixin))
+  (d-spec-outer-declarations (var clause)))
+
+(defclass other-var-mixin ()
+  ((%other-var :accessor other-var
+               :initarg :other-var)))
+
+(defmethod map-variables progn (function (clause other-var-mixin))
+  (map-variables function (other-var clause)))
+
+(defmethod initial-bindings nconc ((clause other-var-mixin))
+  (d-spec-outer-bindings (other-var clause)))
+
+(defmethod initial-declarations nconc ((clause other-var-mixin))
+  (d-spec-outer-declarations (other-var clause)))
 
 (defclass compound-forms-mixin ()
   ((%forms :accessor forms
@@ -74,7 +93,7 @@
     (setf (var-spec (accum-var instance)) (default-accumulation-variable))))
 
 
-(defmethod map-variables (function (clause accumulation-mixin))
+(defmethod map-variables progn (function (clause accumulation-mixin))
   (map-variables function (accum-var clause)))
 
 ;;; Clause classes
@@ -142,7 +161,7 @@
 (defmethod analyze :before ((clause simple-superclause))
   (mapc #'analyze (subclauses clause)))
 
-(defmethod map-variables (function (clause simple-superclause))
+(defmethod map-variables progn (function (clause simple-superclause))
   (map-variables function (subclauses clause)))
 
 (defmethod prologue-forms ((clause simple-superclause))

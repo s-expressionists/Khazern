@@ -282,9 +282,6 @@
 
 ;;; FOR-AS-ARITHMETIC expansion methods
 
-(defmethod map-variables (function (clause for-as-arithmetic))
-  (map-variables function (var clause)))
-
 (defmethod analyze ((clause for-as-arithmetic))
   (unless (typep clause '(or for-as-arithmetic-down for-as-arithmetic-up))
     (change-class clause 'for-as-arithmetic-up))
@@ -323,12 +320,6 @@
           (setf by-ref (coerce by-ref next-type)))
         (check-type-spec var)))))
  
-(defmethod initial-bindings nconc ((clause for-as-arithmetic))
-  (d-spec-outer-bindings (var clause)))
-
-(defmethod initial-declarations nconc ((clause for-as-arithmetic))
-  (d-spec-outer-declarations (var clause)))
-
 (defmethod initial-step-forms ((clause for-as-arithmetic-up))
   (nconc (when (termination-test clause)
            `((unless (,(termination-test clause)
@@ -387,12 +378,6 @@
 (defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :on)))
   (parse-for-as-list (make-instance 'for-as-on-list :start *start*)))
 
-(defmethod initial-bindings nconc ((clause for-as-list))
-  (d-spec-outer-bindings (var clause)))
-
-(defmethod initial-declarations nconc ((clause for-as-list))
-  (d-spec-outer-declarations (var clause)))
-
 (defmethod initial-step-forms ((clause for-as-in-list))
   `((when (endp ,(rest-var clause))
       (go ,*epilogue-tag*))
@@ -438,12 +423,6 @@
   (set-d-spec-temps (var clause) t)
   (check-type-spec (var clause)))
 
-(defmethod initial-bindings nconc ((clause for-as-equals-then))
-  (d-spec-outer-bindings (var clause)))
-
-(defmethod initial-declarations nconc ((clause for-as-equals-then))
-  (d-spec-outer-declarations (var clause)))
-
 (defmethod initial-step-bindings ((clause for-as-equals-then))
   (d-spec-inner-bindings (var clause) (initial-form clause)))
 
@@ -481,12 +460,6 @@
           (end instance) *index*)
     instance))
 
-(defmethod initial-bindings nconc ((clause for-as-across))
-  (d-spec-outer-bindings (var clause)))
-
-(defmethod initial-declarations nconc ((clause for-as-across))
-  (d-spec-outer-declarations (var clause)))
-
 (defmethod initial-step-forms ((clause for-as-across))
   `((setq ,(length-ref clause) (length ,(form-ref clause)))
     (when (>= ,(index-ref clause) ,(length-ref clause))
@@ -518,17 +491,15 @@
 ;;; before IN/OF. In this case a STYLE-WARNING is signalled since the ANSI specification does
 ;;; not permit such an ordering.
 
-(defclass for-as-hash (for-as-iteration-path form-ref-mixin)
+(defclass for-as-hash (for-as-iteration-path form-ref-mixin other-var-mixin)
   ((%temp-entry-p-var :accessor temp-entry-p-var)
    (%temp-key-var :accessor temp-key-var)
    (%temp-value-var :accessor temp-value-var)
    (%iterator-var :reader iterator-var
-                  :initform (gensym "ITER"))
-   (%other-var :accessor other-var
-               :initarg :other-var
-               :initform (make-instance 'destructuring-binding
-                                        :var-spec nil)))
-  (:default-initargs :preposition-names (list :in :of)))
+                  :initform (gensym "ITER")))
+  (:default-initargs :preposition-names (list :in :of)
+                     :other-var (make-instance 'destructuring-binding
+                                               :var-spec nil)))
 
 (defmethod initialize-instance :after ((instance for-as-hash) &rest initargs &key)
   (declare (ignore initargs))
@@ -543,9 +514,6 @@
 (defclass for-as-hash-value (for-as-hash)
   ()
   (:default-initargs :using-names (list :hash-key)))
-
-(defmethod map-variables :after (function (clause for-as-hash))
-  (map-variables function (other-var clause)))
 
 (defmethod make-iteration-path
     ((client standard-client) (name (eql :hash-key))
@@ -613,13 +581,6 @@
                      :hash-value)))
   (check-type-spec (var clause)))
 
-(defmethod initial-bindings nconc ((clause for-as-hash))
-  `(,.(d-spec-outer-bindings (var clause))
-    ,.(d-spec-outer-bindings (other-var clause))))
-
-(defmethod initial-declarations nconc ((clause for-as-hash))
-  (d-spec-outer-declarations (var clause)))
-  
 (defmethod wrap-forms ((subclause for-as-hash) forms)
   `((with-hash-table-iterator
         (,(iterator-var subclause) ,(form-ref subclause))
@@ -750,12 +711,6 @@
     (setf (type-spec (var clause)) t))
   (check-type-spec (var clause)))
 
-(defmethod initial-bindings nconc ((clause for-as-package))
-  (d-spec-outer-bindings (var clause)))
-
-(defmethod initial-declarations nconc ((clause for-as-package))
-  (d-spec-outer-declarations (var clause)))
-  
 (defmethod wrap-forms ((subclause for-as-package) forms)
   `((with-package-iterator
         (,(iterator-var subclause)
@@ -843,12 +798,6 @@
 (defmethod analyze ((instance with-subclause))
   (check-type-spec (var instance)))
 
-(defmethod initial-bindings nconc ((clause with-subclause))
-  (d-spec-outer-bindings (var clause)))
-
 (defmethod wrap-forms ((subclause with-subclause-with-form) forms)
   (nconc (d-spec-inner-form (var subclause) (form-ref subclause))
          forms))
-
-(defmethod initial-declarations nconc ((clause with-subclause))
-  (d-spec-outer-declarations (var clause)))

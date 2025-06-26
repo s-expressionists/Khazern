@@ -6,10 +6,11 @@
 (defgeneric parse-clause (client scope name))
 
 (defgeneric map-variables (function clause)
-  (:method (function clause)
+  (:method-combination progn)
+  (:method progn (function clause)
     (declare (ignore function clause))
     nil)
-  (:method (function (clause cl:list))
+  (:method progn (function (clause cl:list))
     (mapc (lambda (subclause)
             (map-variables function subclause))
           clause)
