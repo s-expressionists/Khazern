@@ -25,7 +25,7 @@
     (declare (ignore clause))
     '()))
 
-(defgeneric bindings (clause)
+(defgeneric variable-list (clause)
   (:method-combination nconc)
   (:method nconc (clause)
     (declare (ignore clause))

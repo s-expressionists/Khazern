@@ -12,15 +12,14 @@
            #:add-simple-binding
            #:analyze
            #:begin-step-forms
-           #:bindings
            #:body-forms
            #:clause
            #:clause-group
            #:declarations
            #:define-interface
-           #:destructuring-bindings
            #:destructuring-declarations
            #:destructuring-set
+           #:destructuring-variable-list
            #:epilogue-forms
            #:expand-body
            #:finish-step-forms
@@ -37,4 +36,5 @@
            #:subclauses
            #:symbol-equal
            #:var
+           #:variable-list
            #:wrap-forms))

@@ -16,6 +16,7 @@
                              (:file "utilities")
                              (:file "conditions")
                              (:file "conditions-english")
+                             (:file "binding")
                              (:file "parser")
                              (:file "clause")
                              (:file "expansion")

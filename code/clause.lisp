@@ -47,8 +47,8 @@
 (defmethod map-variables progn (function (clause var-mixin))
   (map-variables function (var clause)))
 
-(defmethod bindings nconc ((clause var-mixin))
-  (destructuring-bindings (var clause)))
+(defmethod variable-list nconc ((clause var-mixin))
+  (destructuring-variable-list (var clause)))
 
 (defmethod declarations nconc ((clause var-mixin))
   (destructuring-declarations (var clause)))
@@ -60,8 +60,8 @@
 (defmethod map-variables progn (function (clause other-var-mixin))
   (map-variables function (other-var clause)))
 
-(defmethod bindings nconc ((clause other-var-mixin))
-  (destructuring-bindings (other-var clause)))
+(defmethod variable-list nconc ((clause other-var-mixin))
+  (destructuring-variable-list (other-var clause)))
 
 (defmethod declarations nconc ((clause other-var-mixin))
   (destructuring-declarations (other-var clause)))
@@ -130,13 +130,11 @@
         (setf (simple-bindings clause) (nconc (simple-bindings clause) (list binding)))
         (values ref binding))))
 
-(defmethod bindings nconc ((clause clause))
-  (mapcan (lambda (binding)
-            (d-spec-simple-bindings binding (form binding)))
-          (simple-bindings clause)))
+(defmethod variable-list nconc ((clause clause))
+  (mapcan #'simple-variable-list (simple-bindings clause)))
   
 (defmethod declarations nconc ((clause clause))
-  (mapcan #'d-spec-simple-declarations (simple-bindings clause)))
+  (mapcan #'simple-declarations (simple-bindings clause)))
   
 (defclass simple-superclause (clause)
   ((%subclauses :accessor subclauses
@@ -171,7 +169,7 @@
           (subclauses clause)))
 
 (defmethod wrap-forms ((clause sequential-superclause) forms)
-  (wrap-let* (mapcan #'bindings (subclauses clause))
+  (wrap-let* (mapcan #'variable-list (subclauses clause))
              (mapcan #'declarations (subclauses clause))
              (reduce #'wrap-forms (subclauses clause)
                      :from-end t :initial-value forms)))
@@ -190,7 +188,7 @@
           (subclauses clause)))
 
 (defmethod wrap-forms ((clause parallel-superclause) forms)
-  (wrap-let (mapcan #'bindings (subclauses clause))
+  (wrap-let (mapcan #'variable-list (subclauses clause))
             (mapcan #'declarations (subclauses clause))
             (reduce #'wrap-forms (subclauses clause)
                     :from-end t :initial-value forms)))

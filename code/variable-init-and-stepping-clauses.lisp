@@ -431,7 +431,6 @@
 (defmethod analyze ((clause for-as-equals-then))
   (when (eq (type-spec (var clause)) *placeholder-result*)
     (setf (type-spec (var clause)) t))
-  (set-d-spec-temps (var clause) t)
   (check-type-spec (var clause)))
 
 (defmethod begin-step-forms ((clause for-as-equals-then) initialp)
