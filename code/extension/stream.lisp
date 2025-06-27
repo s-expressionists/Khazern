@@ -81,13 +81,13 @@
 
 (defmethod khazern:begin-step-forms ((clause for-as-stream) initialp)
   (declare (ignore initialp))
-  `((when (eq ,(khazern::var-spec (temp-var clause)) ,(stream-ref clause))
+  `((when (eq ,(temp-ref clause) ,(stream-ref clause))
       (go ,khazern:*epilogue-tag*))))
 
 (defmethod khazern:finish-step-forms ((clause for-as-stream) initialp)
   (declare (ignore initialp))
   (khazern:destructuring-set (khazern:var clause)
-                             (khazern::var-spec (temp-var clause))))
+                             (temp-ref clause)))
 
 (defclass for-as-bytes (for-as-stream) ())
 
@@ -97,7 +97,7 @@
 
 (defmethod khazern:begin-step-forms :around ((clause for-as-bytes) initialp)
   (declare (ignore initialp))
-  (let ((temp-var (khazern::var-spec (temp-var clause)))
+  (let ((temp-var (temp-ref clause))
         (stream-ref (stream-ref clause)))
     (list* `(setq ,temp-var (read-byte ,stream-ref nil ,stream-ref))
            (call-next-method))))
@@ -110,7 +110,7 @@
 
 (defmethod khazern:begin-step-forms :around ((clause for-as-characters) initialp)
   (declare (ignore initialp))
-  (let ((temp-var (khazern::var-spec (temp-var clause)))
+  (let ((temp-var (temp-ref clause))
         (stream-ref (stream-ref clause)))
     (list* `(setq ,temp-var (read-char ,stream-ref nil ,stream-ref))
            (call-next-method))))
@@ -123,7 +123,7 @@
 
 (defmethod khazern:begin-step-forms :around ((clause for-as-objects) initialp)
   (declare (ignore initialp))
-  (let ((temp-var (khazern::var-spec (temp-var clause)))
+  (let ((temp-var (temp-ref clause))
         (stream-ref (stream-ref clause)))
     (list* `(setq ,temp-var (read ,stream-ref nil ,stream-ref))
            (call-next-method))))
@@ -145,7 +145,7 @@
 
 (defmethod khazern:begin-step-forms :around ((clause for-as-lines) initialp)
   (declare (ignore initialp))
-  (let ((temp-var (khazern::var-spec (temp-var clause)))
+  (let ((temp-var (temp-ref clause))
         (missing-newline-p-var (missing-newline-p-var clause))
         (stream-ref (stream-ref clause)))
     (list* `(multiple-value-setq (,temp-var ,missing-newline-p-var)
