@@ -315,7 +315,7 @@
         (mapc (lambda (binding)
                 (when (numberp (form binding))
                   (setf (form binding) (coerce (form binding) next-type))))
-              (bindings clause))
+              (simple-bindings clause))
         (when (numberp by-ref)
           (setf by-ref (coerce by-ref next-type)))
         (check-type-spec var)))))

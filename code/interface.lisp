@@ -19,13 +19,13 @@
 ;;; The purpose of this generic function is to extract a list of declaration specifiers from the
 ;;; clause.  Notice that it is a list of declaration specifiers, not a list of declarations.  In
 ;;; other words, the symbol DECLARE is omitted.
-(defgeneric initial-declarations (clause)
+(defgeneric declarations (clause)
   (:method-combination nconc)
   (:method nconc (clause)
     (declare (ignore clause))
     '()))
 
-(defgeneric initial-bindings (clause)
+(defgeneric bindings (clause)
   (:method-combination nconc)
   (:method nconc (clause)
     (declare (ignore clause))

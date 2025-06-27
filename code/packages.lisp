@@ -12,29 +12,27 @@
            #:add-simple-binding
            #:analyze
            #:begin-step-forms
+           #:bindings
            #:body-forms
            #:clause
            #:clause-group
-           #:copy-cons-cells
            #:d-spec
            #:d-spec-inner-assignments
            #:d-spec-inner-form
            #:d-spec-outer-bindings
            #:d-spec-outer-declarations
+           #:declarations
            #:define-interface
            #:epilogue-forms
            #:expand-body
            #:finish-step-forms
            #:for-as-iteration-path
-           #:initial-bindings
-           #:initial-declarations
            #:iteration-path-preposition
            #:iteration-path-preposition-names
            #:iteration-path-using
            #:iteration-path-using-names
            #:make-destructuring-binding
            #:make-iteration-path
-           #:make-simple-binding
            #:map-variables
            #:prologue-forms
            #:standard-client

@@ -96,7 +96,7 @@
   (when (eq (khazern::type-spec (khazern:var instance)) khazern::*placeholder-result*)
     (setf (khazern::type-spec (khazern:var instance)) t)))
 
-(defmethod khazern:initial-bindings nconc ((clause for-as-elements))
+(defmethod khazern:bindings nconc ((clause for-as-elements))
   (nconc (list (iterator-var clause)
                (limit-var clause))
          #+(or abcl clasp sbcl)
@@ -110,7 +110,7 @@
          (when (index-var clause)
            `((,(index-var clause) nil)))))
 
-(defmethod khazern:initial-declarations nconc ((clause for-as-elements))
+(defmethod khazern:declarations nconc ((clause for-as-elements))
   #+(or abcl clasp sbcl)
   `((ignorable ,(write-func clause) ,(index-func clause))))
 

@@ -47,10 +47,10 @@
 (defmethod map-variables progn (function (clause var-mixin))
   (map-variables function (var clause)))
 
-(defmethod initial-bindings nconc ((clause var-mixin))
+(defmethod bindings nconc ((clause var-mixin))
   (d-spec-outer-bindings (var clause)))
 
-(defmethod initial-declarations nconc ((clause var-mixin))
+(defmethod declarations nconc ((clause var-mixin))
   (d-spec-outer-declarations (var clause)))
 
 (defclass other-var-mixin ()
@@ -60,10 +60,10 @@
 (defmethod map-variables progn (function (clause other-var-mixin))
   (map-variables function (other-var clause)))
 
-(defmethod initial-bindings nconc ((clause other-var-mixin))
+(defmethod bindings nconc ((clause other-var-mixin))
   (d-spec-outer-bindings (other-var clause)))
 
-(defmethod initial-declarations nconc ((clause other-var-mixin))
+(defmethod declarations nconc ((clause other-var-mixin))
   (d-spec-outer-declarations (other-var clause)))
 
 (defclass compound-forms-mixin ()
@@ -105,8 +105,8 @@
    (%end :accessor end
          :initarg :end
          :type fixnum)
-   (%bindings :accessor bindings
-              :initform nil)))
+   (%simple-bindings :accessor simple-bindings
+                     :initform nil)))
 
 (defun add-simple-binding (clause
                            &key (var "FORM") (type t) accumulation-category (form nil formp)
@@ -127,33 +127,16 @@
                                                (deduce-initial-value type))
                                      :ignorable ignorablep
                                      :dynamic-extent dynamic-extent-p)))
-        (setf (bindings clause) (nconc (bindings clause) (list binding)))
+        (setf (simple-bindings clause) (nconc (simple-bindings clause) (list binding)))
         (values ref binding))))
 
-(defun add-destructuring-binding (clause
-                                  &key var (type t) ((:ignorable ignorablep) nil)
-                                       ((:dynamic-extent dynamic-extent-p) nil))
-  (let ((binding (make-instance 'simple-binding
-                                :var-spec var
-                                :type-spec type
-                                :ignorable ignorablep
-                                :dynamic-extent dynamic-extent-p)))
-    (setf (bindings clause) (nconc (bindings clause) (list binding)))
-    binding))
-
-(defmethod initial-bindings nconc ((clause clause))
+(defmethod bindings nconc ((clause clause))
   (mapcan (lambda (binding)
-            (if (typep binding 'simple-binding)
-                (d-spec-simple-bindings binding (form binding))
-                (d-spec-outer-bindings binding)))
-          (bindings clause)))
+            (d-spec-simple-bindings binding (form binding)))
+          (simple-bindings clause)))
   
-(defmethod initial-declarations nconc ((clause clause))
-  (mapcan (lambda (binding)
-            (if (typep binding 'simple-binding)
-                (d-spec-simple-declarations binding)
-                (d-spec-outer-declarations binding)))
-          (bindings clause)))
+(defmethod declarations nconc ((clause clause))
+  (mapcan #'d-spec-simple-declarations (simple-bindings clause)))
   
 (defclass simple-superclause (clause)
   ((%subclauses :accessor subclauses
@@ -188,8 +171,8 @@
           (subclauses clause)))
 
 (defmethod wrap-forms ((clause sequential-superclause) forms)
-  (wrap-let* (mapcan #'initial-bindings (subclauses clause))
-             (mapcan #'initial-declarations (subclauses clause))
+  (wrap-let* (mapcan #'bindings (subclauses clause))
+             (mapcan #'declarations (subclauses clause))
              (reduce #'wrap-forms (subclauses clause)
                      :from-end t :initial-value forms)))
 
@@ -207,8 +190,8 @@
           (subclauses clause)))
 
 (defmethod wrap-forms ((clause parallel-superclause) forms)
-  (wrap-let (mapcan #'initial-bindings (subclauses clause))
-            (mapcan #'initial-declarations (subclauses clause))
+  (wrap-let (mapcan #'bindings (subclauses clause))
+            (mapcan #'declarations (subclauses clause))
             (reduce #'wrap-forms (subclauses clause)
                     :from-end t :initial-value forms)))
 
