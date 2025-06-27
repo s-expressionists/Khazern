@@ -16,13 +16,11 @@
            #:body-forms
            #:clause
            #:clause-group
-           #:d-spec
-           #:d-spec-inner-assignments
-           #:d-spec-inner-form
-           #:d-spec-outer-bindings
-           #:d-spec-outer-declarations
            #:declarations
            #:define-interface
+           #:destructuring-bindings
+           #:destructuring-declarations
+           #:destructuring-set
            #:epilogue-forms
            #:expand-body
            #:finish-step-forms

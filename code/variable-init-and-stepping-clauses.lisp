@@ -22,8 +22,7 @@
   ())
 
 (defun parse-for-as (client)
-  (prog ((instance (make-instance 'for-as-clause
-                                  :start *start*))
+  (prog ((instance (make-instance 'for-as-clause :start *start*))
          subclauses
          var
          start)
@@ -167,7 +166,7 @@
    (%end-ref :accessor end-ref
              :initform nil)
    (%end-var :accessor end-var
-            :initform nil)
+             :initform nil)
    (%by-ref :accessor by-ref
             :initform 1)
    (%by-var :accessor by-var
@@ -183,8 +182,8 @@
                       :initarg :termination-test
                       :initform nil))
   (:default-initargs :preposition-names (list :from :upfrom :downfrom
-                                              :to :upto :downto :above
-                                              :below :by)))
+                                                    :to :upto :downto :above
+                                                    :below :by)))
 
 (defclass for-as-arithmetic-up (for-as-arithmetic)
   ())
@@ -207,21 +206,21 @@
   (ecase name
     ((:to :upto :downto :above :below)
      (setf (values (end-ref instance) (end-var instance))
-               (add-simple-binding instance :var "END" :type 'number :form value :fold t)
+           (add-simple-binding instance :var "END" :type 'number :form value :fold t)
            (iteration-path-preposition-names instance)
-               (nset-difference (iteration-path-preposition-names instance)
-                                +to-keywords+)))
+           (nset-difference (iteration-path-preposition-names instance)
+                            +to-keywords+)))
     ((:from :downfrom :upfrom)
      (setf (values (next-ref instance) (next-var instance))
-               (add-simple-binding instance :var "NEXT" :type 'number :form value)
+           (add-simple-binding instance :var "NEXT" :type 'number :form value)
            (iteration-path-preposition-names instance)
-               (nset-difference (iteration-path-preposition-names instance)
-                                +from-keywords+)))
+           (nset-difference (iteration-path-preposition-names instance)
+                            +from-keywords+)))
     (:by
      (setf (values (by-ref instance) (by-var instance))
-               (add-simple-binding instance :var "BY" :type 'number :form value :fold t)
+           (add-simple-binding instance :var "BY" :type 'number :form value :fold t)
            (iteration-path-preposition-names instance)
-               (delete :by (iteration-path-preposition-names instance)))))
+           (delete :by (iteration-path-preposition-names instance)))))
   ;; set the termination test
   (case name
     ((:to :upto :downto)
@@ -319,7 +318,7 @@
         (when (numberp by-ref)
           (setf by-ref (coerce by-ref next-type)))
         (check-type-spec var)))))
- 
+
 (defmethod begin-step-forms ((clause for-as-arithmetic-up) initialp)
   (nconc (unless initialp
            `((incf ,(var-spec (next-var clause)) ,(by-ref clause))))
@@ -386,23 +385,21 @@
   (declare (ignore initialp))
   (nconc (call-next-method)
          `((when (endp ,(rest-var clause))
-             (go ,*epilogue-tag*)))
-         (d-spec-prep-assignments (var clause) `(car ,(rest-var clause)))))
+             (go ,*epilogue-tag*)))))
 
 (defmethod finish-step-forms ((clause for-as-in-list) initialp)
   (declare (ignore initialp))
-  (d-spec-inner-assignments (var clause) `(car ,(rest-var clause))))
+  (destructuring-set (var clause) `(car ,(rest-var clause))))
 
 (defmethod begin-step-forms :around ((clause for-as-on-list) initialp)
   (declare (ignore initialp))
   (nconc (call-next-method)
          `((when (atom ,(rest-var clause))
-             (go ,*epilogue-tag*)))
-         (d-spec-prep-assignments (var clause) (rest-var clause))))
+             (go ,*epilogue-tag*)))))
 
 (defmethod finish-step-forms ((clause for-as-on-list) initialp)
   (declare (ignore initialp))
-  (d-spec-inner-assignments (var clause) (rest-var clause)))
+  (destructuring-set (var clause) (rest-var clause)))
 
 ;;; 6.1.2.1.4 FOR-AS-EQUALS-THEN subclause
 ;;;
@@ -411,10 +408,15 @@
 ;;;   for-as-equals-then := var [type-spec] = form [THEN form2]
 
 (defclass for-as-equals-then (for-as-subclause)
-  ((%initial-form :reader initial-form
+  ((%temp-ref :accessor temp-ref)
+   (%initial-form :reader initial-form
                   :initarg :initial-form)
    (%subsequent-form :reader subsequent-form
                      :initarg :subsequent-form)))
+
+(defmethod initialize-instance :after ((instance for-as-equals-then) &rest initargs &key)
+  (declare (ignore initargs))
+  (setf (temp-ref instance) (add-simple-binding instance :var "TMP")))
 
 (defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :=)))
   (let ((initial-form (pop-token)))
@@ -433,16 +435,12 @@
   (check-type-spec (var clause)))
 
 (defmethod begin-step-forms ((clause for-as-equals-then) initialp)
-  (d-spec-prep-assignments (var clause)
-                           (if initialp
-                               (initial-form clause)
-                               (subsequent-form clause))))
+  `((setq ,(temp-ref clause) ,(if initialp
+                                  (initial-form clause)
+                                  (subsequent-form clause)))))
 
 (defmethod finish-step-forms ((clause for-as-equals-then) initialp)
-  (d-spec-inner-assignments (var clause)
-                            (if initialp
-                                (initial-form clause)
-                                (subsequent-form clause))))
+  (destructuring-set (var clause) (temp-ref clause)))
 
 ;;; 6.1.2.1.5 FOR-AS-ACROSS subclause
 ;;;
@@ -470,16 +468,15 @@
     instance))
 
 (defmethod begin-step-forms ((clause for-as-across) initialp)
-  (list* (if initialp
-             `(setq ,(length-ref clause) (length ,(form-ref clause)))
-             `(incf ,(index-ref clause)))
-         `(when (>= ,(index-ref clause) ,(length-ref clause))
-            (go ,*epilogue-tag*))
-         (d-spec-prep-assignments (var clause) `(aref ,(form-ref clause) ,(index-ref clause)))))
+  `(,(if initialp
+         `(setq ,(length-ref clause) (length ,(form-ref clause)))
+         `(incf ,(index-ref clause)))
+    (when (>= ,(index-ref clause) ,(length-ref clause))
+      (go ,*epilogue-tag*))))
 
 (defmethod finish-step-forms ((clause for-as-across) initialp)
   (declare (ignore initialp))
-  (d-spec-inner-assignments (var clause) `(aref ,(form-ref clause) ,(index-ref clause))))
+  (destructuring-set (var clause) `(aref ,(form-ref clause) ,(index-ref clause))))
 
 ;;; 6.1.2.1.6 FOR-AS-HASH Subclause
 ;;;
@@ -601,35 +598,19 @@
     (unless ,(temp-entry-p-var clause)
       (go ,*epilogue-tag*))))
 
-(defmethod begin-step-forms :around ((clause for-as-hash-key) initialp)
-  (declare (ignore initialp))
-  (nconc (call-next-method)
-         (d-spec-prep-assignments (var clause)
-                                  (temp-key-var clause))
-         (d-spec-prep-assignments (other-var clause)
-                                  (temp-value-var clause))))
-
-(defmethod begin-step-forms :around ((clause for-as-hash-value) initialp)
-  (declare (ignore initialp))
-  (nconc (call-next-method)
-         (d-spec-prep-assignments (var clause)
-                                  (temp-value-var clause))
-         (d-spec-prep-assignments (other-var clause)
-                                  (temp-key-var clause))))
-
 (defmethod finish-step-forms ((clause for-as-hash-key) initialp)
   (declare (ignore initialp))
-  (nconc (d-spec-inner-assignments (var clause)
-                                   (temp-key-var clause))
-         (d-spec-inner-assignments (other-var clause)
-                                   (temp-value-var clause))))
+  (nconc (destructuring-set (var clause)
+                            (temp-key-var clause))
+         (destructuring-set (other-var clause)
+                            (temp-value-var clause))))
 
 (defmethod finish-step-forms ((clause for-as-hash-value) initialp)
   (declare (ignore initialp))
-  (nconc (d-spec-inner-assignments (var clause)
-                                   (temp-value-var clause))
-         (d-spec-inner-assignments (other-var clause)
-                                   (temp-key-var clause))))
+  (nconc (destructuring-set (var clause)
+                            (temp-value-var clause))
+         (destructuring-set (other-var clause)
+                            (temp-key-var clause))))
 
 ;;; 6.1.2.1.7 FOR-AS-PACKAGE Subclause
 ;;;
@@ -723,7 +704,7 @@
   (setf (iteration-path-preposition-names instance) nil
         (form-ref instance) (add-simple-binding instance :var "PKG" :form expression
                                                          :type '(or character string symbol
-                                                                    package)))
+                                                                 package)))
   expression)
 
 (defmethod analyze ((clause for-as-package))
@@ -744,14 +725,12 @@
                           ,(temp-symbol-var clause))
       (,(iterator-var clause)))
     (unless ,(temp-entry-p-var clause)
-      (go ,*epilogue-tag*))
-    ,@(d-spec-prep-assignments (var clause)
-                               (temp-symbol-var clause))))
+      (go ,*epilogue-tag*))))
 
 (defmethod finish-step-forms ((clause for-as-package) initialp)
   (declare (ignore initialp))
-  (d-spec-inner-assignments (var clause)
-                            (temp-symbol-var clause)))
+  (destructuring-set (var clause)
+                     (temp-symbol-var clause)))
 
 ;;; 6.1.2.2 WITH clause
 ;;;
@@ -798,7 +777,7 @@
 (defmethod parse-clause
     ((client standard-client) (scope extended-superclause) (keyword (eql :with)))
   (prog ((instance (make-instance 'with-clause
-                                  :start *start*))
+                    :start *start*))
          subclause
          subclauses
          *start*)
@@ -822,5 +801,5 @@
   (check-type-spec (var instance)))
 
 (defmethod wrap-forms ((subclause with-subclause-with-form) forms)
-  (nconc (d-spec-inner-form (var subclause) (form-ref subclause))
+  (nconc (destructuring-set (var subclause) (form-ref subclause))
          forms))

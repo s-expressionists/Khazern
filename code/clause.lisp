@@ -48,10 +48,10 @@
   (map-variables function (var clause)))
 
 (defmethod bindings nconc ((clause var-mixin))
-  (d-spec-outer-bindings (var clause)))
+  (destructuring-bindings (var clause)))
 
 (defmethod declarations nconc ((clause var-mixin))
-  (d-spec-outer-declarations (var clause)))
+  (destructuring-declarations (var clause)))
 
 (defclass other-var-mixin ()
   ((%other-var :accessor other-var
@@ -61,10 +61,10 @@
   (map-variables function (other-var clause)))
 
 (defmethod bindings nconc ((clause other-var-mixin))
-  (d-spec-outer-bindings (other-var clause)))
+  (destructuring-bindings (other-var clause)))
 
 (defmethod declarations nconc ((clause other-var-mixin))
-  (d-spec-outer-declarations (other-var clause)))
+  (destructuring-declarations (other-var clause)))
 
 (defclass compound-forms-mixin ()
   ((%forms :accessor forms

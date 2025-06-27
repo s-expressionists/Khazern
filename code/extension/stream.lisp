@@ -81,16 +81,13 @@
 
 (defmethod khazern:begin-step-forms ((clause for-as-stream) initialp)
   (declare (ignore initialp))
-  (let ((temp-var (khazern::var-spec (temp-var clause)))
-        (stream-ref (stream-ref clause)))
-    (nconc `((when (eq ,temp-var ,stream-ref)
-               (go ,khazern:*epilogue-tag*)))
-           (khazern::d-spec-prep-assignments (khazern:var clause) temp-var))))
+  `((when (eq ,(khazern::var-spec (temp-var clause)) ,(stream-ref clause))
+      (go ,khazern:*epilogue-tag*))))
 
 (defmethod khazern:finish-step-forms ((clause for-as-stream) initialp)
   (declare (ignore initialp))
-  (khazern::d-spec-inner-assignments (khazern:var clause)
-                                     (khazern::var-spec (temp-var clause))))
+  (khazern:destructuring-set (khazern:var clause)
+                             (khazern::var-spec (temp-var clause))))
 
 (defclass for-as-bytes (for-as-stream) ())
 

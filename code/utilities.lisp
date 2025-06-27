@@ -169,8 +169,6 @@
                (cond ((null d-var-spec)
                       nil)
                      ((symbolp d-var-spec)
-                      (when temp-var-p
-                        (setf (gethash d-var-spec temps) (gensym "TMP")))
                       t)
                      ((not (consp d-var-spec))
                       (error 'expected-var-spec-but-found
@@ -180,19 +178,18 @@
                             (cdr-p (traverse (cdr d-var-spec))))
                         (when (and car-p cdr-p)
                           (setf (gethash d-var-spec temps) (gensym "DE")))
-                          (or car-p cdr-p))))))
+                        (or car-p cdr-p))))))
       (traverse (var-spec d-spec))
       (setf (temps d-spec) temps))))
 
-(defmethod initialize-instance :after
-    ((clause destructuring-binding) &rest initargs &key ((:temp-var temp-var-p) nil))
+(defmethod initialize-instance :after ((clause destructuring-binding) &rest initargs &key)
   (declare (ignore initargs))
-  (set-d-spec-temps clause temp-var-p))
+  (set-d-spec-temps clause))
 
 (defun make-simple-binding (name
                             &key (type t) form ((:ignorable ignorablep) nil)
-                                 accumulation-category
-                                 ((:dynamic-extent dynamic-extent-p) nil))
+                              accumulation-category
+                              ((:dynamic-extent dynamic-extent-p) nil))
   (make-instance 'simple-binding
                  :var-spec (if (symbolp name)
                                name
@@ -205,23 +202,21 @@
 
 (defun make-destructuring-binding (spec
                                    &key (type t) ((:ignorable ignorablep) nil)
-                                        ((:dynamic-extent dynamic-extent-p) nil))
+                                     ((:dynamic-extent dynamic-extent-p) nil))
   (make-instance 'destructuring-binding
                  :var-spec spec
                  :type-spec type
                  :ignorable ignorablep
                  :dynamic-extent dynamic-extent-p))
 
-(defun d-spec-prep-assignments (d-spec form)
+(defun destructuring-set (d-spec form)
   (let ((assignments '())
         (temps (temps d-spec)))
     (labels ((traverse (d-var-spec form)
                (cond ((null d-var-spec))
                      ((symbolp d-var-spec)
-                      (let ((temp (gethash d-var-spec temps)))
-                        (when temp
-                          (push temp assignments)
-                          (push form assignments))))
+                      (push d-var-spec assignments)
+                      (push form assignments))
                      ((not (consp d-var-spec))
                       (error 'expected-var-spec-but-found
                              :found d-var-spec))
@@ -238,33 +233,6 @@
       (traverse (var-spec d-spec) form)
       (when assignments
         `((setq ,.(nreverse assignments)))))))
-
-(defun d-spec-inner-assignments (d-spec form)
-  (let ((assignments '())
-        (temps (temps d-spec)))
-    (labels ((traverse (d-var-spec form)
-               (cond ((null d-var-spec))
-                     ((symbolp d-var-spec)
-                      (push d-var-spec assignments)
-                      (push (or (gethash d-var-spec temps) form) assignments))
-                     ((not (consp d-var-spec))
-                      (error 'expected-var-spec-but-found
-                             :found d-var-spec))
-                     (t
-                      (let ((temp (gethash d-var-spec temps)))
-                        (cond (temp
-                               (traverse (car d-var-spec) `(car ,temp))
-                               (traverse (cdr d-var-spec) `(cdr ,temp)))
-                              (t
-                               (traverse (car d-var-spec) `(car ,form))
-                               (traverse (cdr d-var-spec) `(cdr ,form)))))))))
-      (traverse (var-spec d-spec) form)
-      (when assignments
-        `((setq ,.(nreverse assignments)))))))
-
-(defun d-spec-inner-form (d-spec form)
-  (nconc (d-spec-prep-assignments d-spec form)
-         (d-spec-inner-assignments d-spec form)))
 
 (defmethod map-variables progn (function (d-spec binding))
   (labels ((traverse (var-spec type-spec)
@@ -319,7 +287,7 @@
     (setf (type-spec instance)
           (traverse (var-spec instance) (type-spec instance)))))
 
-(defun d-spec-outer-declarations
+(defun destructuring-declarations
     (d-spec)
   (let ((result '())
         (variables '()))
@@ -336,7 +304,7 @@
       (push `(dynamic-extent ,@variables) result))
     (nreverse result)))
 
-(defun d-spec-outer-bindings (d-spec)
+(defun destructuring-bindings (d-spec)
   (let ((result '()))
     (map-variables (lambda (var type category)
                      (declare (ignore category))
@@ -360,9 +328,9 @@
       (when var-spec
         (unless (eq type-spec t)
           (push `(type ,(if nullablep
-                             (type-or-null type-spec)
-                             type-spec)
-                          ,var-spec)
+                            (type-or-null type-spec)
+                            type-spec)
+                       ,var-spec)
                 decl))
         (when ignorablep
           (push `(ignorable ,var-spec) decl))
