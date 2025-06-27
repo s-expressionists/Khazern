@@ -79,25 +79,31 @@
             (close ,(stream-ref clause)))))
       forms))
 
+(defmethod khazern:begin-step-forms ((clause for-as-stream) initialp)
+  (declare (ignore initialp))
+  (let ((temp-var (khazern::var-spec (temp-var clause)))
+        (stream-ref (stream-ref clause)))
+    (nconc `((when (eq ,temp-var ,stream-ref)
+               (go ,khazern:*epilogue-tag*)))
+           (khazern::d-spec-prep-assignments (khazern:var clause) temp-var))))
+
+(defmethod khazern:finish-step-forms ((clause for-as-stream) initialp)
+  (declare (ignore initialp))
+  (khazern::d-spec-inner-assignments (khazern:var clause)
+                                     (khazern::var-spec (temp-var clause))))
+
 (defclass for-as-bytes (for-as-stream) ())
 
 (defmethod khazern:analyze ((instance for-as-bytes))
   (when (eq (khazern::type-spec (khazern:var instance)) khazern::*placeholder-result*)
     (setf (khazern::type-spec (khazern:var instance)) 'integer)))
 
-(defun for-as-bytes/step (clause)
+(defmethod khazern:begin-step-forms :around ((clause for-as-bytes) initialp)
+  (declare (ignore initialp))
   (let ((temp-var (khazern::var-spec (temp-var clause)))
         (stream-ref (stream-ref clause)))
-    `((setq ,temp-var (read-byte ,stream-ref nil ,stream-ref))
-      (when (eq ,temp-var ,stream-ref)
-        (go ,khazern:*epilogue-tag*))
-      ,@(khazern:d-spec-inner-form (khazern:var clause) temp-var))))
-
-(defmethod khazern:initial-step-forms ((clause for-as-bytes))
-  (for-as-bytes/step clause))
-
-(defmethod khazern:subsequent-step-forms ((clause for-as-bytes))
-  (for-as-bytes/step clause))
+    (list* `(setq ,temp-var (read-byte ,stream-ref nil ,stream-ref))
+           (call-next-method))))
 
 (defclass for-as-characters (for-as-stream) ())
 
@@ -105,19 +111,12 @@
   (when (eq (khazern::type-spec (khazern:var instance)) khazern::*placeholder-result*)
     (setf (khazern::type-spec (khazern:var instance)) 'character)))
 
-(defun for-as-characters/step (clause)
+(defmethod khazern:begin-step-forms :around ((clause for-as-characters) initialp)
+  (declare (ignore initialp))
   (let ((temp-var (khazern::var-spec (temp-var clause)))
         (stream-ref (stream-ref clause)))
-    `((setq ,temp-var (read-char ,stream-ref nil ,stream-ref))
-      (when (eq ,temp-var ,stream-ref)
-        (go ,khazern:*epilogue-tag*))
-      ,@(khazern:d-spec-inner-form (khazern:var clause) temp-var))))
-
-(defmethod khazern:initial-step-forms ((clause for-as-characters))
-  (for-as-characters/step clause))
-
-(defmethod khazern:subsequent-step-forms ((clause for-as-characters))
-  (for-as-characters/step clause))
+    (list* `(setq ,temp-var (read-char ,stream-ref nil ,stream-ref))
+           (call-next-method))))
 
 (defclass for-as-objects (for-as-stream) ())
 
@@ -125,19 +124,12 @@
   (when (eq (khazern::type-spec (khazern:var instance)) khazern::*placeholder-result*)
     (setf (khazern::type-spec (khazern:var instance)) t)))
 
-(defun for-as-objects/step (clause)
+(defmethod khazern:begin-step-forms :around ((clause for-as-objects) initialp)
+  (declare (ignore initialp))
   (let ((temp-var (khazern::var-spec (temp-var clause)))
         (stream-ref (stream-ref clause)))
-    `((setq ,temp-var (read ,stream-ref nil ,stream-ref))
-      (when (eq ,temp-var ,stream-ref)
-        (go ,khazern:*epilogue-tag*))
-      ,@(khazern:d-spec-inner-form (khazern:var clause) temp-var))))
-
-(defmethod khazern:initial-step-forms ((clause for-as-objects))
-  (for-as-objects/step clause))
-
-(defmethod khazern:subsequent-step-forms ((clause for-as-objects))
-  (for-as-objects/step clause))
+    (list* `(setq ,temp-var (read ,stream-ref nil ,stream-ref))
+           (call-next-method))))
 
 (defclass for-as-lines (for-as-stream)
   ((%missing-newline-p-var :accessor missing-newline-p-var
@@ -154,18 +146,11 @@
   (when (eq (khazern::type-spec (khazern:var instance)) khazern::*placeholder-result*)
     (setf (khazern::type-spec (khazern:var instance)) 'string)))
 
-(defun for-as-lines/step (clause)
+(defmethod khazern:begin-step-forms :around ((clause for-as-lines) initialp)
+  (declare (ignore initialp))
   (let ((temp-var (khazern::var-spec (temp-var clause)))
         (missing-newline-p-var (missing-newline-p-var clause))
         (stream-ref (stream-ref clause)))
-    `((multiple-value-setq (,temp-var ,missing-newline-p-var)
-        (read-line ,stream-ref nil ,stream-ref))
-      (when (eq ,temp-var ,stream-ref)
-        (go ,khazern:*epilogue-tag*))
-      ,@(khazern:d-spec-inner-form (khazern:var clause) temp-var))))
-
-(defmethod khazern:initial-step-forms ((clause for-as-lines))
-  (for-as-lines/step clause))
-
-(defmethod khazern:subsequent-step-forms ((clause for-as-lines))
-  (for-as-lines/step clause))
+    (list* `(multiple-value-setq (,temp-var ,missing-newline-p-var)
+              (read-line ,stream-ref nil ,stream-ref))
+           (call-next-method))))

@@ -320,31 +320,28 @@
           (setf by-ref (coerce by-ref next-type)))
         (check-type-spec var)))))
  
-(defmethod initial-step-forms ((clause for-as-arithmetic-up))
-  (nconc (when (termination-test clause)
+(defmethod begin-step-forms ((clause for-as-arithmetic-up) initialp)
+  (nconc (unless initialp
+           `((incf ,(var-spec (next-var clause)) ,(by-ref clause))))
+         (when (termination-test clause)
            `((unless (,(termination-test clause)
                       ,(next-ref clause)
                       ,(end-ref clause))
-               (go ,*epilogue-tag*))))
-         (when (var-spec (var clause))
-           `((setq ,(var-spec (var clause)) ,(var-spec (next-var clause)))))))
+               (go ,*epilogue-tag*))))))
 
-(defmethod initial-step-forms ((clause for-as-arithmetic-down))
-  (nconc (when (termination-test clause)
+(defmethod begin-step-forms ((clause for-as-arithmetic-down) initialp)
+  (nconc (unless initialp
+           `((decf ,(var-spec (next-var clause)) ,(by-ref clause))))
+         (when (termination-test clause)
            `((unless (,(termination-test clause)
                       ,(end-ref clause)
                       ,(next-ref clause))
-               (go ,*epilogue-tag*))))
-         (when (var-spec (var clause))
-           `((setq ,(var-spec (var clause)) ,(var-spec (next-var clause)))))))
+               (go ,*epilogue-tag*))))))
 
-(defmethod subsequent-step-forms ((clause for-as-arithmetic-up))
-  (nconc `((incf ,(var-spec (next-var clause)) ,(by-ref clause)))
-         (initial-step-forms clause)))
-
-(defmethod subsequent-step-forms ((clause for-as-arithmetic-down))
-  (nconc `((decf ,(var-spec (next-var clause)) ,(by-ref clause)))
-         (initial-step-forms clause)))
+(defmethod finish-step-forms ((clause for-as-arithmetic) initialp)
+  (declare (ignore initialp))
+  (when (var-spec (var clause))
+    `((setq ,(var-spec (var clause)) ,(var-spec (next-var clause))))))
 
 ;;; 6.1.2.1.2/6.1.2.1.3 FOR-AS-IN-LIST/FOR-AS-ON-LIST subclauses
 ;;;
@@ -378,22 +375,34 @@
 (defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :on)))
   (parse-for-as-list (make-instance 'for-as-on-list :start *start*)))
 
-(defmethod initial-step-forms ((clause for-as-in-list))
-  `((when (endp ,(rest-var clause))
-      (go ,*epilogue-tag*))
-    ,@(d-spec-inner-form (var clause) `(car ,(rest-var clause)))))
+(defmethod begin-step-forms ((clause for-as-list) initialp)
+  (unless initialp
+    `((setq ,(rest-var clause)
+            ,(if (function-operator-p (by-ref clause))
+                 `(,(second (by-ref clause)) ,(rest-var clause))
+                 `(funcall ,(by-ref clause) ,(rest-var clause)))))))
 
-(defmethod initial-step-forms ((clause for-as-on-list))
-  `((when (atom ,(rest-var clause))
-      (go ,*epilogue-tag*))
-    ,@(d-spec-inner-form (var clause) (rest-var clause))))
+(defmethod begin-step-forms :around ((clause for-as-in-list) initialp)
+  (declare (ignore initialp))
+  (nconc (call-next-method)
+         `((when (endp ,(rest-var clause))
+             (go ,*epilogue-tag*)))
+         (d-spec-prep-assignments (var clause) `(car ,(rest-var clause)))))
 
-(defmethod subsequent-step-forms ((clause for-as-list))
-  `((setq ,(rest-var clause)
-          ,(if (function-operator-p (by-ref clause))
-               `(,(second (by-ref clause)) ,(rest-var clause))
-               `(funcall ,(by-ref clause) ,(rest-var clause))))
-    ,@(initial-step-forms clause)))
+(defmethod finish-step-forms ((clause for-as-in-list) initialp)
+  (declare (ignore initialp))
+  (d-spec-inner-assignments (var clause) `(car ,(rest-var clause))))
+
+(defmethod begin-step-forms :around ((clause for-as-on-list) initialp)
+  (declare (ignore initialp))
+  (nconc (call-next-method)
+         `((when (atom ,(rest-var clause))
+             (go ,*epilogue-tag*)))
+         (d-spec-prep-assignments (var clause) (rest-var clause))))
+
+(defmethod finish-step-forms ((clause for-as-on-list) initialp)
+  (declare (ignore initialp))
+  (d-spec-inner-assignments (var clause) (rest-var clause)))
 
 ;;; 6.1.2.1.4 FOR-AS-EQUALS-THEN subclause
 ;;;
@@ -423,17 +432,17 @@
   (set-d-spec-temps (var clause) t)
   (check-type-spec (var clause)))
 
-(defmethod initial-step-bindings ((clause for-as-equals-then))
-  (d-spec-inner-bindings (var clause) (initial-form clause)))
+(defmethod begin-step-forms ((clause for-as-equals-then) initialp)
+  (d-spec-prep-assignments (var clause)
+                           (if initialp
+                               (initial-form clause)
+                               (subsequent-form clause))))
 
-(defmethod initial-step-forms ((clause for-as-equals-then))
-  `((setq ,@(d-spec-inner-assignments (var clause) (initial-form clause)))))
-
-(defmethod subsequent-step-bindings ((clause for-as-equals-then))
-  (d-spec-inner-bindings (var clause) (subsequent-form clause)))
-
-(defmethod subsequent-step-forms ((clause for-as-equals-then))
-  `((setq ,@(d-spec-inner-assignments (var clause) (subsequent-form clause)))))
+(defmethod finish-step-forms ((clause for-as-equals-then) initialp)
+  (d-spec-inner-assignments (var clause)
+                            (if initialp
+                                (initial-form clause)
+                                (subsequent-form clause))))
 
 ;;; 6.1.2.1.5 FOR-AS-ACROSS subclause
 ;;;
@@ -460,20 +469,17 @@
           (end instance) *index*)
     instance))
 
-(defmethod initial-step-forms ((clause for-as-across))
-  `((setq ,(length-ref clause) (length ,(form-ref clause)))
-    (when (>= ,(index-ref clause) ,(length-ref clause))
-      (go ,*epilogue-tag*))
-    ,@(d-spec-inner-form (var clause)
-                         `(aref ,(form-ref clause)
-                                ,(index-ref clause)))))
+(defmethod begin-step-forms ((clause for-as-across) initialp)
+  (list* (if initialp
+             `(setq ,(length-ref clause) (length ,(form-ref clause)))
+             `(incf ,(index-ref clause)))
+         `(when (>= ,(index-ref clause) ,(length-ref clause))
+            (go ,*epilogue-tag*))
+         (d-spec-prep-assignments (var clause) `(aref ,(form-ref clause) ,(index-ref clause)))))
 
-(defmethod subsequent-step-forms ((clause for-as-across))
-  `((when (>= (incf ,(index-ref clause)) ,(length-ref clause))
-      (go ,*epilogue-tag*))
-    ,@(d-spec-inner-form (var clause)
-                         `(aref ,(form-ref clause)
-                                ,(index-ref clause)))))
+(defmethod finish-step-forms ((clause for-as-across) initialp)
+  (declare (ignore initialp))
+  (d-spec-inner-assignments (var clause) `(aref ,(form-ref clause) ,(index-ref clause))))
 
 ;;; 6.1.2.1.6 FOR-AS-HASH Subclause
 ;;;
@@ -586,7 +592,8 @@
         (,(iterator-var subclause) ,(form-ref subclause))
       ,@forms)))
 
-(defmethod initial-step-forms ((clause for-as-hash))
+(defmethod begin-step-forms ((clause for-as-hash) initialp)
+  (declare (ignore initialp))
   `((multiple-value-setq (,(temp-entry-p-var clause)
                           ,(temp-key-var clause)
                           ,(temp-value-var clause))
@@ -594,22 +601,35 @@
     (unless ,(temp-entry-p-var clause)
       (go ,*epilogue-tag*))))
 
-(defmethod initial-step-forms :around ((clause for-as-hash-key))
+(defmethod begin-step-forms :around ((clause for-as-hash-key) initialp)
+  (declare (ignore initialp))
   (nconc (call-next-method)
-         (d-spec-inner-form (var clause)
-                            (temp-key-var clause))
-         (d-spec-inner-form (other-var clause)
-                            (temp-value-var clause))))
+         (d-spec-prep-assignments (var clause)
+                                  (temp-key-var clause))
+         (d-spec-prep-assignments (other-var clause)
+                                  (temp-value-var clause))))
 
-(defmethod initial-step-forms :around ((clause for-as-hash-value))
+(defmethod begin-step-forms :around ((clause for-as-hash-value) initialp)
+  (declare (ignore initialp))
   (nconc (call-next-method)
-         (d-spec-inner-form (var clause)
-                            (temp-value-var clause))
-         (d-spec-inner-form (other-var clause)
-                            (temp-key-var clause))))
+         (d-spec-prep-assignments (var clause)
+                                  (temp-value-var clause))
+         (d-spec-prep-assignments (other-var clause)
+                                  (temp-key-var clause))))
 
-(defmethod subsequent-step-forms ((clause for-as-hash))
-  (initial-step-forms clause))
+(defmethod finish-step-forms ((clause for-as-hash-key) initialp)
+  (declare (ignore initialp))
+  (nconc (d-spec-inner-assignments (var clause)
+                                   (temp-key-var clause))
+         (d-spec-inner-assignments (other-var clause)
+                                   (temp-value-var clause))))
+
+(defmethod finish-step-forms ((clause for-as-hash-value) initialp)
+  (declare (ignore initialp))
+  (nconc (d-spec-inner-assignments (var clause)
+                                   (temp-value-var clause))
+         (d-spec-inner-assignments (other-var clause)
+                                   (temp-key-var clause))))
 
 ;;; 6.1.2.1.7 FOR-AS-PACKAGE Subclause
 ;;;
@@ -718,17 +738,20 @@
          ,@(iterator-keywords subclause))
       ,@forms)))
 
-(defmethod initial-step-forms ((clause for-as-package))
+(defmethod begin-step-forms ((clause for-as-package) initialp)
+  (declare (ignore initialp))
   `((multiple-value-setq (,(temp-entry-p-var clause)
                           ,(temp-symbol-var clause))
       (,(iterator-var clause)))
     (unless ,(temp-entry-p-var clause)
       (go ,*epilogue-tag*))
-    ,@(d-spec-inner-form (var clause)
-                         (temp-symbol-var clause))))
+    ,@(d-spec-prep-assignments (var clause)
+                               (temp-symbol-var clause))))
 
-(defmethod subsequent-step-forms ((clause for-as-package))
-  (initial-step-forms clause))
+(defmethod finish-step-forms ((clause for-as-package) initialp)
+  (declare (ignore initialp))
+  (d-spec-inner-assignments (var clause)
+                            (temp-symbol-var clause)))
 
 ;;; 6.1.2.2 WITH clause
 ;;;

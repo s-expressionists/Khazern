@@ -11,25 +11,23 @@
            #:accumulation-category
            #:add-simple-binding
            #:analyze
+           #:begin-step-forms
            #:body-forms
            #:clause
            #:clause-group
            #:copy-cons-cells
            #:d-spec
            #:d-spec-inner-assignments
-           #:d-spec-inner-bindings
            #:d-spec-inner-form
            #:d-spec-outer-bindings
            #:d-spec-outer-declarations
            #:define-interface
            #:epilogue-forms
            #:expand-body
+           #:finish-step-forms
            #:for-as-iteration-path
            #:initial-bindings
            #:initial-declarations
-           #:initial-step-bindings
-           #:initial-step-declarations
-           #:initial-step-forms
            #:iteration-path-preposition
            #:iteration-path-preposition-names
            #:iteration-path-using
@@ -41,9 +39,6 @@
            #:prologue-forms
            #:standard-client
            #:subclauses
-           #:subsequent-step-bindings
-           #:subsequent-step-declarations
-           #:subsequent-step-forms
            #:symbol-equal
            #:var
            #:wrap-forms))

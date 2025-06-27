@@ -61,10 +61,8 @@
 (defmethod body-forms ((clause repeat-clause))
   (expand-repeat clause :main))
 
-(defmethod initial-step-forms ((clause repeat-clause))
-  (expand-repeat clause :variable))
-
-(defmethod subsequent-step-forms ((clause repeat-clause))
+(defmethod begin-step-forms ((clause repeat-clause) initialp)
+  (declare (ignore initialp))
   (expand-repeat clause :variable))
 
 (defclass always-clause (boolean-termination-test-clause)
@@ -88,10 +86,8 @@
 (defmethod body-forms ((clause always-clause))
   (expand-always clause :main))
     
-(defmethod initial-step-forms ((clause always-clause))
-  (expand-always clause :variable))
-    
-(defmethod subsequent-step-forms ((clause always-clause))
+(defmethod begin-step-forms ((clause always-clause) initialp)
+  (declare (ignore initialp))
   (expand-always clause :variable))
 
 (defclass never-clause (boolean-termination-test-clause)
@@ -115,10 +111,8 @@
 (defmethod body-forms ((clause never-clause))
   (expand-never clause :main))
 
-(defmethod initial-step-forms ((clause never-clause))
-  (expand-never clause :variable))
-
-(defmethod subsequent-step-forms ((clause never-clause))
+(defmethod begin-step-forms ((clause never-clause) initialp)
+  (declare (ignore initialp))
   (expand-never clause :variable))
 
 (defclass thereis-clause (boolean-termination-test-clause)
@@ -143,10 +137,8 @@
 (defmethod body-forms ((clause thereis-clause))
   (expand-thereis clause :main))
 
-(defmethod initial-step-forms ((clause thereis-clause))
-  (expand-thereis clause :variable))
-
-(defmethod subsequent-step-forms ((clause thereis-clause))
+(defmethod begin-step-forms ((clause thereis-clause) initialp)
+  (declare (ignore initialp))
   (expand-thereis clause :variable))
 
 (defclass while-clause (termination-test-clause form-mixin)
@@ -174,8 +166,6 @@
 (defmethod body-forms ((clause while-clause))
   (expand-while clause :main))
 
-(defmethod initial-step-forms ((clause while-clause))
-  (expand-while clause :variable))
-
-(defmethod subsequent-step-forms ((clause while-clause))
+(defmethod begin-step-forms ((clause while-clause) initialp)
+  (declare (ignore initialp))
   (expand-while clause :variable))

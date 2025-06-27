@@ -40,48 +40,20 @@
     (declare (ignore clause))
     nil))
 
-(defgeneric initial-step-bindings (clause)
-  (:method (clause)
-    (declare (ignore clause))
+(defgeneric begin-step-forms (clause initialp)
+  (:method (clause initialp)
+    (declare (ignore clause initialp))
     nil))
 
-(defgeneric initial-step-declarations (clause)
-  (:method (clause)
-    (declare (ignore clause))
-    nil))
-
-(defgeneric initial-step-forms (clause)
-  (:method (clause)
-    (declare (ignore clause))
+(defgeneric finish-step-forms (clause initialp)
+  (:method (clause initialp)
+    (declare (ignore clause initialp))
     nil))
 
 ;;; This generic function returns a form for CLAUSE that should go in the main the body code, before
 ;;; the termination test and the stepping forms, in the body of the expanded code.  The DO clause
 ;;; and the accumulation clauses are obvious candidates for such code.
 (defgeneric body-forms (clause)
-  (:method (clause)
-    (declare (ignore clause))
-    nil))
-
-;;; This generic function returns the bindings for CLAUSE that go after the main body code and the
-;;; termination tests in the body of the expanded code.
-(defgeneric subsequent-step-bindings (clause)
-  (:method (clause)
-    (declare (ignore clause))
-    nil))
-
-;;; This generic function returns the declarations for CLAUSE that go after the main body code and
-;;; the termination tests in the body of the expanded code.
-(defgeneric subsequent-step-declarations (clause)
-  (:method (clause)
-    (declare (ignore clause))
-    '()))
-
-;;; This generic function returns a form for CLAUSE that should go
-;;; after the main body code and the termination tests in the body of
-;;; the expanded code.  The FOR-AS clauses and also the REPEAT clause
-;;; generate code here.
-(defgeneric subsequent-step-forms (clause)
   (:method (clause)
     (declare (ignore clause))
     nil))

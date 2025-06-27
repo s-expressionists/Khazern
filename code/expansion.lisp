@@ -34,10 +34,12 @@
   (let ((start-tag (gensym "BODY")))
     `((tagbody
          ,@(prologue-forms body-clause)
-         ,@(initial-step-forms body-clause)
+         ,@(begin-step-forms body-clause t)
+         ,@(finish-step-forms body-clause t)
        ,start-tag
          ,@(body-forms body-clause)
-         ,@(subsequent-step-forms body-clause)
+         ,@(begin-step-forms body-clause nil)
+         ,@(finish-step-forms body-clause nil)
          (go ,start-tag)
        ,*epilogue-tag*
          ,@(epilogue-forms body-clause)

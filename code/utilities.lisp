@@ -212,28 +212,32 @@
                  :ignorable ignorablep
                  :dynamic-extent dynamic-extent-p))
 
-(defun d-spec-inner-bindings (d-spec form &optional bind-all-p)
-  (let ((bindings '())
+(defun d-spec-prep-assignments (d-spec form)
+  (let ((assignments '())
         (temps (temps d-spec)))
     (labels ((traverse (d-var-spec form)
                (cond ((null d-var-spec))
                      ((symbolp d-var-spec)
                       (let ((temp (gethash d-var-spec temps)))
                         (when temp
-                          (push `(,temp ,form) bindings))
-                        (when bind-all-p
-                          (push `(,d-var-spec ,(or temp form)) bindings))))
-                     ((consp d-var-spec)
+                          (push temp assignments)
+                          (push form assignments))))
+                     ((not (consp d-var-spec))
+                      (error 'expected-var-spec-but-found
+                             :found d-var-spec))
+                     (t
                       (let ((temp (gethash d-var-spec temps)))
                         (cond (temp
-                               (push `(,temp ,form) bindings)
+                               (push temp assignments)
+                               (push form assignments)
                                (traverse (car d-var-spec) `(car ,temp))
                                (traverse (cdr d-var-spec) `(cdr ,temp)))
                               (t
                                (traverse (car d-var-spec) `(car ,form))
                                (traverse (cdr d-var-spec) `(cdr ,form)))))))))
       (traverse (var-spec d-spec) form)
-      (nreverse bindings))))
+      (when assignments
+        `((setq ,.(nreverse assignments)))))))
 
 (defun d-spec-inner-assignments (d-spec form)
   (let ((assignments '())
@@ -255,12 +259,12 @@
                                (traverse (car d-var-spec) `(car ,form))
                                (traverse (cdr d-var-spec) `(cdr ,form)))))))))
       (traverse (var-spec d-spec) form)
-      (nreverse assignments))))
+      (when assignments
+        `((setq ,.(nreverse assignments)))))))
 
 (defun d-spec-inner-form (d-spec form)
-  (wrap-let* (d-spec-inner-bindings d-spec form)
-             nil
-             `((setq ,@(d-spec-inner-assignments d-spec form)))))
+  (nconc (d-spec-prep-assignments d-spec form)
+         (d-spec-inner-assignments d-spec form)))
 
 (defmethod map-variables progn (function (d-spec binding))
   (labels ((traverse (var-spec type-spec)
@@ -339,6 +343,10 @@
                      (push (list var (deduce-initial-value type))
                            result))
                    d-spec)
+    (maphash (lambda (object temp)
+               (declare (ignore object))
+               (push `(,temp nil) result))
+             (temps d-spec))
     (nreverse result)))
 
 (defun d-spec-simple-declarations (d-spec
