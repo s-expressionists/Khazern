@@ -88,7 +88,7 @@
 (defun parse-d-spec (&key (type-spec t) ((:ignorable ignorablep) nil)
                           ((:dynamic-extent dynamic-extent-p) nil))
   (make-instance 'destructuring-binding
-                 :var-spec (pop-token)
+                 :var-spec (pop-token :type 'd-var-spec)
                  :type-spec (parse-type-spec type-spec)
                  :ignorable ignorablep
                  :dynamic-extent dynamic-extent-p))

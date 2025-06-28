@@ -8,6 +8,7 @@
            #:*epilogue-tag*
            #:*it-var*
            #:*loop-name*
+           #:*placeholder-result*
            #:accumulation-category
            #:add-simple-binding
            #:analyze

@@ -42,10 +42,10 @@
     ((condition expected-token-but-end) stream
      (language acclimation:english))
   (format stream
-          "Expected~:[ a token~;~:[~; either~]~
+          "~@<Expected~:[ a token~;~:[~; either~]~
            ~@[ a loop keyword of ~{~#[~;~a~;~a or ~a~:;~@{~a~#[~;, or ~:;, ~]~}~]~}~]~
            ~:[~; or~]~@[ a token of type ~s~]~]~
-           ~@[ at location ~s~] but reached the end of the loop body instead."
+           ~@[ at location ~s~] but reached the end of the loop body instead.~:@>"
           (or (expected-keywords condition)
               (expected-type condition))
           (and (expected-keywords condition)
@@ -61,10 +61,10 @@
      stream
      (language acclimation:english))
   (format stream
-          "Expected~:[~; either~]~
+          "~@<Expected~:[~; either~]~
            ~@[ a loop keyword of ~{~#[~;~a~;~a or ~a~:;~@{~a~#[~;, or ~:;, ~]~}~]~}~]~
            ~:[~; or~]~@[ a token of type ~s~]~
-           ~@[ at location ~s~] but found ~a instead."
+           ~@[ at location ~s~] but found ~a instead.~:@>"
           (and (expected-keywords condition)
                (expected-type condition))
           (expected-keywords condition)

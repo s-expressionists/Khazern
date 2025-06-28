@@ -36,7 +36,7 @@
 (defmethod (setf khazern:iteration-path-using)
     (value (instance for-as-stream) (key (eql :stream)))
   (when (stream-d-spec instance)
-    (setf (khazern::var-spec (stream-d-spec instance)) value
+    (setf (khazern:var-spec (stream-d-spec instance)) value
           (stream-ref instance) value))
   (setf (stream-var instance) value))
 
@@ -53,7 +53,7 @@
 (defmethod khazern:analyze :after ((instance for-as-stream))
   (khazern:check-nullable-simple-var-spec (khazern:var instance))
   (setf (values (temp-ref instance) (temp-var instance))
-        (khazern:add-simple-binding instance :var "NEXT" :type `(or stream ,(khazern::type-spec (khazern:var instance))))))
+        (khazern:add-simple-binding instance :var "NEXT" :type `(or stream ,(khazern:type-spec (khazern:var instance))))))
 
 (defmethod khazern:wrap-forms ((clause for-as-stream) forms)
   (if (close-ref clause)
@@ -78,8 +78,8 @@
 (defclass for-as-bytes (for-as-stream) ())
 
 (defmethod khazern:analyze ((instance for-as-bytes))
-  (when (eq (khazern::type-spec (khazern:var instance)) khazern::*placeholder-result*)
-    (setf (khazern::type-spec (khazern:var instance)) 'integer)))
+  (when (eq (khazern:type-spec (khazern:var instance)) khazern:*placeholder-result*)
+    (setf (khazern:type-spec (khazern:var instance)) 'integer)))
 
 (defmethod khazern:begin-step-forms :around ((clause for-as-bytes) initialp)
   (declare (ignore initialp))
@@ -91,8 +91,8 @@
 (defclass for-as-characters (for-as-stream) ())
 
 (defmethod khazern:analyze ((instance for-as-characters))
-  (when (eq (khazern::type-spec (khazern:var instance)) khazern::*placeholder-result*)
-    (setf (khazern::type-spec (khazern:var instance)) 'character)))
+  (when (eq (khazern:type-spec (khazern:var instance)) khazern:*placeholder-result*)
+    (setf (khazern:type-spec (khazern:var instance)) 'character)))
 
 (defmethod khazern:begin-step-forms :around ((clause for-as-characters) initialp)
   (declare (ignore initialp))
@@ -104,8 +104,8 @@
 (defclass for-as-objects (for-as-stream) ())
 
 (defmethod khazern:analyze ((instance for-as-objects))
-  (when (eq (khazern::type-spec (khazern:var instance)) khazern::*placeholder-result*)
-    (setf (khazern::type-spec (khazern:var instance)) t)))
+  (when (eq (khazern:type-spec (khazern:var instance)) khazern:*placeholder-result*)
+    (setf (khazern:type-spec (khazern:var instance)) t)))
 
 (defmethod khazern:begin-step-forms :around ((clause for-as-objects) initialp)
   (declare (ignore initialp))
@@ -126,8 +126,8 @@
   value)
 
 (defmethod khazern:analyze ((instance for-as-lines))
-  (when (eq (khazern::type-spec (khazern:var instance)) khazern::*placeholder-result*)
-    (setf (khazern::type-spec (khazern:var instance)) 'string)))
+  (when (eq (khazern:type-spec (khazern:var instance)) khazern:*placeholder-result*)
+    (setf (khazern:type-spec (khazern:var instance)) 'string)))
 
 (defmethod khazern:begin-step-forms :around ((clause for-as-lines) initialp)
   (declare (ignore initialp))

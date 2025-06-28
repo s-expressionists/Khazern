@@ -139,6 +139,9 @@
            (d-var-spec-p (car object))
            (d-var-spec-p (cdr object)))))
 
+(deftype d-var-spec ()
+  `(satisfies d-var-spec-p))
+
 (defun function-operator-p (value)
   (and (consp value)
        (eq (first value) 'cl:function)
