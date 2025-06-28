@@ -27,7 +27,7 @@
    (%write-func :accessor write-func)
    #+(or abcl clasp sbcl)
    (%index-func :accessor index-func))
-  (:default-initargs :preposition-names (list :in :of :start :end :from-end)
+  (:default-initargs :preposition-names (list '(:in :of) :start :end :from-end)
                      :using-names (list :index)))
 
 (defmethod initialize-instance :after ((instance for-as-elements) &rest initargs &key)
@@ -42,18 +42,6 @@
         (index-func instance) (khazern:add-simple-binding instance :var "INDEX" :ignorable t))
   #-(or abcl clasp sbcl)
   (setf (step-ref instance) (khazern:add-simple-binding instance :var "STEP" :type 'fixnum)))
-
-(defmethod (setf khazern:iteration-path-preposition)
-    :after (value (instance for-as-elements) key)
-  (declare (ignore value))
-  (setf (khazern:iteration-path-preposition-names instance)
-        (delete-if (lambda (name)
-                     (or (eq name key)
-                         (and (eq key :in)
-                              (eq name :of))
-                         (and (eq key :of)
-                              (eq name :in))))
-                   (khazern:iteration-path-preposition-names instance))))
 
 (defmethod (setf khazern:iteration-path-preposition)
     (value (instance for-as-elements) (key (eql :in)))
@@ -84,11 +72,6 @@
   (setf (from-end-ref instance) (khazern:add-simple-binding instance :var "FROM-END-"
                                                                      :form value))
   value)
-
-(defmethod (setf khazern:iteration-path-using) :after
-    (expression (instance for-as-elements) key)
-  (setf (khazern:iteration-path-using-names instance)
-        (delete key (khazern:iteration-path-using-names instance))))
 
 (defmethod (setf khazern:iteration-path-using)
     (value (instance for-as-elements) (key (eql :index)))

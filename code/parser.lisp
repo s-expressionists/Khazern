@@ -9,6 +9,14 @@
 (deftype simple-type-spec ()
   '(or null (member fixnum float t)))
 
+(defun find-keyword (token keyword-or-keywords)
+  (cond ((listp keyword-or-keywords)
+         (some (lambda (keyword)
+                 (find-keyword token keyword))
+               keyword-or-keywords))
+        ((symbol-equal token keyword-or-keywords)
+         keyword-or-keywords)))
+
 (defun pop-token (&key (type nil type-p) (keywords nil keywords-p))
   (when (null *tokens*)
     (error 'expected-token-but-end
@@ -17,29 +25,32 @@
            :location *index*))
   (trivial-with-current-source-form:with-current-source-form
       ((car *tokens*) *tokens*)
-    (when (or (and type-p
-                   (not (typep (car *tokens*) type)))
-              (and keywords-p
-                   (or (not (symbolp (car *tokens*)))
-                       (not (find (car *tokens*) keywords :test #'symbol-equal)))))
-      (error 'expected-token-but-found
-             :found (car *tokens*)
-             :expected-type type
-             :expected-keywords keywords
-             :location *index*))
-    (incf *index*)
-    (pop *tokens*)))
+    (let ((keyword nil))
+      (when (or (and type-p
+                     (not (typep (car *tokens*) type)))
+                (and keywords-p
+                     (or (not (symbolp (car *tokens*)))
+                         (not (setf keyword (find-keyword (car *tokens*) keywords))))))
+        (error 'expected-token-but-found
+               :found (car *tokens*)
+               :expected-type type
+               :expected-keywords keywords
+               :location *index*))
+      (incf *index*)
+      (values (pop *tokens*) keyword))))
 
 (defun pop-token? (&key (type nil type-p) (keywords nil keywords-p))
-  (cond ((and (car *tokens*)
-              (or (not type-p)
-                  (typep (car *tokens*) type))
-              (or (not keywords-p)
-                  (find (car *tokens*) keywords :test #'symbol-equal)))
-         (incf *index*)
-         (values t (pop *tokens*)))
-        (t
-         (values nil nil))))
+  (let ((keyword nil))
+    (cond ((or (null *tokens*)
+               (and type-p
+                    (not (typep (car *tokens*) type)))
+               (and keywords-p
+                    (or (not (symbolp (car *tokens*)))
+                        (not (setf keyword (find-keyword (car *tokens*) keywords))))))
+           (values nil nil nil))
+          (t
+           (incf *index*)
+           (values t (pop *tokens*) keyword)))))
 
 (defun push-token (token)
   (decf *index*)

@@ -11,19 +11,8 @@
                :initform nil)
    (%stream-var :accessor stream-var
                 :initform nil))
-  (:default-initargs :preposition-names (list :in :of :close)
+  (:default-initargs :preposition-names (list '(:in :of) :close)
                      :using-names (list :stream)))
-
-(defmethod (setf khazern:iteration-path-preposition) :after
-    (expression (instance for-as-stream) key)
-  (setf (khazern:iteration-path-preposition-names instance)
-        (delete-if (lambda (name)
-                     (or (eq name key)
-                         (and (eq key :in)
-                              (eq name :of))
-                         (and (eq key :of)
-                              (eq name :in))))
-                   (khazern:iteration-path-preposition-names instance))))
 
 (defmethod (setf khazern:iteration-path-preposition)
     (value (instance for-as-stream) (key (eql :in)))
@@ -44,10 +33,6 @@
   (setf (close-ref instance) (khazern:add-simple-binding instance :var "CLOSEP" :form value))
   value)
 
-(defmethod (setf khazern:iteration-path-using) :after (expression (instance for-as-stream) key)
-  (setf (khazern:iteration-path-using-names instance)
-        (delete key (khazern:iteration-path-using-names instance))))
-
 (defmethod (setf khazern:iteration-path-using)
     (value (instance for-as-stream) (key (eql :stream)))
   (when (stream-d-spec instance)
@@ -66,6 +51,7 @@
          (setf (stream-ref instance) '*standard-input*))))
 
 (defmethod khazern:analyze :after ((instance for-as-stream))
+  (khazern:check-nullable-simple-var-spec (khazern:var instance))
   (setf (values (temp-ref instance) (temp-var instance))
         (khazern:add-simple-binding instance :var "NEXT" :type `(or stream ,(khazern::type-spec (khazern:var instance))))))
 

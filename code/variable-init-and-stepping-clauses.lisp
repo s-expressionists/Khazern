@@ -71,6 +71,22 @@
                  :initarg :using-names
                  :initform nil)))
 
+(defmethod (setf iteration-path-preposition) :after
+    (value (instance for-as-iteration-path) name)
+  (declare (ignore name))
+  (setf (iteration-path-preposition-names instance)
+        (delete-if (lambda (keyword-or-keywords)
+                     (find-keyword name keyword-or-keywords))
+                   (iteration-path-preposition-names instance))))
+
+(defmethod (setf iteration-path-using) :after
+    (value (instance for-as-iteration-path) name)
+  (declare (ignore name))
+  (setf (iteration-path-using-names instance)
+        (delete-if (lambda (keyword-or-keywords)
+                     (find-keyword name keyword-or-keywords))
+                   (iteration-path-using-names instance))))
+
 (defun make-iteration-path-name (client token)
   (when (symbolp token)
     (multiple-value-bind (name status)
@@ -93,8 +109,7 @@
    next-using
      (setf key (first using)
            value (second using) 
-           name (find key (iteration-path-using-names instance)
-                      :test #'symbol-equal))
+           name (find-keyword key (iteration-path-using-names instance)))
      (when (null name)
        (let ((keywords (iteration-path-using-names instance)))
          (if keywords
@@ -109,25 +124,23 @@
        (go next-using))))
 
 (defun parse-iteration-path-prepositions (instance)
-  (prog ((name nil)
-         (foundp nil)
+  (prog ((foundp nil)
          (token nil)
+         (keyword nil)
          (usingp (and (iteration-path-using-names instance) t)))
    next-preposition
-     (multiple-value-setq (foundp token)
+     (multiple-value-setq (foundp token keyword)
        (pop-token? :keywords (if usingp
                                  (list* :using
                                         (iteration-path-preposition-names instance))
                                  (iteration-path-preposition-names instance))))
      (cond ((not foundp)
             (return instance))
-           ((symbol-equal token :using)
+           ((eq keyword :using)
             (setf usingp nil)
             (parse-iteration-path-using instance (pop-token :type 'cons)))
            (t
-            (setf name (find token (iteration-path-preposition-names instance)
-                             :test #'symbol-equal)
-                  (iteration-path-preposition instance name) (pop-token))))
+            (setf (iteration-path-preposition instance keyword) (pop-token))))
      (go next-preposition)))
 
 (defmethod parse-clause
@@ -181,9 +194,9 @@
    (%termination-test :accessor termination-test
                       :initarg :termination-test
                       :initform nil))
-  (:default-initargs :preposition-names (list :from :upfrom :downfrom
-                                                    :to :upto :downto :above
-                                                    :below :by)))
+  (:default-initargs :preposition-names (list '(:from :upfrom :downfrom)
+                                              '(:to :upto :downto :above :below)
+                                              :by)))
 
 (defclass for-as-arithmetic-up (for-as-arithmetic)
   ())
@@ -195,32 +208,18 @@
 ;;;
 ;;; FOR-AS-ARITHMETIC parsers
 
-(defvar +from-keywords+ '(:from :upfrom :downfrom))
-
-(defvar +to-keywords+ '(:to :upto :downto :above :below))
-
-(defvar +by-keywords+ '(:by))
-
 (defmethod (setf iteration-path-preposition) (value (instance for-as-arithmetic) name)
   ;; parse the form
   (ecase name
     ((:to :upto :downto :above :below)
      (setf (values (end-ref instance) (end-var instance))
-           (add-simple-binding instance :var "END" :type 'number :form value :fold t)
-           (iteration-path-preposition-names instance)
-           (nset-difference (iteration-path-preposition-names instance)
-                            +to-keywords+)))
+           (add-simple-binding instance :var "END" :type 'number :form value :fold t)))
     ((:from :downfrom :upfrom)
      (setf (values (next-ref instance) (next-var instance))
-           (add-simple-binding instance :var "NEXT" :type 'number :form value)
-           (iteration-path-preposition-names instance)
-           (nset-difference (iteration-path-preposition-names instance)
-                            +from-keywords+)))
+           (add-simple-binding instance :var "NEXT" :type 'number :form value)))
     (:by
      (setf (values (by-ref instance) (by-var instance))
-           (add-simple-binding instance :var "BY" :type 'number :form value :fold t)
-           (iteration-path-preposition-names instance)
-           (delete :by (iteration-path-preposition-names instance)))))
+           (add-simple-binding instance :var "BY" :type 'number :form value :fold t))))
   ;; set the termination test
   (case name
     ((:to :upto :downto)
@@ -293,15 +292,16 @@
         var
       (unless next-var
         (setf (iteration-path-preposition clause :from) 0))
-      (with-accessors ((next-type type-spec))
+      (with-accessors ((next-type type-spec)
+                       (next-form form))
           next-var
         (check-nullable-simple-var-spec (var clause))
         (let ((val nil))
           (cond ((not (eq var-type *placeholder-result*))
                  (check-subtype var-type 'number)
                  (setf next-type (numeric-super-type var-type)))
-                ((numberp (form (next-var clause)))
-                 (setf val (form (next-var clause)))
+                ((numberp next-form)
+                 (setf val next-form)
                  (when (numberp by-ref)
                    (incf val by-ref))
                  (setf next-type (numeric-type-of val)
@@ -311,10 +311,8 @@
                        next-type 'number))))
         (when by-var
           (setf (type-spec by-var) next-type))
-        (mapc (lambda (binding)
-                (when (numberp (form binding))
-                  (setf (form binding) (coerce (form binding) next-type))))
-              (simple-bindings clause))
+        (when (numberp next-form)
+          (setf next-form (coerce next-form next-type)))
         (when (numberp by-ref)
           (setf by-ref (coerce by-ref next-type)))
         (check-type-spec var)))))
@@ -499,7 +497,7 @@
    (%temp-value-var :accessor temp-value-var)
    (%iterator-var :reader iterator-var
                   :initform (gensym "ITER")))
-  (:default-initargs :preposition-names (list :in :of)
+  (:default-initargs :preposition-names (list '(:in :of))
                      :other-var (make-instance 'destructuring-binding
                                                :var-spec nil)))
 
@@ -561,13 +559,11 @@
           :name (if (typep instance 'for-as-hash-key)
                     :hash-key
                     :hash-value)))
-  (setf (iteration-path-preposition-names instance) nil
-        (form-ref instance) (add-simple-binding instance :var "HT" :form expression
+  (setf (form-ref instance) (add-simple-binding instance :var "HT" :form expression
                                                          :type 'hash-table))
   expression)
 
 (defmethod (setf iteration-path-using) (value (instance for-as-hash) key)
-  (setf (iteration-path-using-names instance) nil)
   (setf (other-var instance) (make-instance 'destructuring-binding
                                             :var-spec value))
   value)
@@ -630,7 +626,7 @@
    (%iterator-keywords :reader iterator-keywords
                        :initarg :iterator-keywords))
   (:default-initargs :form-ref '*package*
-                     :preposition-names (list :in :of)))
+                     :preposition-names (list '(:in :of))))
 
 
 (defmethod initialize-instance :after ((instance for-as-package) &rest initargs &key)
@@ -700,13 +696,13 @@
 
 (defmethod (setf iteration-path-preposition)
     (expression (instance for-as-package) key)
-  (setf (iteration-path-preposition-names instance) nil
-        (form-ref instance) (add-simple-binding instance :var "PKG" :form expression
+  (setf (form-ref instance) (add-simple-binding instance :var "PKG" :form expression
                                                          :type '(or character string symbol
                                                                  package)))
   expression)
 
 (defmethod analyze ((clause for-as-package))
+  (check-nullable-simple-var-spec (var clause))
   (when (eq (type-spec (var clause)) *placeholder-result*)
     (setf (type-spec (var clause)) t))
   (check-type-spec (var clause)))

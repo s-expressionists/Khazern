@@ -13,6 +13,7 @@
            #:analyze
            #:begin-step-forms
            #:body-forms
+           #:check-nullable-simple-var-spec
            #:clause
            #:clause-group
            #:declarations
@@ -20,10 +21,13 @@
            #:destructuring-declarations
            #:destructuring-set
            #:destructuring-variable-list
+           #:dynamic-extent-p
            #:epilogue-forms
            #:expand-body
            #:finish-step-forms
            #:for-as-iteration-path
+           #:form
+           #:ignorablep
            #:iteration-path-preposition
            #:iteration-path-preposition-names
            #:iteration-path-using
@@ -33,8 +37,9 @@
            #:map-variables
            #:prologue-forms
            #:standard-client
-           #:subclauses
            #:symbol-equal
+           #:type-spec
            #:var
+           #:var-spec
            #:variable-list
            #:wrap-forms))

@@ -47,20 +47,6 @@
   (declare (ignore initargs))
   (set-destructuring-temps clause))
 
-(defun make-simple-binding (name
-                            &key (type t) form ((:ignorable ignorablep) nil)
-                              accumulation-category
-                              ((:dynamic-extent dynamic-extent-p) nil))
-  (make-instance 'simple-binding
-                 :var-spec (if (symbolp name)
-                               name
-                               (gensym name))
-                 :type-spec type
-                 :form form
-                 :accumulation-category accumulation-category
-                 :ignorable ignorablep
-                 :dynamic-extent dynamic-extent-p))
-
 (defun make-destructuring-binding (spec
                                    &key (type t) ((:ignorable ignorablep) nil)
                                      ((:dynamic-extent dynamic-extent-p) nil))
