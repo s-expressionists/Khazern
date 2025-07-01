@@ -162,10 +162,10 @@
 (defclass sequential-superclause (simple-superclause)
   ())
 
-(defmethod finish-step-forms ((clause sequential-superclause) initialp)
+(defmethod step-outro-forms ((clause sequential-superclause) initialp)
   (mapcan (lambda (clause)
-            (nconc (begin-step-forms clause initialp)
-                   (finish-step-forms clause initialp)))
+            (nconc (step-intro-forms clause initialp)
+                   (step-outro-forms clause initialp)))
           (subclauses clause)))
 
 (defmethod wrap-forms ((clause sequential-superclause) forms)
@@ -177,14 +177,14 @@
 (defclass parallel-superclause (simple-superclause)
   ())
 
-(defmethod begin-step-forms ((clause parallel-superclause) initialp)
+(defmethod step-intro-forms ((clause parallel-superclause) initialp)
   (mapcan (lambda (clause)
-            (begin-step-forms clause initialp))
+            (step-intro-forms clause initialp))
           (subclauses clause)))
 
-(defmethod finish-step-forms ((clause parallel-superclause) initialp)
+(defmethod step-outro-forms ((clause parallel-superclause) initialp)
   (mapcan (lambda (clause)
-            (finish-step-forms clause initialp))
+            (step-outro-forms clause initialp))
           (subclauses clause)))
 
 (defmethod wrap-forms ((clause parallel-superclause) forms)

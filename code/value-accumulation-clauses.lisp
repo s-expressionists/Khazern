@@ -13,10 +13,16 @@
 (defclass accumulation-clause (selectable-clause accumulation-mixin form-mixin)
   ())
 
-(defun parse-into ()
-  (if (pop-token? :keywords '(:into))
-      (pop-token :type 'symbol)
-      (default-accumulation-variable)))
+(defun parse-into (&key default-type-spec accumulation-category)
+  (let ((var-spec (if (pop-token? :keywords '(:into))
+                      (pop-token :type 'symbol)
+                      (default-accumulation-variable))))
+    (make-instance 'simple-binding
+                   :var-spec var-spec
+                   :type-spec (if default-type-spec
+                                  (parse-type-spec :default-type-spec default-type-spec :var-spec var-spec)
+                                  t)
+                   :accumulation-category accumulation-category)))
 
 (defclass list-accumulation-clause (clause)
   ((%head :accessor head)
@@ -237,9 +243,7 @@
   (make-instance 'collect-clause
                  :start *start*
                  :form (pop-token)
-                 :accum-var (make-instance 'simple-binding
-                                           :var-spec (parse-into)
-                                           :accumulation-category :list)
+                 :accum-var (parse-into :accumulation-category :list)
                  :end *index*))
 
 (defmethod parse-clause
@@ -247,9 +251,7 @@
   (make-instance 'collect-clause
                  :start *start*
                  :form (pop-token)
-                 :accum-var (make-instance 'simple-binding
-                                           :var-spec (parse-into)
-                                           :accumulation-category :list)
+                 :accum-var (parse-into :accumulation-category :list)
                  :end *index*))
 
 (defmethod body-forms ((clause collect-clause))
@@ -267,9 +269,7 @@
   (make-instance 'append-clause
                  :start *start*
                  :form (pop-token)
-                 :accum-var (make-instance 'simple-binding
-                                           :var-spec (parse-into)
-                                           :accumulation-category :list)
+                 :accum-var (parse-into :accumulation-category :list)
                  :end *index*))
 
 (defmethod parse-clause
@@ -277,9 +277,7 @@
   (make-instance 'append-clause
                  :start *start*
                  :form (pop-token)
-                 :accum-var (make-instance 'simple-binding
-                                           :var-spec (parse-into)
-                                           :accumulation-category :list)
+                 :accum-var (parse-into :accumulation-category :list)
                  :end *index*))
 
 (defmethod body-forms ((clause append-clause))
@@ -295,9 +293,7 @@
   (make-instance 'nconc-clause
                  :start *start*
                  :form (pop-token)
-                 :accum-var (make-instance 'simple-binding
-                                           :var-spec (parse-into)
-                                           :accumulation-category :list)
+                 :accum-var (parse-into :accumulation-category :list)
                  :end *index*))
 
 (defmethod parse-clause
@@ -305,9 +301,7 @@
   (make-instance 'nconc-clause
                  :start *start*
                  :form (pop-token)
-                 :accum-var (make-instance 'simple-binding
-                                           :var-spec (parse-into)
-                                           :accumulation-category :list)
+                 :accum-var (parse-into :accumulation-category :list)
                  :end *index*))
 
 (defmethod body-forms ((clause nconc-clause))
@@ -323,10 +317,8 @@
   (make-instance 'count-clause
                  :start *start*
                  :form (pop-token)
-                 :accum-var (make-instance 'simple-binding
-                                           :var-spec (parse-into)
-                                           :type-spec (parse-type-spec 'fixnum)                          
-                                           :accumulation-category :summation)
+                 :accum-var (parse-into :default-type-spec 'fixnum
+                                        :accumulation-category :summation)
                  :end *index*))
 
 (defmethod parse-clause
@@ -334,10 +326,8 @@
   (make-instance 'count-clause
                  :start *start*
                  :form (pop-token)
-                 :accum-var (make-instance 'simple-binding
-                                           :var-spec (parse-into)
-                                           :type-spec (parse-type-spec 'fixnum)                          
-                                           :accumulation-category :summation)
+                 :accum-var (parse-into :default-type-spec 'fixnum                         
+                                        :accumulation-category :summation)
                  :end *index*))
 
 (defmethod analyze ((clause count-clause))
@@ -361,10 +351,8 @@
                  :start *start*
                  :form (pop-token)
                  :func-name :min
-                 :accum-var (make-instance 'simple-binding
-                                           :var-spec (parse-into)
-                                           :type-spec (parse-type-spec 'real)                          
-                                           :accumulation-category :extremum)
+                 :accum-var (parse-into :default-type-spec 'real                          
+                                        :accumulation-category :extremum)
                  :end *index*))
 
 (defmethod parse-clause
@@ -373,10 +361,8 @@
                  :start *start*
                  :form (pop-token)
                  :func-name :min
-                 :accum-var (make-instance 'simple-binding
-                                           :var-spec (parse-into)
-                                           :type-spec (parse-type-spec 'real)                          
-                                           :accumulation-category :extremum)
+                 :accum-var (parse-into :default-type-spec 'real                          
+                                        :accumulation-category :extremum)
                  :end *index*))
 
 (defmethod parse-clause
@@ -385,10 +371,8 @@
                  :start *start*
                  :form (pop-token)
                  :func-name :max
-                 :accum-var (make-instance 'simple-binding
-                                           :var-spec (parse-into)
-                                           :type-spec (parse-type-spec 'real)                          
-                                           :accumulation-category :extremum)
+                 :accum-var (parse-into :default-type-spec 'real                        
+                                        :accumulation-category :extremum)
                  :end *index*))
 
 (defmethod parse-clause
@@ -397,10 +381,8 @@
                  :start *start*
                  :form (pop-token)
                  :func-name :max
-                 :accum-var (make-instance 'simple-binding
-                                           :var-spec (parse-into)
-                                           :type-spec (parse-type-spec 'real)                          
-                                           :accumulation-category :extremum)
+                 :accum-var (parse-into :default-type-spec 'real              
+                                        :accumulation-category :extremum)
                  :end *index*))
 
 (defmethod analyze ((clause extremum-clause))
@@ -420,10 +402,8 @@
   (make-instance 'sum-clause
                  :start *start*
                  :form (pop-token)
-                 :accum-var (make-instance 'simple-binding
-                                           :var-spec (parse-into)
-                                           :type-spec (parse-type-spec 'number)                          
-                                           :accumulation-category :summation)
+                 :accum-var (parse-into :default-type-spec 'number                 
+                                        :accumulation-category :summation)
                  :end *index*))
 
 (defmethod parse-clause
@@ -431,10 +411,8 @@
   (make-instance 'sum-clause
                  :start *start*
                  :form (pop-token)
-                 :accum-var (make-instance 'simple-binding
-                                           :var-spec (parse-into)
-                                           :type-spec (parse-type-spec 'number)                          
-                                           :accumulation-category :summation)
+                 :accum-var (parse-into :default-type-spec 'number                         
+                                        :accumulation-category :summation)
                  :end *index*))
 
 (defmethod analyze ((clause sum-clause))

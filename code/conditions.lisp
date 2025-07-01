@@ -11,7 +11,10 @@
   ((location :accessor location
              :initarg :location
              :initform nil
-             :type list)))
+             :type list)
+   (%clause :reader clause
+            :initarg :clause
+            :initform nil)))
 
 (define-condition loop-parse-error-found (loop-parse-error)
   ((%found :reader found
@@ -84,8 +87,7 @@
   ())
 
 (define-condition conflicting-stepping-directions (loop-parse-error)
-  ((%clause :reader clause
-            :initarg :clause)))
+  ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

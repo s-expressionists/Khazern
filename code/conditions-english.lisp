@@ -35,7 +35,7 @@
 (defmethod acclimation:report-condition
     ((condition unable-to-deduce-initial-value) stream (language acclimation:english))
   (format stream
-          "Unable to deduce initial value for type ~s. Using NIL as a fallback."
+          "~@<Unable to deduce initial value for type ~s. Using NIL as a fallback.~:@>"
           (type-spec condition)))
 
 (defmethod acclimation:report-condition
@@ -45,7 +45,7 @@
           "~@<Expected~:[ a token~;~:[~; either~]~
            ~@[ a loop keyword of ~{~#[~;~a~;~a or ~a~:;~@{~a~#[~;, or ~:;, ~]~}~]~}~]~
            ~:[~; or~]~@[ a token of type ~s~]~]~
-           ~@[ at location ~s~] but reached the end of the loop body instead.~:@>"
+           ~@[ in clause `~{~s~^ ~}`~] but reached the end of the loop body instead.~:@>"
           (or (expected-keywords condition)
               (expected-type condition))
           (and (expected-keywords condition)
@@ -54,7 +54,7 @@
           (and (expected-keywords condition)
                (expected-type condition))
           (expected-type condition)
-          (location condition)))
+          (clause condition)))
 
 (defmethod acclimation:report-condition
     ((condition expected-token-but-found)
@@ -64,14 +64,14 @@
           "~@<Expected~:[~; either~]~
            ~@[ a loop keyword of ~{~#[~;~a~;~a or ~a~:;~@{~a~#[~;, or ~:;, ~]~}~]~}~]~
            ~:[~; or~]~@[ a token of type ~s~]~
-           ~@[ at location ~s~] but found ~a instead.~:@>"
+           ~@[ in clause `~{~s~^ ~}`~] but found ~a instead.~:@>"
           (and (expected-keywords condition)
                (expected-type condition))
           (expected-keywords condition)
           (and (expected-keywords condition)
                (expected-type condition))
           (expected-type condition)
-          (location condition)
+          (clause condition)
           (found condition)))
 
 (defmethod acclimation:report-condition
@@ -79,9 +79,9 @@
      stream
      (language acclimation:english))
   (format stream
-          "Unexpected token ~s found~@[at location ~s ~]."
+          "~@<Unexpected token ~s found~@[ in clause `~{~s~^ ~}`~].~:@>"
           (found  condition)
-          (location condition)))
+          (clause condition)))
 
 (defmethod acclimation:report-condition
     ((condition expected-var-spec-but-end)

@@ -86,7 +86,7 @@
     (setf (from-end-ref instance) (khazern:add-simple-binding instance :var "FROM-END-"
                                                                        :form nil))))
 
-(defmethod khazern:begin-step-forms ((clause for-as-elements) initialp)
+(defmethod khazern:step-intro-forms ((clause for-as-elements) initialp)
   #+(or abcl clasp sbcl)
   (nconc (if initialp
              `((multiple-value-setq (,(iterator-ref clause) ,(limit-ref clause)
@@ -117,7 +117,7 @@
          `((when (= ,(iterator-ref clause) ,(limit-ref clause))
              (go ,khazern:*epilogue-tag*)))))
 
-(defmethod khazern:finish-step-forms ((clause for-as-elements) initialp)
+(defmethod khazern:step-outro-forms ((clause for-as-elements) initialp)
   (declare (ignore initialp))
   #+(or abcl clasp sbcl)
   (nconc (khazern:destructuring-set (khazern:var clause)

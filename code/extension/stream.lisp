@@ -65,12 +65,12 @@
             (close ,(stream-ref clause)))))
       forms))
 
-(defmethod khazern:begin-step-forms ((clause for-as-stream) initialp)
+(defmethod khazern:step-intro-forms ((clause for-as-stream) initialp)
   (declare (ignore initialp))
   `((when (eq ,(temp-ref clause) ,(stream-ref clause))
       (go ,khazern:*epilogue-tag*))))
 
-(defmethod khazern:finish-step-forms ((clause for-as-stream) initialp)
+(defmethod khazern:step-outro-forms ((clause for-as-stream) initialp)
   (declare (ignore initialp))
   (khazern:destructuring-set (khazern:var clause)
                              (temp-ref clause)))
@@ -81,7 +81,7 @@
   (when (eq (khazern:type-spec (khazern:var instance)) khazern:*placeholder-result*)
     (setf (khazern:type-spec (khazern:var instance)) 'integer)))
 
-(defmethod khazern:begin-step-forms :around ((clause for-as-bytes) initialp)
+(defmethod khazern:step-intro-forms :around ((clause for-as-bytes) initialp)
   (declare (ignore initialp))
   (let ((temp-var (temp-ref clause))
         (stream-ref (stream-ref clause)))
@@ -94,7 +94,7 @@
   (when (eq (khazern:type-spec (khazern:var instance)) khazern:*placeholder-result*)
     (setf (khazern:type-spec (khazern:var instance)) 'character)))
 
-(defmethod khazern:begin-step-forms :around ((clause for-as-characters) initialp)
+(defmethod khazern:step-intro-forms :around ((clause for-as-characters) initialp)
   (declare (ignore initialp))
   (let ((temp-var (temp-ref clause))
         (stream-ref (stream-ref clause)))
@@ -107,7 +107,7 @@
   (when (eq (khazern:type-spec (khazern:var instance)) khazern:*placeholder-result*)
     (setf (khazern:type-spec (khazern:var instance)) t)))
 
-(defmethod khazern:begin-step-forms :around ((clause for-as-objects) initialp)
+(defmethod khazern:step-intro-forms :around ((clause for-as-objects) initialp)
   (declare (ignore initialp))
   (let ((temp-var (temp-ref clause))
         (stream-ref (stream-ref clause)))
@@ -129,7 +129,7 @@
   (when (eq (khazern:type-spec (khazern:var instance)) khazern:*placeholder-result*)
     (setf (khazern:type-spec (khazern:var instance)) 'string)))
 
-(defmethod khazern:begin-step-forms :around ((clause for-as-lines) initialp)
+(defmethod khazern:step-intro-forms :around ((clause for-as-lines) initialp)
   (declare (ignore initialp))
   (let ((temp-var (temp-ref clause))
         (missing-newline-p-var (missing-newline-p-var clause))

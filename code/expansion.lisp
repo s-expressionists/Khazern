@@ -34,12 +34,12 @@
   (let ((start-tag (gensym "BODY")))
     `((tagbody
          ,@(prologue-forms body-clause)
-         ,@(begin-step-forms body-clause t)
-         ,@(finish-step-forms body-clause t)
+         ,@(step-intro-forms body-clause t)
+         ,@(step-outro-forms body-clause t)
        ,start-tag
          ,@(body-forms body-clause)
-         ,@(begin-step-forms body-clause nil)
-         ,@(finish-step-forms body-clause nil)
+         ,@(step-intro-forms body-clause nil)
+         ,@(step-outro-forms body-clause nil)
          (go ,start-tag)
        ,*epilogue-tag*
          ,@(epilogue-forms body-clause)
@@ -50,6 +50,7 @@
   (let* ((*accumulation-variable* nil)
          (*index* 0)
          (*tokens* *body*)
+         (*toplevel* t)
          (*extended-superclause* (parse-body client)))
     (analyze *extended-superclause*)
     (let ((*loop-name* (name *extended-superclause*)))

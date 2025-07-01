@@ -16,53 +16,56 @@
           clause)
     nil))
 
-;;; The purpose of this generic function is to extract a list of declaration specifiers from the
-;;; clause.  Notice that it is a list of declaration specifiers, not a list of declarations.  In
-;;; other words, the symbol DECLARE is omitted.
-(defgeneric declarations (clause)
-  (:method-combination nconc)
-  (:method nconc (clause)
-    (declare (ignore clause))
-    '()))
-
 (defgeneric variable-list (clause)
+  (:documentation "This generic function returns a list of variable and initial forms for use in
+LET or LET*.")
   (:method-combination nconc)
   (:method nconc (clause)
     (declare (ignore clause))
     '()))
 
-;;; This generic function returns a form for CLAUSE that should go in the LOOP prologue.  The
-;;; INITIALLY clause is an obvious candidate for such code.  But the stepping clauses also have code
-;;; that goes in the prologue, namely an initial termination test to determine whether any
-;;; iterations at all should be executed.
+(defgeneric declarations (clause)
+  (:documentation "The purpose of this generic function is to extract a list of declaration
+specifiers from the clause.  Notice that it is a list of declaration specifiers, not a list of
+declarations.  In other words, the symbol DECLARE is omitted.")
+  (:method-combination nconc)
+  (:method nconc (clause)
+    (declare (ignore clause))
+    '()))
+
 (defgeneric prologue-forms (clause)
+  (:documentation "This generic function returns forms for CLAUSE that should go in the LOOP
+prologue. The INITIALLY clause is an obvious candidate for such code.")
   (:method (clause)
     (declare (ignore clause))
     nil))
 
-(defgeneric begin-step-forms (clause initialp)
+(defgeneric step-intro-forms (clause initialp)
+  (:documentation "This generic functions returns the forms that prepare to step a clause. This
+typically includes advancing the internal iterator variables and checking for termination
+conditions. INITIALP is non-NIL for the step forms completed before the body forms.")
   (:method (clause initialp)
     (declare (ignore clause initialp))
     nil))
 
-(defgeneric finish-step-forms (clause initialp)
+(defgeneric step-outro-forms (clause initialp)
+  (:documentation "This generic functions returns the forms that complete stepping a clause.
+This typically includes setting destructuring loop variables and USING variables. INITIALP is
+non-NIL for the step forms completed before the body forms.")
   (:method (clause initialp)
     (declare (ignore clause initialp))
     nil))
 
-;;; This generic function returns a form for CLAUSE that should go in the main the body code, before
-;;; the termination test and the stepping forms, in the body of the expanded code.  The DO clause
-;;; and the accumulation clauses are obvious candidates for such code.
 (defgeneric body-forms (clause)
+  (:documentation "This generic function returns forms for CLAUSE that should go in body, after
+the introduction step forms.")
   (:method (clause)
     (declare (ignore clause))
     nil))
 
-;;; This generic function returns a form for CLAUSE that should go in
-;;; the LOOP epilogue.  Of the clause types defined by the Common Lisp
-;;; standard, only the method specialized to the FINALLY clause
-;;; returns a value other than NIL.
 (defgeneric epilogue-forms (clause)
+  (:documentation "This generic function returns forms for CLAUSE that should go in the LOOP
+epilogue. The FINALLY clause is an obvious candidate for such code.")
   (:method (clause)
     (declare (ignore clause))
     nil))
@@ -107,6 +110,11 @@
 (defgeneric make-iteration-path (client name &optional inclusive-form))
 
 (defgeneric iteration-path-preposition-names (instance)
+  (:method (instance)
+    (declare (ignore instance))
+    nil))
+
+(defgeneric iteration-path-required-preposition-names (instance)
   (:method (instance)
     (declare (ignore instance))
     nil))

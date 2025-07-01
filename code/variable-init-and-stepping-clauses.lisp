@@ -67,9 +67,13 @@
   ((%preposition-names :accessor iteration-path-preposition-names
                        :initarg :preposition-names
                        :initform nil)
+   (%required-preposition-names :accessor iteration-path-required-preposition-names
+                                :initarg :required-preposition-names
+                                :initform nil)
    (%using-names :accessor iteration-path-using-names
                  :initarg :using-names
                  :initform nil)))
+   
 
 (defmethod (setf iteration-path-preposition) :after
     (value (instance for-as-iteration-path) name)
@@ -77,7 +81,11 @@
   (setf (iteration-path-preposition-names instance)
         (delete-if (lambda (keyword-or-keywords)
                      (find-keyword name keyword-or-keywords))
-                   (iteration-path-preposition-names instance))))
+                   (iteration-path-preposition-names instance))
+        (iteration-path-required-preposition-names instance)
+        (delete-if (lambda (keyword-or-keywords)
+                     (find-keyword name keyword-or-keywords))
+                   (iteration-path-required-preposition-names instance))))
 
 (defmethod (setf iteration-path-using) :after
     (value (instance for-as-iteration-path) name)
@@ -105,43 +113,49 @@
          :inclusive inclusive-form-p))
 
 (defun parse-iteration-path-using (instance using)
-  (prog (key value name)
-   next-using
-     (setf key (first using)
-           value (second using) 
-           name (find-keyword key (iteration-path-using-names instance)))
-     (when (null name)
-       (let ((keywords (iteration-path-using-names instance)))
-         (if keywords
-             (error 'expected-token-but-found
-                    :found key
-                    :expected-keywords keywords)
-             (error 'unexpected-token-found
-                    :found key))))
-     (setf (iteration-path-using instance name) value
-           using (cddr using))
-     (when using
-       (go next-using))))
+  (trivial-with-current-source-form:with-current-source-form (using)
+    (prog ((*tokens* using)
+           (*toplevel* nil)
+           (names nil))
+     next-using
+       (setf names (iteration-path-using-names instance))
+       (unless names
+         (error 'unexpected-token-found
+                :found (car *tokens*)
+                :location *index*
+                :clause (subseq *body* *start* *index*)))
+       (setf (iteration-path-using instance (nth-value 1 (pop-token :keywords names)))
+             (pop-token :type 'd-var-spec))
+     (when *tokens*
+       (go next-using)))))
 
 (defun parse-iteration-path-prepositions (instance)
   (prog ((foundp nil)
          (token nil)
          (keyword nil)
+         (names nil)
          (usingp (and (iteration-path-using-names instance) t)))
    next-preposition
-     (multiple-value-setq (foundp token keyword)
-       (pop-token? :keywords (if usingp
-                                 (list* :using
-                                        (iteration-path-preposition-names instance))
-                                 (iteration-path-preposition-names instance))))
-     (cond ((not foundp)
-            (return instance))
-           ((eq keyword :using)
-            (setf usingp nil)
-            (parse-iteration-path-using instance (pop-token :type 'cons)))
-           (t
-            (setf (iteration-path-preposition instance keyword) (pop-token))))
-     (go next-preposition)))
+     (setf names (if usingp
+                     (list* :using
+                            (iteration-path-preposition-names instance))
+                     (iteration-path-preposition-names instance)))
+     (when names
+       (cond ((iteration-path-required-preposition-names instance)
+              (multiple-value-setq (token keyword)
+                (pop-token :keywords names))
+              (setf foundp t))
+             (t
+              (multiple-value-setq (foundp token keyword)
+                (pop-token? :keywords names))))
+       (cond ((not foundp)
+              (return instance))
+             ((eq keyword :using)
+              (setf usingp nil)
+              (parse-iteration-path-using instance (pop-token :type 'cons)))
+             (t
+              (setf (iteration-path-preposition instance keyword) (pop-token))))
+       (go next-preposition))))
 
 (defmethod parse-clause
     ((client standard-client) (instance for-as-clause) (keyword (eql :being)))
@@ -317,7 +331,7 @@
           (setf by-ref (coerce by-ref next-type)))
         (check-type-spec var)))))
 
-(defmethod begin-step-forms ((clause for-as-arithmetic-up) initialp)
+(defmethod step-intro-forms ((clause for-as-arithmetic-up) initialp)
   (nconc (unless initialp
            `((incf ,(var-spec (next-var clause)) ,(by-ref clause))))
          (when (termination-test clause)
@@ -326,7 +340,7 @@
                       ,(end-ref clause))
                (go ,*epilogue-tag*))))))
 
-(defmethod begin-step-forms ((clause for-as-arithmetic-down) initialp)
+(defmethod step-intro-forms ((clause for-as-arithmetic-down) initialp)
   (nconc (unless initialp
            `((decf ,(var-spec (next-var clause)) ,(by-ref clause))))
          (when (termination-test clause)
@@ -335,7 +349,7 @@
                       ,(next-ref clause))
                (go ,*epilogue-tag*))))))
 
-(defmethod finish-step-forms ((clause for-as-arithmetic) initialp)
+(defmethod step-outro-forms ((clause for-as-arithmetic) initialp)
   (declare (ignore initialp))
   (when (var-spec (var clause))
     `((setq ,(var-spec (var clause)) ,(var-spec (next-var clause))))))
@@ -372,30 +386,30 @@
 (defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :on)))
   (parse-for-as-list (make-instance 'for-as-on-list :start *start*)))
 
-(defmethod begin-step-forms ((clause for-as-list) initialp)
+(defmethod step-intro-forms ((clause for-as-list) initialp)
   (unless initialp
     `((setq ,(rest-var clause)
             ,(if (function-operator-p (by-ref clause))
                  `(,(second (by-ref clause)) ,(rest-var clause))
                  `(funcall ,(by-ref clause) ,(rest-var clause)))))))
 
-(defmethod begin-step-forms :around ((clause for-as-in-list) initialp)
+(defmethod step-intro-forms :around ((clause for-as-in-list) initialp)
   (declare (ignore initialp))
   (nconc (call-next-method)
          `((when (endp ,(rest-var clause))
              (go ,*epilogue-tag*)))))
 
-(defmethod finish-step-forms ((clause for-as-in-list) initialp)
+(defmethod step-outro-forms ((clause for-as-in-list) initialp)
   (declare (ignore initialp))
   (destructuring-set (var clause) `(car ,(rest-var clause))))
 
-(defmethod begin-step-forms :around ((clause for-as-on-list) initialp)
+(defmethod step-intro-forms :around ((clause for-as-on-list) initialp)
   (declare (ignore initialp))
   (nconc (call-next-method)
          `((when (atom ,(rest-var clause))
              (go ,*epilogue-tag*)))))
 
-(defmethod finish-step-forms ((clause for-as-on-list) initialp)
+(defmethod step-outro-forms ((clause for-as-on-list) initialp)
   (declare (ignore initialp))
   (destructuring-set (var clause) (rest-var clause)))
 
@@ -431,12 +445,12 @@
     (setf (type-spec (var clause)) t))
   (check-type-spec (var clause)))
 
-(defmethod begin-step-forms ((clause for-as-equals-then) initialp)
+(defmethod step-intro-forms ((clause for-as-equals-then) initialp)
   `((setq ,(temp-ref clause) ,(if initialp
                                   (initial-form clause)
                                   (subsequent-form clause)))))
 
-(defmethod finish-step-forms ((clause for-as-equals-then) initialp)
+(defmethod step-outro-forms ((clause for-as-equals-then) initialp)
   (destructuring-set (var clause) (temp-ref clause)))
 
 ;;; 6.1.2.1.5 FOR-AS-ACROSS subclause
@@ -464,14 +478,14 @@
           (end instance) *index*)
     instance))
 
-(defmethod begin-step-forms ((clause for-as-across) initialp)
+(defmethod step-intro-forms ((clause for-as-across) initialp)
   `(,(if initialp
          `(setq ,(length-ref clause) (length ,(form-ref clause)))
          `(incf ,(index-ref clause)))
     (when (>= ,(index-ref clause) ,(length-ref clause))
       (go ,*epilogue-tag*))))
 
-(defmethod finish-step-forms ((clause for-as-across) initialp)
+(defmethod step-outro-forms ((clause for-as-across) initialp)
   (declare (ignore initialp))
   (destructuring-set (var clause) `(aref ,(form-ref clause) ,(index-ref clause))))
 
@@ -498,6 +512,7 @@
    (%iterator-var :reader iterator-var
                   :initform (gensym "ITER")))
   (:default-initargs :preposition-names (list '(:in :of))
+                     :required-preposition-names (list '(:in :of))
                      :other-var (make-instance 'destructuring-binding
                                                :var-spec nil)))
 
@@ -584,7 +599,7 @@
         (,(iterator-var subclause) ,(form-ref subclause))
       ,@forms)))
 
-(defmethod begin-step-forms ((clause for-as-hash) initialp)
+(defmethod step-intro-forms ((clause for-as-hash) initialp)
   (declare (ignore initialp))
   `((multiple-value-setq (,(temp-entry-p-var clause)
                           ,(temp-key-var clause)
@@ -593,14 +608,14 @@
     (unless ,(temp-entry-p-var clause)
       (go ,*epilogue-tag*))))
 
-(defmethod finish-step-forms ((clause for-as-hash-key) initialp)
+(defmethod step-outro-forms ((clause for-as-hash-key) initialp)
   (declare (ignore initialp))
   (nconc (destructuring-set (var clause)
                             (temp-key-var clause))
          (destructuring-set (other-var clause)
                             (temp-value-var clause))))
 
-(defmethod finish-step-forms ((clause for-as-hash-value) initialp)
+(defmethod step-outro-forms ((clause for-as-hash-value) initialp)
   (declare (ignore initialp))
   (nconc (destructuring-set (var clause)
                             (temp-value-var clause))
@@ -714,7 +729,7 @@
          ,@(iterator-keywords subclause))
       ,@forms)))
 
-(defmethod begin-step-forms ((clause for-as-package) initialp)
+(defmethod step-intro-forms ((clause for-as-package) initialp)
   (declare (ignore initialp))
   `((multiple-value-setq (,(temp-entry-p-var clause)
                           ,(temp-symbol-var clause))
@@ -722,7 +737,7 @@
     (unless ,(temp-entry-p-var clause)
       (go ,*epilogue-tag*))))
 
-(defmethod finish-step-forms ((clause for-as-package) initialp)
+(defmethod step-outro-forms ((clause for-as-package) initialp)
   (declare (ignore initialp))
   (destructuring-set (var clause)
                      (temp-symbol-var clause)))

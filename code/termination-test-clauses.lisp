@@ -61,7 +61,7 @@
 (defmethod body-forms ((clause repeat-clause))
   (expand-repeat clause :main))
 
-(defmethod begin-step-forms ((clause repeat-clause) initialp)
+(defmethod step-intro-forms ((clause repeat-clause) initialp)
   (declare (ignore initialp))
   (expand-repeat clause :variable))
 
@@ -86,7 +86,7 @@
 (defmethod body-forms ((clause always-clause))
   (expand-always clause :main))
     
-(defmethod begin-step-forms ((clause always-clause) initialp)
+(defmethod step-intro-forms ((clause always-clause) initialp)
   (declare (ignore initialp))
   (expand-always clause :variable))
 
@@ -111,7 +111,7 @@
 (defmethod body-forms ((clause never-clause))
   (expand-never clause :main))
 
-(defmethod begin-step-forms ((clause never-clause) initialp)
+(defmethod step-intro-forms ((clause never-clause) initialp)
   (declare (ignore initialp))
   (expand-never clause :variable))
 
@@ -137,7 +137,7 @@
 (defmethod body-forms ((clause thereis-clause))
   (expand-thereis clause :main))
 
-(defmethod begin-step-forms ((clause thereis-clause) initialp)
+(defmethod step-intro-forms ((clause thereis-clause) initialp)
   (declare (ignore initialp))
   (expand-thereis clause :variable))
 
@@ -166,6 +166,6 @@
 (defmethod body-forms ((clause while-clause))
   (expand-while clause :main))
 
-(defmethod begin-step-forms ((clause while-clause) initialp)
+(defmethod step-intro-forms ((clause while-clause) initialp)
   (declare (ignore initialp))
   (expand-while clause :variable))

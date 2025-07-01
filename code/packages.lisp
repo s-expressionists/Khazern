@@ -12,7 +12,7 @@
            #:accumulation-category
            #:add-simple-binding
            #:analyze
-           #:begin-step-forms
+           #:step-intro-forms
            #:body-forms
            #:check-nullable-simple-var-spec
            #:clause
@@ -25,7 +25,7 @@
            #:dynamic-extent-p
            #:epilogue-forms
            #:expand-body
-           #:finish-step-forms
+           #:step-outro-forms
            #:for-as-iteration-path
            #:form
            #:ignorablep
