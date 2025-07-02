@@ -3,7 +3,12 @@
 (defclass standard-client ()
   ())
 
-(defgeneric parse-clause (client scope name))
+;;; Parsing interface
+
+(defgeneric parse-clause (client scope name)
+  (:documentation "Parse a clause based on its keyword name."))
+
+;;; Variable maping
 
 (defgeneric map-variables (function clause)
   (:method-combination progn)
@@ -15,6 +20,8 @@
             (map-variables function subclause))
           clause)
     nil))
+
+;;; Expansion interface
 
 (defgeneric variable-list (clause)
   (:documentation "This generic function returns a list of variable and initial forms for use in
@@ -70,14 +77,12 @@ epilogue. The FINALLY clause is an obvious candidate for such code.")
     (declare (ignore clause))
     nil))
 
-;;; Once the LOOP prologue, the LOOP body, and the LOOP epilogue have
-;;; all been constructed, a bunch of successive WRAPPERS are applied
-;;; so as to obtain the final expansion.  Each clause type defines how
-;;; it needs to be wrapped.  Some clauses only require the
-;;; establishment of variable bindings in the wrapper.  Other clauses
-;;; might need to be wrapped in some iterator form.  The generic
-;;; function WRAP-CLAUSE defines how each clause type is wrapped.
 (defgeneric wrap-forms (clause forms)
+  (:documentation "Once the LOOP prologue, the LOOP body, and the LOOP epilogue have all been
+constructed, a bunch of successive WRAPPERS are applied so as to obtain the final expansion.
+Each clause type defines how it needs to be wrapped.  Some clauses only require the
+establishment of variable bindings in the wrapper.  Other clauses might need to be wrapped in
+some iterator form.  The generic function WRAP-CLAUSE defines how each clause type is wrapped.")
   (:method (clause forms)
     (declare (ignore clause))
     forms))
@@ -87,18 +92,42 @@ epilogue. The FINALLY clause is an obvious candidate for such code.")
     (declare (ignore clause))
     nil))
 
-(defgeneric clause-group (clause))
+(defgeneric clause-group (clause)
+  (:documentation "Return the top level group of the clause. This is either :NAME, :VARIABLE or
+:MAIN"))
 
-(defgeneric (setf clause-group) (group clause))
+(defgeneric (setf clause-group) (group clause)
+  (:documentation "Some clauses can appear in either the :VARIABLE or :MAIN group. This SETF
+provides a way to inform the clause where it located so that it knows whether to put its
+expansion into the step forms or the body forms. If the clause cannot be moved it should signal
+INVALID-CLAUSE-ORDER or warn POSSIBLE-INVALID-CLAUSE-ORDER."))
 
-;;; We define three different accumulation CATEGORIES, each identified
-;;; by a symbol: LIST, COUNT/SUM, and MAX/MIN.  Accumulation clauses
-;;; within a category are compatible in that they can be mixed, even
-;;; when they accumulate into the same variable.  This generic
-;;; function takes an accumulation clause and returns the category.
-(defgeneric accumulation-category (clause)
-  (:method (clause)
-    (declare (ignore clause))))
+;;; Binding interface
+
+(defgeneric var-spec (binding))
+
+(defgeneric (setf var-spec) (value binding))
+
+(defgeneric type-spec (binding))
+
+(defgeneric (setf type-spec) (value binding))
+
+(defgeneric ignorablep (binding))
+
+(defgeneric (setf ignorablep) (value binding))
+
+(defgeneric dynamic-extent-p (binding))
+
+(defgeneric (setf dynamic-extent-p) (value binding))
+
+(defgeneric accumulation-category (binding)
+  (:documentation "Return the accumulation category of the binding.")
+  (:method (binding)
+    (declare (ignore binding))))
+
+(defgeneric (setf accumulation-category) (value binding))
+
+;;; Accumulation clause interface
 
 (defgeneric make-accumulation-clause (name type category))
 
@@ -106,6 +135,8 @@ epilogue. The FINALLY clause is an obvious candidate for such code.")
   (:method (instance name ref)
     (declare (ignore instance name ref))
     nil))
+
+;;; Iteration path interface
 
 (defgeneric make-iteration-path (client name &optional inclusive-form))
 

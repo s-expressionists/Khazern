@@ -95,7 +95,7 @@
                      (find-keyword name keyword-or-keywords))
                    (iteration-path-using-names instance))))
 
-(defun make-iteration-path-name (client token)
+(defun make-iteration-path-name (client token &optional inclusive-form-p)
   (when (symbolp token)
     (multiple-value-bind (name status)
         (find-symbol (symbol-name token) :keyword)
@@ -103,14 +103,19 @@
         (return-from make-iteration-path-name name))))
   (error 'unknown-iteration-path
          :client client
-         :name token))
+         :name token
+         :inclusive inclusive-form-p
+         :clause (when (numberp *start*)
+                   (subseq *body* *start* *index*))))
 
 (defmethod make-iteration-path (client name &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (error 'unknown-iteration-path
          :client client
          :name name
-         :inclusive inclusive-form-p))
+         :inclusive inclusive-form-p
+         :clause (when (numberp *start*)
+                   (subseq *body* *start* *index*))))
 
 (defun parse-iteration-path-using (instance using)
   (trivial-with-current-source-form:with-current-source-form (using)
@@ -168,7 +173,7 @@
                         (pop-token :keywords '(:its :each :his :her))
                         (make-iteration-path client
                                              (make-iteration-path-name client
-                                                                       (pop-token))
+                                                                       (pop-token) t)
                                              form)))))
     (parse-iteration-path-prepositions instance)
     instance))
@@ -573,7 +578,9 @@
           :second-preposition :in
           :name (if (typep instance 'for-as-hash-key)
                     :hash-key
-                    :hash-value)))
+                    :hash-value)
+          :clause (when (numberp *start*)
+                    (subseq *body* *start* *index*))))
   (setf (form-ref instance) (add-simple-binding instance :var "HT" :form expression
                                                          :type 'hash-table))
   expression)
@@ -586,12 +593,6 @@
 (defmethod analyze ((clause for-as-hash))
   (when (eq (type-spec (var clause)) *placeholder-result*)
     (setf (type-spec (var clause)) t))
-  (unless (form-ref clause)
-    (error 'missing-iteration-path-prepositions
-           :names '(:in)
-           :name (if (typep clause 'for-as-hash-key)
-                     :hash-key
-                     :hash-value)))
   (check-type-spec (var clause)))
 
 (defmethod wrap-forms ((subclause for-as-hash) forms)

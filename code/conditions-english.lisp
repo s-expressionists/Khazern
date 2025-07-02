@@ -14,23 +14,19 @@
 (defmethod acclimation:report-condition
     ((condition unknown-iteration-path) stream (language acclimation:english))
   (format stream
-          "Unknown ~:[~;inclusive ~]iteration path ~a with client ~a."
+          "~@<Unknown ~:[~;inclusive ~]iteration path ~a with client ~
+           ~a~@[ in clause `~{~s~^ ~}`~].~:@>"
           (inclusivep condition) (name condition)
-          (class-name (class-of (client condition)))))
-
-(defmethod acclimation:report-condition
-    ((condition missing-iteration-path-prepositions) stream (language acclimation:english))
-  (format stream
-          "Missing ~{~#[~;~a~;~a and ~a~:;~@{~a~#[~;, and ~:;, ~]~}~]~} preposition~p for ~:[~;inclusive ~]iteration path ~a."
-          (names condition) (length (names condition))
-          (inclusivep condition) (name condition)))
+          (class-name (class-of (client condition)))
+          (clause condition)))
 
 (defmethod acclimation:report-condition
     ((condition invalid-iteration-path-preposition-order) stream (language acclimation:english))
   (format stream
-          "Preposition order of ~a followed by ~a is invalid for ~:[~;inclusive ~]iteration path ~a."
+          "~@<Preposition order of ~a followed by ~a is invalid for ~:[~;inclusive ~]iteration ~
+path ~a~@[ in clause `~{~s~^ ~}`~].~:@>"
           (first-preposition condition) (second-preposition condition)
-          (inclusivep condition) (name condition)))
+          (inclusivep condition) (name condition) (clause condition)))
 
 (defmethod acclimation:report-condition
     ((condition unable-to-deduce-initial-value) stream (language acclimation:english))
@@ -84,15 +80,6 @@
           (clause condition)))
 
 (defmethod acclimation:report-condition
-    ((condition expected-var-spec-but-end)
-     stream
-     (language acclimation:english))
-  (declare (ignorable condition))
-  (format stream
-          "Expected a variable specification, but reached~@
-           the end of the loop body."))
-
-(defmethod acclimation:report-condition
     ((condition expected-var-spec-but-found)
      stream
      (language acclimation:english))
@@ -108,8 +95,7 @@
      (language acclimation:english))
   (declare (ignorable condition))
   (format stream
-          "~@<Conflicting stepping directions in clause `~{~s~^ ~
-~}`.~:@>"
+          "~@<Conflicting stepping directions in clause `~{~s~^ ~}`.~:@>"
           (clause condition)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -37,15 +37,6 @@
                :initarg :inclusive
                :initform nil)))
 
-(define-condition missing-iteration-path-prepositions (loop-parse-error)
-  ((%name :reader name
-          :initarg :name)
-   (%inclusive :reader inclusivep
-               :initarg :inclusive
-               :initform nil)
-   (%names :reader names
-           :initarg :names)))
-
 (define-condition invalid-iteration-path-preposition-order (style-warning acclimation:condition)
   ((%name :reader name
           :initarg :name)
@@ -61,9 +52,6 @@
   ((%type-spec :reader type-spec
                :initarg :type-spec
                :initform nil)))
-
-(define-condition expected-var-spec-but-end (loop-parse-error)
-  ())
 
 (define-condition expected-var-spec-but-found (loop-parse-error-found)
   ())
