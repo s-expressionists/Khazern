@@ -7,7 +7,7 @@
 (defmethod acclimation:report-condition
     ((condition unknown-parser) stream (language acclimation:english))
   (format stream
-          "Unknown parser ~a with client ~a and scope ~a."
+          "~@<Unknown parser ~a with client ~a and scope ~a.~:@>"
           (name condition) (class-name (class-of (client condition)))
           (class-name (class-of (scope condition)))))
 
@@ -80,16 +80,6 @@ path ~a~@[ in clause `~{~s~^ ~}`~].~:@>"
           (clause condition)))
 
 (defmethod acclimation:report-condition
-    ((condition expected-var-spec-but-found)
-     stream
-     (language acclimation:english))
-  (format stream
-          "Expected a variable specification but found~@
-           the following instead:~@
-           ~s"
-          (found condition)))
-
-(defmethod acclimation:report-condition
     ((condition conflicting-stepping-directions)
      stream
      (language acclimation:english))
@@ -116,9 +106,8 @@ path ~a~@[ in clause `~{~s~^ ~}`~].~:@>"
      (language acclimation:english))
   (declare (ignorable condition))
   (format stream
-          "~@<Multiple NAME clauses were found: ~{~#[~;`~{~s~^ ~
-~}`~;`~{~s~^ ~}` and `~{~s~^ ~}`~:;~@{`~{~s~^ ~}`~#[~;, and ~:;, ~
-~]~}~]~}.~:@>"
+          "~@<Multiple NAME clauses were found: ~{~#[~;`~{~s~^ ~}`~;`~{~s~^ ~}` and ~
+`~{~s~^ ~}`~:;~@{`~{~s~^ ~}`~#[~;, and ~:;, ~]~}~]~}.~:@>"
           (clauses condition)))
 
 (defmethod acclimation:report-condition
@@ -127,9 +116,8 @@ path ~a~@[ in clause `~{~s~^ ~}`~].~:@>"
      (language acclimation:english))
   (declare (ignorable condition))
   (format stream
-          "~@<Invalid clause order. The clause `~{~s~^ ~}` was found ~
-in the ~a clause group but was expected to be in the ~a clause ~
-group.~:@>"
+          "~@<Invalid clause order. The clause `~{~s~^ ~}` was found in the ~a clause group ~
+but was expected to be in the ~a clause group.~:@>"
           (clause condition) (found-group condition)
           (expected-group condition)))
 
@@ -139,10 +127,9 @@ group.~:@>"
      (language acclimation:english))
   (declare (ignorable condition))
   (format stream
-          "~@<Possible invalid clause order according to strict ~
-interpretation of ANSI specification. The clause `~{~s~^ ~}` was ~
-found in the ~a clause group but was expected to be in the ~a clause ~
-group.~:@>"
+          "~@<Possible invalid clause order according to strict interpretation of ANSI ~
+specification. The clause `~{~s~^ ~}` was found in the ~a clause group but was expected to be ~
+in the ~a clause group.~:@>"
           (clause condition) (found-group condition)
           (expected-group condition)))
 
@@ -157,15 +144,15 @@ group.~:@>"
 (defmethod acclimation:report-condition
     ((condition iteration-accumulation-overlap) stream (language acclimation:english))
   (format stream
-          "~@<The variable ~s is used both as an iteration variable ~
-and as an accumulation variable.~:@>"
+          "~@<The variable ~s is used both as an iteration variable and as an accumulation ~
+variable.~:@>"
           (bound-variable condition)))
 
 (defmethod acclimation:report-condition
     ((condition multiple-accumulation-occurrences) stream (language acclimation:english))
   (format stream
-          "~@<the accumulation variable~@[ ~s~] is used both for ~a ~
-accumulation and ~a accumulation.~:@>"
+          "~@<the accumulation variable~@[ ~s~] is used both for ~a accumulation and ~a ~
+accumulation.~:@>"
           (bound-variable condition)
           (first-clause condition)
           (second-clause condition)))
@@ -175,8 +162,7 @@ accumulation and ~a accumulation.~:@>"
      stream
      (language acclimation:english))
   (format stream
-          "~@<Inclusive iteration is not possible with the ~a LOOP ~
-iteration path.~:@>"
+          "~@<Inclusive iteration is not possible with the ~a LOOP iteration path.~:@>"
           (path condition)))
 
 (defmethod acclimation:report-condition
@@ -184,8 +170,8 @@ iteration path.~:@>"
      stream
      (language acclimation:english))
   (format stream
-          "~@<Cannot verify that ~s is a subtype of the required type ~
-~s.~:@>"(subtype condition) (supertype condition)))
+          "~@<Cannot verify that ~s is a subtype of the required type ~s.~:@>"
+          (subtype condition) (supertype condition)))
 
 (defmethod acclimation:report-condition
     ((condition invalid-data-type)

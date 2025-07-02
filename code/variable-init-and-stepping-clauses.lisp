@@ -127,7 +127,6 @@
        (unless names
          (error 'unexpected-token-found
                 :found (car *tokens*)
-                :location *index*
                 :clause (subseq *body* *start* *index*)))
        (setf (iteration-path-using instance (nth-value 1 (pop-token :keywords names)))
              (pop-token :type 'd-var-spec))

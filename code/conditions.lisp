@@ -8,11 +8,7 @@
 ;;; and put them in a separate (language-specific) file.  
 
 (define-condition loop-parse-error (parse-error acclimation:condition)
-  ((location :accessor location
-             :initarg :location
-             :initform nil
-             :type list)
-   (%clause :reader clause
+  ((%clause :reader clause
             :initarg :clause
             :initform nil)))
 
@@ -52,9 +48,6 @@
   ((%type-spec :reader type-spec
                :initarg :type-spec
                :initform nil)))
-
-(define-condition expected-var-spec-but-found (loop-parse-error-found)
-  ())
 
 (define-condition expected-token (loop-parse-error)
   ((%expected-type :accessor expected-type

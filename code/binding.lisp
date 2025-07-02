@@ -31,9 +31,6 @@
                       nil)
                      ((symbolp d-var-spec)
                       t)
-                     ((not (consp d-var-spec))
-                      (error 'expected-var-spec-but-found
-                             :found d-var-spec))
                      (t
                       (let ((car-p (traverse (car d-var-spec)))
                             (cdr-p (traverse (cdr d-var-spec))))
@@ -49,7 +46,7 @@
 
 (defun make-destructuring-binding (spec
                                    &key (type t) ((:ignorable ignorablep) nil)
-                                     ((:dynamic-extent dynamic-extent-p) nil))
+                                        ((:dynamic-extent dynamic-extent-p) nil))
   (make-instance 'destructuring-binding
                  :var-spec spec
                  :type-spec type
@@ -64,9 +61,6 @@
                      ((symbolp d-var-spec)
                       (push d-var-spec assignments)
                       (push form assignments))
-                     ((not (consp d-var-spec))
-                      (error 'expected-var-spec-but-found
-                             :found d-var-spec))
                      (t
                       (let ((temp (gethash d-var-spec temps)))
                         (cond (temp
@@ -87,15 +81,9 @@
                    ((symbolp var-spec)
                     (funcall function var-spec (or type-spec t)
                              (accumulation-category binding)))
-                   ((not (consp var-spec))
-                    (error 'expected-var-spec-but-found
-                           :found var-spec))
                    ((symbolp type-spec)
                     (traverse (car var-spec) type-spec)
                     (traverse (cdr var-spec) type-spec))
-                   ((not (consp type-spec))
-                    (error 'expected-type-spec-but-found
-                           :found type-spec))
                    (t
                     (traverse (car var-spec) (car type-spec))
                     (traverse (cdr var-spec) (cdr type-spec))))
@@ -118,16 +106,10 @@
                     nil)
                    ((symbolp var-spec)
                     (deduce type-spec))
-                   ((not (consp var-spec))
-                    (error 'expected-var-spec-but-found
-                           :found var-spec))
                    ((symbolp type-spec)
                     (setf type-spec (deduce type-spec))
                     (cons (traverse (car var-spec) type-spec)
                           (traverse (cdr var-spec) type-spec)))
-                   ((not (consp type-spec))
-                    (error 'expected-type-spec-but-found
-                           :found type-spec))
                    (t
                     (cons (traverse (car var-spec) (car type-spec))
                           (traverse (cdr var-spec) (cdr type-spec)))))))

@@ -29,7 +29,6 @@
     (error 'expected-token-but-end
            :expected-type type
            :expected-keywords (flatten-keywords keywords)
-           :location *index*
            :clause (when (numberp *start*)
                      (subseq *body* *start* *index*))))
   (trivial-with-current-source-form:with-current-source-form ((car *tokens*))
@@ -43,7 +42,6 @@
                :found (car *tokens*)
                :expected-type type
                :expected-keywords (flatten-keywords keywords)
-               :location *index*
                :clause (when (numberp *start*)
                          (subseq *body* *start* *index*))))
       (when *toplevel*
