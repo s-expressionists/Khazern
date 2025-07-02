@@ -163,6 +163,8 @@ INVALID-CLAUSE-ORDER or warn POSSIBLE-INVALID-CLAUSE-ORDER."))
 
 (defgeneric (setf iteration-path-using) (new-value instance name))
 
+;;; Clause analysis
+
 (defgeneric analyze (clause-or-clauses)
   (:method (clause-or-clauses)
     (declare (ignore clause-or-clauses))))
