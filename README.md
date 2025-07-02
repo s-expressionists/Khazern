@@ -8,7 +8,7 @@ implementation's own LOOP.
 
 To load Khazern intrinsically with [Quicklisp][] do the following:
 
-```lisp
+```common-lisp
 * (ql:quickload :khazern-intrinsic)
 * (loop for i in '(1 2 3 4) when (oddp i) collect i)    
 (1 3)
@@ -16,11 +16,75 @@ To load Khazern intrinsically with [Quicklisp][] do the following:
 
 To load Khazern extrinsically do the following
 
-```lisp
+```common-lisp
 * (ql:quickload :khazern-extrinsic)
 * (khazern-extrinsic:loop for i in '(1 2 3 4) when (oddp i) collect i)    
 (1 3)
 ```
 
+## Extending Khazern
+
+Khazern supports extension via iteration paths. The documentation
+regarding the this protocol has not been written yet, but examples can
+be seen in the `khazern-extension` system. Khazern can support the
+iteration paths provided by [loop-iteration-paths][] simply by using
+either the `khazern-extension-extrinsic` or
+`khazern-extension-intrinsic` systems. For example:
+
+```common-lisp
+* (ql:quickload '(:khazern-extension-extrinsic :flexi-streams))
+* (ke:loop for i being the elements in #(1 2 3 4 5)
+             start 1 from-end t
+           do (print i))
+
+5 
+4 
+3 
+2 
+NIL
+* (with-input-from-string (stream "a 233d0 #C(1 2) (wibble)")
+    (ke:loop for i being the objects in stream
+             do (print i)))
+
+A 
+233.0d0 
+#C(1 2) 
+(WIBBLE) 
+NIL
+* (with-input-from-string (stream "abcd")
+    (ke:loop for i being the characters in stream
+             do (print i)))
+
+#\a 
+#\b 
+#\c 
+#\d 
+NIL
+* (with-input-from-string (stream "ab
+c
+d")
+    (ke:loop for i being the lines in stream
+               using (missing-newline-p j)
+             do (print i)
+                (print j)))
+
+"ab" 
+NIL 
+"c" 
+NIL 
+"d" 
+T 
+NIL
+* (flexi-streams:with-input-from-sequence (stream #(1 2 3))
+    (ke:loop for i being the bytes in stream
+             do (print i)))
+
+1 
+2 
+3 
+NIL
+```
+
+[loop-iteration-paths]: https://github.com/yitzchak/loop-iteration-paths/
 [Quicklisp]: https://www.quicklisp.org/beta/
 [SICL]: https://github.com/robert-strandh/SICL

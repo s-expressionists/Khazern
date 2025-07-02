@@ -8,14 +8,14 @@
 (defgeneric parse-clause (client scope name)
   (:documentation "Parse a clause based on its keyword name."))
 
-;;; Variable maping
+;;; Variable mapping
 
 (defgeneric map-variables (function clause)
   (:method-combination progn)
   (:method progn (function clause)
     (declare (ignore function clause))
     nil)
-  (:method progn (function (clause cl:list))
+  (:method progn (function (clause list))
     (mapc (lambda (subclause)
             (map-variables function subclause))
           clause)
