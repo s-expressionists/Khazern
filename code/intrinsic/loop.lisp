@@ -9,4 +9,4 @@
   (khazern:define-interface *client* intrinsic-client t))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (pushnew :loop/khazern *features*)
+  (pushnew :loop/khazern *features*))
