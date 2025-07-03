@@ -81,3 +81,6 @@
        (if inclusive-form-p
            (call-next-method)
            (make-instance 'for-as-lines)))))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (pushnew :loop/khazern-extension *features*)
