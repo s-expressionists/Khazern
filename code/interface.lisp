@@ -1,7 +1,10 @@
 (cl:in-package #:khazern)
 
 (defclass standard-client ()
-  ())
+  ()
+  (:documentation "The standard-client includes the core parsing and clause creation rules for
+LOOP. KHAZERN:DEFINE-INTERFACE is then used with a subclass of the standard-client to create the
+macro stubs LOOP and LOOP-FINISH."))
 
 ;;; Parsing interface
 
@@ -10,15 +13,17 @@
 
 ;;; Variable mapping
 
-(defgeneric map-variables (function clause)
+(defgeneric map-variables (function instance)
+  (:documentation "Map over the variables associated with the instance. For each variable call
+the FUNCTION with the arguments var, type and category.")
   (:method-combination progn)
-  (:method progn (function clause)
-    (declare (ignore function clause))
+  (:method progn (function instance)
+    (declare (ignore function instance))
     nil)
-  (:method progn (function (clause list))
-    (mapc (lambda (subclause)
-            (map-variables function subclause))
-          clause)
+  (:method progn (function (instance list))
+    (mapc (lambda (item)
+            (map-variables function item))
+          instance)
     nil))
 
 ;;; Expansion interface
@@ -104,68 +109,107 @@ INVALID-CLAUSE-ORDER or warn POSSIBLE-INVALID-CLAUSE-ORDER."))
 
 ;;; Binding interface
 
-(defgeneric var-spec (binding))
+(defgeneric var-spec (binding)
+  (:documentation "Return the var-spec of the binding. This is possibly a d-var-spec."))
 
-(defgeneric (setf var-spec) (value binding))
+(defgeneric (setf var-spec) (value binding)
+  (:documentation "Set the var-spec of the binding."))
 
-(defgeneric type-spec (binding))
+(defgeneric type-spec (binding)
+  (:documentation "Return the type-spec of the binding. This is possibly a d-type-spec."))
 
-(defgeneric (setf type-spec) (value binding))
+(defgeneric (setf type-spec) (value binding)
+  (:documentation "Set the type-spec of the binding."))
 
-(defgeneric ignorablep (binding))
+(defgeneric ignorablep (binding)
+  (:documentation "Return non-NIL if the binding is declared IGNORABLE."))
 
-(defgeneric (setf ignorablep) (value binding))
+(defgeneric (setf ignorablep) (value binding)
+  (:documentation "Set the IGNORABLE declaration of the binding. Non-NIL if the binding is
+declared IGNORABLE."))
 
-(defgeneric dynamic-extent-p (binding))
+(defgeneric dynamic-extent-p (binding)
+  (:documentation "Return non-NIL if the binding is declared DYNAMIC-EXTENT."))
 
-(defgeneric (setf dynamic-extent-p) (value binding))
+(defgeneric (setf dynamic-extent-p) (value binding)
+  (:documentation "Set the DYNAMIC-EXTENT declaration of the binding. Non-NIL if the binding is
+declared DYNAMIC-EXTENT."))
 
 (defgeneric accumulation-category (binding)
-  (:documentation "Return the accumulation category of the binding.")
+  (:documentation "Return the accumulation category of the binding. There can be multiple
+accumulation clauses that have the same binding name as long as they all have the same
+accumulation category. The category should be a keyword. Currently used categories are :LIST,
+:SUMMATION, :EXTREMUM, :EVERY and :SOME.")
   (:method (binding)
     (declare (ignore binding))))
 
-(defgeneric (setf accumulation-category) (value binding))
+(defgeneric (setf accumulation-category) (value binding)
+  (:documentation "Set the accumulation category of the binding."))
 
 ;;; Accumulation clause interface
 
-(defgeneric make-accumulation-clause (name type category))
+(defgeneric make-accumulation-clause (name type category)
+  (:documentation "Create an accumulation clause based on the category. This is the clause that
+will contain the bindings or wrappers that are common to all of the accumulation clauses and
+will be inserted at the beginning of the clause list."))
 
 (defgeneric accumulation-clause-reference (instance name ref)
+  (:documentation "Return a symbol that represents the lexical name of REF in the accumulation
+variable NAME. For example, a REF of :TAIL for list accumulation will return the tail cons of
+the accumulation variable.")
   (:method (instance name ref)
     (declare (ignore instance name ref))
     nil))
 
 ;;; Iteration path interface
 
-(defgeneric make-iteration-path (client name &optional inclusive-form))
+(defgeneric make-iteration-path (client name &optional inclusive-form)
+  (:documentation "Make an iteration path based on client and name. The name will be a
+keyword. INCLUSIVE-FORM will be included if the iteration path was inclusive."))
 
 (defgeneric iteration-path-preposition-names (instance)
+  (:documentation "Return a list of valid preposition names. This list is expected to be updated
+as prepositions are parsed. If the iteration path is a subclass of KHAZERN:FOR-AS-ITERATION-PATH
+then this will be automatically handled including preposition groups. For instance,
+`((:in :of) :by)` specifies that :IN and :OF are in in the same preposition group, so that if
+one is specified then the other cannot occur.")
   (:method (instance)
     (declare (ignore instance))
     nil))
 
 (defgeneric iteration-path-required-preposition-names (instance)
+  (:documentation "Return a list of required preposition names. This list has the same format as
+ITERATION-PATH-PREPOSITION-NAMES.")
   (:method (instance)
     (declare (ignore instance))
     nil))
 
-(defgeneric iteration-path-preposition (instance key))
+(defgeneric iteration-path-preposition (instance key)
+  (:documentation "Return the value of a path preposition. This is not currently used."))
 
-(defgeneric (setf iteration-path-preposition) (new-value instance name))
+(defgeneric (setf iteration-path-preposition) (new-value instance name)
+  (:documentation "Set the value of a path preposition."))
 
 (defgeneric iteration-path-using-names (instance)
+  (:documentation "Return a list of valid USING names. This list is expected to be updated as
+USING variables are parsed. If the iteration path is a subclass of KHAZERN:FOR-AS-ITERATION-PATH
+then this will be automatically handled including USING groups. For instance,
+`((:index :indicies) :quux)` specifies that :INDEX and :INDICIES are in in the same USING group,
+so that if one is specified then the other cannot occur.")
   (:method (instance)
     (declare (ignore instance))
     nil))
 
-(defgeneric iteration-path-using (instance key))
+(defgeneric iteration-path-using (instance key)
+  (:documentation "Return the value of a path using. This is not currently used."))
 
-(defgeneric (setf iteration-path-using) (new-value instance name))
+(defgeneric (setf iteration-path-using) (new-value instance name)
+  (:documentation "Set the value of a path using."))
 
 ;;; Clause analysis
 
 (defgeneric analyze (clause-or-clauses)
+  (:documentation "Analyze the clause for semantic errors.")
   (:method (clause-or-clauses)
     (declare (ignore clause-or-clauses))))
 
@@ -176,11 +220,12 @@ INVALID-CLAUSE-ORDER or warn POSSIBLE-INVALID-CLAUSE-ORDER."))
 
 (defmacro define-interface (client-var client-class &optional intrinsic)
   (declare (ignore client-class))
-  (let* ((intrinsic-pkg (if intrinsic (find-package '#:common-lisp) *package*))
+  "Create the macro stubs LOOP and LOOP-FINISH based on the client-var and client-class."
+  (let* ((pkg (if intrinsic (find-package '#:common-lisp) *package*))
          (epilogue-tag (ensure-symbol '#:epilogue)))
     `(progn
-       (defmacro ,(ensure-symbol '#:loop-finish intrinsic-pkg) ()
+       (defmacro ,(ensure-symbol '#:loop-finish pkg) ()
          '(go ,epilogue-tag))
 
-       (defmacro ,(ensure-symbol '#:loop intrinsic-pkg) (&rest forms)
+       (defmacro ,(ensure-symbol '#:loop pkg) (&rest forms)
          (khazern:expand-body ,client-var forms ',epilogue-tag)))))

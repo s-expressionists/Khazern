@@ -47,6 +47,7 @@
 (defun make-destructuring-binding (spec
                                    &key (type t) ((:ignorable ignorablep) nil)
                                         ((:dynamic-extent dynamic-extent-p) nil))
+  "Make a destructuring binding."
   (make-instance 'destructuring-binding
                  :var-spec spec
                  :type-spec type
@@ -54,6 +55,7 @@
                  :dynamic-extent dynamic-extent-p))
 
 (defun destructuring-set (binding form)
+  "Return the SETQ for a destructuring binding and a form."
   (let ((assignments '())
         (temps (temps binding)))
     (labels ((traverse (d-var-spec form)
@@ -91,6 +93,7 @@
     (traverse (var-spec binding) (type-spec binding))))
 
 (defun check-type-spec (instance)
+  "Check the types and initial values of a destructuring binding."
   (labels ((deduce (type-spec)
              (cond ((nth-value 1 (deduce-initial-value type-spec))
                     type-spec)
@@ -116,8 +119,8 @@
     (setf (type-spec instance)
           (traverse (var-spec instance) (type-spec instance)))))
 
-(defun destructuring-declarations
-    (binding)
+(defun destructuring-declarations (binding)
+  "Return the declarations of a destructuring binding."
   (let ((result '())
         (variables '()))
     (map-variables (lambda (var type category)
@@ -134,6 +137,7 @@
     (nreverse result)))
 
 (defun destructuring-variable-list (binding)
+  "Return the variable list of a destructuring binding."
   (let ((result '()))
     (map-variables (lambda (var type category)
                      (declare (ignore category))

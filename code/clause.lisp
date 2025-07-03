@@ -113,6 +113,8 @@
                                 ((:ignorable ignorablep) nil)
                                 ((:dynamic-extent dynamic-extent-p) nil)
                                 ((:fold foldp) nil) (fold-test 'constantp))
+  "Make a simple binding with an initial form. If the form is not specified then it will be
+deduced based on the type."
   (if (and foldp (funcall fold-test form))
       (values form nil)
       (let* ((ref (if (symbolp var)
