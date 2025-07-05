@@ -25,7 +25,7 @@
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
-  :depends-on ("alexandria"
+  :depends-on ("ansi-test-harness"
                "khazern-intrinsic")
   :perform (asdf:test-op (op c)
              (uiop:symbol-call :khazern-intrinsic/test :test))

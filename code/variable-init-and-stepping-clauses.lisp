@@ -58,37 +58,10 @@
 ;;;   path-using            ::= USING ({simple-var simple-var}+)
 ;;;   path-preposition      ::= name form
 
-(defclass for-as-iteration-path (for-as-subclause)
-  ((%preposition-names :accessor iteration-path-preposition-names
-                       :initarg :preposition-names
-                       :initform nil)
-   (%required-preposition-names :accessor iteration-path-required-preposition-names
-                                :initarg :required-preposition-names
-                                :initform nil)
-   (%using-names :accessor iteration-path-using-names
-                 :initarg :using-names
-                 :initform nil)))
-   
-
-(defmethod (setf iteration-path-preposition) :after
-    (value (instance for-as-iteration-path) name)
-  (declare (ignore name))
-  (setf (iteration-path-preposition-names instance)
-        (delete-if (lambda (keyword-or-keywords)
-                     (find-keyword name keyword-or-keywords))
-                   (iteration-path-preposition-names instance))
-        (iteration-path-required-preposition-names instance)
-        (delete-if (lambda (keyword-or-keywords)
-                     (find-keyword name keyword-or-keywords))
-                   (iteration-path-required-preposition-names instance))))
-
-(defmethod (setf iteration-path-using) :after
-    (value (instance for-as-iteration-path) name)
-  (declare (ignore name))
-  (setf (iteration-path-using-names instance)
-        (delete-if (lambda (keyword-or-keywords)
-                     (find-keyword name keyword-or-keywords))
-                   (iteration-path-using-names instance))))
+(defun delete-name (name names)
+  (delete-if (lambda (keyword-or-keywords)
+               (find-keyword name keyword-or-keywords))
+             names))
 
 (defun make-iteration-path-name (client token &optional inclusive-form-p)
   (when (symbolp token)
@@ -112,49 +85,47 @@
          :clause (when (numberp *start*)
                    (subseq *body* *start* *index*))))
 
-(defun parse-iteration-path-using (instance using)
+(defun parse-iteration-path-usings (instance using-names using)
   (trivial-with-current-source-form:with-current-source-form (using)
     (prog ((*tokens* using)
            (*toplevel* nil)
-           (names nil))
+           keyword)
      next-using
-       (setf names (iteration-path-using-names instance))
-       (unless names
+       (unless using-names
          (error 'unexpected-token-found
                 :found (car *tokens*)
                 :clause (subseq *body* *start* *index*)))
-       (setf (iteration-path-using instance (nth-value 1 (pop-token :keywords names)))
-             (pop-token :type 'd-var-spec))
+       (setf keyword (nth-value 1 (pop-token :keywords using-names))
+             using-names (delete-name keyword using-names))
+       (parse-iteration-path-using instance keyword)
      (when *tokens*
        (go next-using)))))
 
 (defun parse-iteration-path-prepositions (instance)
-  (prog ((foundp nil)
-         (token nil)
-         (keyword nil)
-         (names nil)
-         (usingp (and (iteration-path-using-names instance) t)))
-   next-preposition
-     (setf names (if usingp
-                     (list* :using
-                            (iteration-path-preposition-names instance))
-                     (iteration-path-preposition-names instance)))
-     (when names
-       (cond ((iteration-path-required-preposition-names instance)
-              (multiple-value-setq (token keyword)
-                (pop-token :keywords names))
-              (setf foundp t))
-             (t
-              (multiple-value-setq (foundp token keyword)
-                (pop-token? :keywords names))))
-       (cond ((not foundp)
-              (return instance))
-             ((eq keyword :using)
-              (setf usingp nil)
-              (parse-iteration-path-using instance (pop-token :type 'cons)))
-             (t
-              (setf (iteration-path-preposition instance keyword) (pop-token))))
-       (go next-preposition))))
+  (multiple-value-bind (preposition-names required-preposition-names using-names)
+      (iteration-path-names instance)
+    (when using-names
+      (pushnew :using preposition-names))
+    (prog ((foundp nil)
+           (token nil)
+           (keyword nil))
+     next-preposition
+       (when preposition-names
+         (cond (required-preposition-names
+                (multiple-value-setq (token keyword)
+                  (pop-token :keywords preposition-names))
+                (setf foundp t))
+               (t
+                (multiple-value-setq (foundp token keyword)
+                  (pop-token? :keywords preposition-names))))
+         (unless foundp
+           (return instance))
+         (setf preposition-names (delete-name keyword preposition-names)
+               required-preposition-names (delete-name keyword required-preposition-names))
+         (if (eq keyword :using)
+             (parse-iteration-path-usings instance using-names (pop-token :type 'cons))
+             (parse-iteration-path-preposition instance keyword))
+         (go next-preposition)))))
 
 (defmethod parse-clause
     ((client standard-client) (instance for-as-clause) (keyword (eql :being)) &key var)
@@ -186,7 +157,7 @@
 ;;;   arithmetic-downfrom         ::= ⟦{DOWNFROM form1} | {TO | DOWNTO | ABOVE} form2 |
 ;;;                                    BY form3⟧
 
-(defclass for-as-arithmetic (for-as-iteration-path)
+(defclass for-as-arithmetic (for-as-subclause)
   ((%next-ref :accessor next-ref
               :initform nil)
    (%next-var :accessor next-var
@@ -208,10 +179,7 @@
    ;; then this slot contains NIL.
    (%termination-test :accessor termination-test
                       :initarg :termination-test
-                      :initform nil))
-  (:default-initargs :preposition-names (list '(:from :upfrom :downfrom)
-                                              '(:to :upto :downto :above :below)
-                                              :by)))
+                      :initform nil))) 
 
 (defmethod initialize-instance :after ((instance for-as-arithmetic) &rest initargs &key)
   (declare (ignore initargs))
@@ -227,38 +195,46 @@
 ;;;
 ;;; FOR-AS-ARITHMETIC parsers
 
-(defmethod (setf iteration-path-preposition) (value (instance for-as-arithmetic) name)
-  ;; parse the form
-  (ecase name
-    ((:to :upto :downto :above :below)
-     (setf (values (end-ref instance) (end-var instance))
-           (add-simple-binding instance :var "END" :type 'number :form value :fold t)))
-    ((:from :downfrom :upfrom)
-     (setf (values (next-ref instance) (next-var instance))
-           (add-simple-binding instance :var "NEXT" :type 'number :form value)))
-    (:by
-     (setf (values (by-ref instance) (by-var instance))
-           (add-simple-binding instance :var "BY" :type 'number :form value :fold t))))
-  ;; set the termination test
-  (case name
-    ((:to :upto :downto)
-     (setf (termination-test instance) '<=))
-    ((:above :below)
-     (setf (termination-test instance) '<)))
-  ;; set the direction
-  (case name
-    ((:upto :upfrom :below)
-     (cond ((typep instance 'for-as-arithmetic-down)
-            (error 'conflicting-stepping-directions
-                   :clause (subseq *body* *start* *index*)))
-           ((not (typep instance 'for-as-arithmetic-up))
-            (change-class instance 'for-as-arithmetic-up))))
-    ((:downto :downfrom :above)
-     (cond ((typep instance 'for-as-arithmetic-up)
-            (error 'conflicting-stepping-directions
-                   :clause (subseq *body* *start* *index*)))
-           ((not (typep instance 'for-as-arithmetic-down))
-            (change-class instance 'for-as-arithmetic-down)))))
+(defmethod iteration-path-names ((instance for-as-arithmetic))
+  (values (list '(:from :upfrom :downfrom)
+                '(:to :upto :downto :above :below)
+                :by)
+          '()
+          '()))
+
+(defmethod parse-iteration-path-preposition ((instance for-as-arithmetic) name)
+  (let ((value (pop-token)))
+    ;; parse the form
+    (ecase name
+      ((:to :upto :downto :above :below)
+       (setf (values (end-ref instance) (end-var instance))
+             (add-simple-binding instance :var "END" :type 'number :form value :fold t)))
+      ((:from :downfrom :upfrom)
+       (setf (values (next-ref instance) (next-var instance))
+             (add-simple-binding instance :var "NEXT" :type 'number :form value)))
+      (:by
+       (setf (values (by-ref instance) (by-var instance))
+             (add-simple-binding instance :var "BY" :type 'number :form value :fold t))))
+    ;; set the termination test
+    (case name
+      ((:to :upto :downto)
+       (setf (termination-test instance) '<=))
+      ((:above :below)
+       (setf (termination-test instance) '<)))
+    ;; set the direction
+    (case name
+      ((:upto :upfrom :below)
+       (cond ((typep instance 'for-as-arithmetic-down)
+              (error 'conflicting-stepping-directions
+                     :clause (subseq *body* *start* *index*)))
+             ((not (typep instance 'for-as-arithmetic-up))
+              (change-class instance 'for-as-arithmetic-up))))
+      ((:downto :downfrom :above)
+       (cond ((typep instance 'for-as-arithmetic-up)
+              (error 'conflicting-stepping-directions
+                     :clause (subseq *body* *start* *index*)))
+             ((not (typep instance 'for-as-arithmetic-down))
+              (change-class instance 'for-as-arithmetic-down))))))
   nil)
 
 (defun parse-for-as-arithmetic (keyword var)
@@ -312,7 +288,8 @@
     (with-accessors ((var-type type-spec))
         var
       (unless next-var
-        (setf (iteration-path-preposition clause :from) 0))
+        (setf (values (next-ref clause) (next-var clause))
+              (add-simple-binding clause :var "NEXT" :type 'number :form 0)))
       (with-accessors ((next-type type-spec)
                        (next-form form))
           next-var
@@ -520,15 +497,13 @@
 ;;; before IN/OF. In this case a STYLE-WARNING is signalled since the ANSI specification does
 ;;; not permit such an ordering.
 
-(defclass for-as-hash (for-as-iteration-path form-ref-mixin other-var-mixin)
+(defclass for-as-hash (for-as-subclause form-ref-mixin other-var-mixin)
   ((%temp-entry-p-var :accessor temp-entry-p-var)
    (%temp-key-var :accessor temp-key-var)
    (%temp-value-var :accessor temp-value-var)
    (%iterator-var :reader iterator-var
                   :initform (gensym "ITER")))
-  (:default-initargs :preposition-names (list '(:in :of))
-                     :required-preposition-names (list '(:in :of))
-                     :other-var (make-instance 'destructuring-binding
+  (:default-initargs :other-var (make-instance 'destructuring-binding
                                                :var-spec nil)))
 
 (defmethod initialize-instance :after ((instance for-as-hash) &rest initargs &key)
@@ -539,12 +514,10 @@
         (temp-value-var instance) (add-simple-binding instance :var "VALUE")))
 
 (defclass for-as-hash-key (for-as-hash)
-  ()
-  (:default-initargs :using-names (list :hash-value)))
+  ())
 
 (defclass for-as-hash-value (for-as-hash)
-  ()
-  (:default-initargs :using-names (list :hash-key)))
+  ())
 
 (defmethod make-iteration-path
     ((client standard-client) (name (eql :hash-key)) var
@@ -586,7 +559,17 @@
                      :var var
                      :start *start*)))
 
-(defmethod (setf iteration-path-preposition) (expression (instance for-as-hash) key)
+(defmethod iteration-path-names ((instance for-as-hash-key))
+  (values (list '(:in :of))
+          (list '(:in :of))
+          (list :hash-value)))
+                     
+(defmethod iteration-path-names ((instance for-as-hash-value))
+  (values (list '(:in :of))
+          (list '(:in :of))
+          (list :hash-key)))
+
+(defmethod parse-iteration-path-preposition ((instance for-as-hash) key)
   (when (var-spec (other-var instance))
     (warn 'invalid-iteration-path-preposition-order
           :first-preposition :using
@@ -596,14 +579,12 @@
                     :hash-value)
           :clause (when (numberp *start*)
                     (subseq *body* *start* *index*))))
-  (setf (form-ref instance) (add-simple-binding instance :var "HT" :form expression
-                                                         :type 'hash-table))
-  expression)
+  (setf (form-ref instance) (add-simple-binding instance :var "HT" :form (pop-token)
+                                                         :type 'hash-table)))
 
-(defmethod (setf iteration-path-using) (value (instance for-as-hash) key)
+(defmethod parse-iteration-path-using ((instance for-as-hash) key)
   (setf (other-var instance) (add-destructuring-binding instance
-                                                        :var value))
-  value)
+                                                        :var (pop-token :type 'd-var-spec))))
 
 (defmethod analyze ((clause for-as-hash))
   (when (eq (type-spec (var clause)) *placeholder-result*)
@@ -649,16 +630,14 @@
 ;;; FOR-AS-PACKAGE is implmented as the SYMBOL(S)/PRESENT-SYMBOL(S)/EXTERNAL-SYMBOL(S) iteration
 ;;; path extension.
 
-(defclass for-as-package (for-as-iteration-path form-ref-mixin)
+(defclass for-as-package (for-as-subclause form-ref-mixin)
   ((%temp-entry-p-var :accessor temp-entry-p-var)
    (%temp-symbol-var :accessor temp-symbol-var)
    (%iterator-var :reader iterator-var
                   :initform (gensym "ITER"))
    (%iterator-keywords :reader iterator-keywords
                        :initarg :iterator-keywords))
-  (:default-initargs :form-ref '*package*
-                     :preposition-names (list '(:in :of))))
-
+  (:default-initargs :form-ref '*package*))
 
 (defmethod initialize-instance :after ((instance for-as-package) &rest initargs &key)
   (declare (ignore initargs))
@@ -732,12 +711,15 @@
                      :var var
                      :iterator-keywords '(:external))))
 
-(defmethod (setf iteration-path-preposition)
-    (expression (instance for-as-package) key)
-  (setf (form-ref instance) (add-simple-binding instance :var "PKG" :form expression
+(defmethod iteration-path-names ((instance for-as-package))
+  (values (list '(:in :of))
+          '()
+          '()))
+
+(defmethod parse-iteration-path-preposition ((instance for-as-package) key)
+  (setf (form-ref instance) (add-simple-binding instance :var "PKG" :form (pop-token)
                                                          :type '(or character string symbol
-                                                                 package)))
-  expression)
+                                                                 package))))
 
 (defmethod analyze ((clause for-as-package))
   (check-nullable-simple-var-spec (var clause))

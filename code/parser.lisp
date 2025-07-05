@@ -66,7 +66,7 @@
   (decf *index*)
   (push token *tokens*))
 
-(defmethod parse-clause (client scope name &key)
+(defmethod parse-clause (client scope name &key &allow-other-keys)
   (error 'unknown-parser
          :client client
          :scope scope

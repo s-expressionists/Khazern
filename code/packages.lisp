@@ -24,22 +24,22 @@
            #:dynamic-extent-p
            #:epilogue-forms
            #:expand-body
-           #:for-as-iteration-path
            #:form
            #:ignorablep
-           #:iteration-path-preposition
-           #:iteration-path-preposition-names
-           #:iteration-path-using
-           #:iteration-path-using-names
+           #:iteration-path-names
            #:make-iteration-path
            #:map-variables
+           #:parse-clause
+           #:parse-iteration-path-preposition
+           #:parse-iteration-path-using
+           #:pop-token
+           #:pop-token?
            #:prologue-forms
            #:standard-client
            #:step-intro-forms
            #:step-outro-forms
            #:symbol-equal
            #:type-spec
-           #:var
            #:var-spec
            #:variable-list
            #:wrap-forms))

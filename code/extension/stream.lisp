@@ -1,7 +1,9 @@
 (cl:in-package #:khazern-extension)
 
-(defclass for-as-stream (khazern:for-as-iteration-path)
-  ((%temp-ref :accessor temp-ref)
+(defclass for-as-stream (khazern:clause)
+  ((%var :accessor var
+         :initarg :var)
+   (%temp-ref :accessor temp-ref)
    (%temp-var :accessor temp-var)
    (%stream-ref :accessor stream-ref
                 :initform nil)
@@ -10,39 +12,42 @@
    (%close-ref :accessor close-ref
                :initform nil)
    (%stream-var :accessor stream-var
-                :initform nil))
-  (:default-initargs :preposition-names (list '(:in :of) :close)
-                     :using-names (list :stream)))
+                :initform nil)))
 
 (defmethod initialize-instance :after ((instance for-as-stream) &rest initargs &key)
   (declare (ignore initargs))
-  (khazern:add-binding instance (khazern:var instance)))
+  (khazern:add-binding instance (var instance)))
 
-(defmethod (setf khazern:iteration-path-preposition)
-    (value (instance for-as-stream) (key (eql :in)))
+(defmethod khazern:iteration-path-names ((instance for-as-stream))
+  (values (list '(:in :of) :close)
+          '()
+          (list :stream)))
+
+(defmethod khazern:parse-iteration-path-preposition
+    ((instance for-as-stream) (key (eql :in)))
   (setf (values (stream-ref instance) (stream-d-spec instance))
         (khazern:add-simple-binding instance :var (or (stream-var instance) "STREAM")
-                                             :form value :type 'stream))
-  value)
+                                             :form (khazern:pop-token) :type 'stream)))
 
-(defmethod (setf khazern:iteration-path-preposition)
-    (value (instance for-as-stream) (key (eql :of)))
+(defmethod khazern:parse-iteration-path-preposition
+    ((instance for-as-stream) (key (eql :of)))
   (setf (values (stream-ref instance) (stream-d-spec instance))
         (khazern:add-simple-binding instance :var (or (stream-var instance) "STREAM")
-                                             :form value :type 'stream))
-  value)
+                                             :form (khazern:pop-token) :type 'stream)))
 
-(defmethod (setf khazern:iteration-path-preposition)
-    (value (instance for-as-stream) (key (eql :close)))
-  (setf (close-ref instance) (khazern:add-simple-binding instance :var "CLOSEP" :form value))
-  value)
+(defmethod khazern:parse-iteration-path-preposition
+    ((instance for-as-stream) (key (eql :close)))
+  (setf (close-ref instance) (khazern:add-simple-binding instance
+                                                         :var "CLOSEP"
+                                                         :form (khazern:pop-token))))
 
-(defmethod (setf khazern:iteration-path-using)
-    (value (instance for-as-stream) (key (eql :stream)))
-  (when (stream-d-spec instance)
-    (setf (khazern:var-spec (stream-d-spec instance)) value
-          (stream-ref instance) value))
-  (setf (stream-var instance) value))
+(defmethod khazern:parse-iteration-path-using
+    ((instance for-as-stream) (key (eql :stream)))
+  (let ((value (khazern:pop-token)))
+    (when (stream-d-spec instance)
+      (setf (var-spec (stream-d-spec instance)) value
+            (stream-ref instance) value))
+    (setf (stream-var instance) value)))
 
 (defmethod khazern:analyze :before ((instance for-as-stream))
   (cond ((stream-ref instance))
@@ -55,12 +60,12 @@
          (setf (stream-ref instance) '*standard-input*))))
 
 (defmethod khazern:analyze :after ((instance for-as-stream))
-  (khazern:check-nullable-simple-var-spec (khazern:var instance))
+  (khazern:check-nullable-simple-var-spec (var instance))
   (setf (values (temp-ref instance) (temp-var instance))
         (khazern:add-simple-binding instance
                                     :var "NEXT"
                                     :type `(or stream
-                                               ,(khazern:type-spec (khazern:var instance))))))
+                                               ,(khazern:type-spec (var instance))))))
 
 (defmethod khazern:wrap-forms ((clause for-as-stream) forms)
   (if (close-ref clause)
@@ -79,14 +84,14 @@
 
 (defmethod khazern:step-outro-forms ((clause for-as-stream) initialp)
   (declare (ignore initialp))
-  (khazern:destructuring-set (khazern:var clause)
+  (khazern:destructuring-set (var clause)
                              (temp-ref clause)))
 
 (defclass for-as-bytes (for-as-stream) ())
 
 (defmethod khazern:analyze ((instance for-as-bytes))
-  (when (eq (khazern:type-spec (khazern:var instance)) khazern:*placeholder-result*)
-    (setf (khazern:type-spec (khazern:var instance)) 'integer)))
+  (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
+    (setf (khazern:type-spec (var instance)) 'integer)))
 
 (defmethod khazern:step-intro-forms :around ((clause for-as-bytes) initialp)
   (declare (ignore initialp))
@@ -98,8 +103,8 @@
 (defclass for-as-characters (for-as-stream) ())
 
 (defmethod khazern:analyze ((instance for-as-characters))
-  (when (eq (khazern:type-spec (khazern:var instance)) khazern:*placeholder-result*)
-    (setf (khazern:type-spec (khazern:var instance)) 'character)))
+  (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
+    (setf (khazern:type-spec (var instance)) 'character)))
 
 (defmethod khazern:step-intro-forms :around ((clause for-as-characters) initialp)
   (declare (ignore initialp))
@@ -111,8 +116,8 @@
 (defclass for-as-objects (for-as-stream) ())
 
 (defmethod khazern:analyze ((instance for-as-objects))
-  (when (eq (khazern:type-spec (khazern:var instance)) khazern:*placeholder-result*)
-    (setf (khazern:type-spec (khazern:var instance)) t)))
+  (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
+    (setf (khazern:type-spec (var instance)) t)))
 
 (defmethod khazern:step-intro-forms :around ((clause for-as-objects) initialp)
   (declare (ignore initialp))
@@ -123,18 +128,21 @@
 
 (defclass for-as-lines (for-as-stream)
   ((%missing-newline-p-var :accessor missing-newline-p-var
-                           :initform (gensym "MISS")))
-  (:default-initargs :using-names (list :stream :missing-newline-p)))
+                           :initform (gensym "MISS"))))
 
-(defmethod (setf khazern:iteration-path-using)
-    (value (instance for-as-lines) (key (eql :missing-newline-p)))
+(defmethod khazern:iteration-path-names ((instance for-as-stream))
+  (values (list '(:in :of) :close)
+          '()
+          (list :stream :missing-newline-p)))
+
+(defmethod khazern:parse-iteration-path-using
+    ((instance for-as-lines) (key (eql :missing-newline-p)))
   (setf (missing-newline-p-var instance)
-        (khazern:add-simple-binding instance :var value :ignorable t))
-  value)
+        (khazern:add-simple-binding instance :var (khazern:pop-token) :ignorable t)))
 
 (defmethod khazern:analyze ((instance for-as-lines))
-  (when (eq (khazern:type-spec (khazern:var instance)) khazern:*placeholder-result*)
-    (setf (khazern:type-spec (khazern:var instance)) 'string)))
+  (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
+    (setf (khazern:type-spec (var instance)) 'string)))
 
 (defmethod khazern:step-intro-forms :around ((clause for-as-lines) initialp)
   (declare (ignore initialp))

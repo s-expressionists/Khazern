@@ -14,11 +14,6 @@ macro stubs LOOP and LOOP-FINISH."))
 
 (defclass for-as-scope () ())
 
-;;; Parsing interface
-
-(defgeneric parse-clause (client scope name &key)
-  (:documentation "Parse a clause based on its keyword name."))
-
 ;;; Variable mapping
 
 (defgeneric map-variables (function instance)
@@ -175,44 +170,21 @@ the accumulation variable.")
   (:documentation "Make an iteration path based on client and name. The name will be a
 keyword. INCLUSIVE-FORM will be included if the iteration path was inclusive."))
 
-(defgeneric iteration-path-preposition-names (instance)
-  (:documentation "Return a list of valid preposition names. This list is expected to be updated
-as prepositions are parsed. If the iteration path is a subclass of KHAZERN:FOR-AS-ITERATION-PATH
-then this will be automatically handled including preposition groups. For instance,
-`((:in :of) :by)` specifies that :IN and :OF are in in the same preposition group, so that if
-one is specified then the other cannot occur.")
-  (:method (instance)
-    (declare (ignore instance))
-    nil))
+(defgeneric iteration-path-names (instance)
+  (:documentation "Return (VALUES PREPOSITION-NAMES REQUIRED-PREPOSITION-NAMES USING-NAMES).
+Each is a list of names or name groups. These lists will be modified as the iteration path is
+parsed."))
 
-(defgeneric iteration-path-required-preposition-names (instance)
-  (:documentation "Return a list of required preposition names. This list has the same format as
-ITERATION-PATH-PREPOSITION-NAMES.")
-  (:method (instance)
-    (declare (ignore instance))
-    nil))
+;;; Parsing interface
 
-(defgeneric iteration-path-preposition (instance key)
-  (:documentation "Return the value of a path preposition. This is not currently used."))
+(defgeneric parse-clause (client scope name &key)
+  (:documentation "Parse a clause based on its keyword name."))
 
-(defgeneric (setf iteration-path-preposition) (new-value instance name)
-  (:documentation "Set the value of a path preposition."))
+(defgeneric parse-iteration-path-preposition (instance name)
+  (:documentation "Parse the next item as a preposition value."))
 
-(defgeneric iteration-path-using-names (instance)
-  (:documentation "Return a list of valid USING names. This list is expected to be updated as
-USING variables are parsed. If the iteration path is a subclass of KHAZERN:FOR-AS-ITERATION-PATH
-then this will be automatically handled including USING groups. For instance,
-`((:index :indicies) :quux)` specifies that :INDEX and :INDICIES are in in the same USING group,
-so that if one is specified then the other cannot occur.")
-  (:method (instance)
-    (declare (ignore instance))
-    nil))
-
-(defgeneric iteration-path-using (instance key)
-  (:documentation "Return the value of a path using. This is not currently used."))
-
-(defgeneric (setf iteration-path-using) (new-value instance name)
-  (:documentation "Set the value of a path using."))
+(defgeneric parse-iteration-path-using (instance name)
+  (:documentation "Parse the next item as a using value."))
 
 ;;; Clause analysis
 

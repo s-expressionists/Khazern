@@ -2,8 +2,10 @@
 
 #+abcl (require :extensible-sequences)
 
-(defclass for-as-elements (khazern:for-as-iteration-path)
-  ((%in-ref :accessor in-ref
+(defclass for-as-elements (khazern:clause)
+  ((%var :accessor var
+         :initarg :var)
+   (%in-ref :accessor in-ref
             :initform nil)
    (%start-ref :accessor start-ref
                :initform 0)
@@ -26,13 +28,11 @@
    #+(or abcl clasp sbcl)
    (%write-func :accessor write-func)
    #+(or abcl clasp sbcl)
-   (%index-func :accessor index-func))
-  (:default-initargs :preposition-names (list '(:in :of) :start :end :from-end)
-                     :using-names (list :index)))
+   (%index-func :accessor index-func)))
 
 (defmethod initialize-instance :after ((instance for-as-elements) &rest initargs &key)
   (declare (ignore initargs))
-  (khazern:add-binding instance (khazern:var instance))
+  (khazern:add-binding instance (var instance))
   (setf (limit-ref instance) (khazern:add-simple-binding instance :var "LIMIT")
         (iterator-ref instance) (khazern:add-simple-binding instance :var "ITER"))
   #+(or abcl clasp sbcl)
@@ -44,45 +44,53 @@
   #-(or abcl clasp sbcl)
   (setf (step-ref instance) (khazern:add-simple-binding instance :var "STEP" :type 'fixnum)))
 
-(defmethod (setf khazern:iteration-path-preposition)
-    (value (instance for-as-elements) (key (eql :in)))
-  (setf (in-ref instance) (khazern:add-simple-binding instance :var "IN" :form value
-                                                               :type 'sequence))
-  value)
+(defmethod khazern:iteration-path-names ((instance for-as-elements))
+  (values (list '(:in :of) :start :end :from-end)
+          (list '(:in :of))
+          (list :index)))
 
-(defmethod (setf khazern:iteration-path-preposition)
-    (value (instance for-as-elements) (key (eql :of)))
-  (setf (in-ref instance) (khazern:add-simple-binding instance :var "IN" :form value
-                                                               :type 'sequence))
-  value)
+(defmethod khazern:parse-iteration-path-preposition ((instance for-as-elements) (key (eql :in)))
+  (setf (in-ref instance) (khazern:add-simple-binding instance
+                                                      :var "IN"
+                                                      :form (khazern:pop-token)
+                                                      :type 'sequence)))
 
-(defmethod (setf khazern:iteration-path-preposition)
-    (value (instance for-as-elements) (key (eql :start)))
-  (setf (start-ref instance) (khazern:add-simple-binding instance :var "START" :form value
-                                                                  :fold t :type 'fixnum))
-  value)
+(defmethod khazern:parse-iteration-path-preposition ((instance for-as-elements) (key (eql :of)))
+  (setf (in-ref instance) (khazern:add-simple-binding instance
+                                                      :var "IN"
+                                                      :form (khazern:pop-token)
+                                                      :type 'sequence)))
 
-(defmethod (setf khazern:iteration-path-preposition)
-    (value (instance for-as-elements) (key (eql :end)))
-  (setf (end-ref instance) (khazern:add-simple-binding instance :var "END" :form value
-                                                                :fold t :type 'fixnum))
-  value)
+(defmethod khazern:parse-iteration-path-preposition
+    ((instance for-as-elements) (key (eql :start)))
+  (setf (start-ref instance) (khazern:add-simple-binding instance
+                                                         :var "START"
+                                                         :form (khazern:pop-token)
+                                                         :fold t :type 'fixnum)))
 
-(defmethod (setf khazern:iteration-path-preposition)
-    (value (instance for-as-elements) (key (eql :from-end)))
-  (setf (from-end-ref instance) (khazern:add-simple-binding instance :var "FROM-END-"
-                                                                     :form value))
-  value)
+(defmethod khazern:parse-iteration-path-preposition
+    ((instance for-as-elements) (key (eql :end)))
+  (setf (end-ref instance) (khazern:add-simple-binding instance
+                                                       :var "END" :form (khazern:pop-token)
+                                                       :fold t :type 'fixnum)))
 
-(defmethod (setf khazern:iteration-path-using)
-    (value (instance for-as-elements) (key (eql :index)))
-  (setf (index-ref instance) (khazern:add-simple-binding instance :var value
-                                                                  :type 'fixnum
-                                                                  :form 0)))
+(defmethod khazern:parse-iteration-path-preposition
+    ((instance for-as-elements) (key (eql :from-end)))
+  (setf (from-end-ref instance) (khazern:add-simple-binding instance
+                                                            :var "FROM-END-"
+                                                            :form (khazern:pop-token))))
+
+(defmethod khazern:parse-iteration-path-using
+    ((instance for-as-elements) (key (eql :index)))
+  (setf (index-ref instance)
+        (khazern:add-simple-binding instance
+                                    :var (khazern:pop-token :type 'symbol)
+                                    :type 'fixnum
+                                    :form 0)))
 
 (defmethod khazern:analyze ((instance for-as-elements))
-  (when (eq (khazern:type-spec (khazern:var instance)) khazern:*placeholder-result*)
-    (setf (khazern:type-spec (khazern:var instance)) t))
+  (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
+    (setf (khazern:type-spec (var instance)) t))
   (unless (from-end-ref instance)
     (setf (from-end-ref instance) (khazern:add-simple-binding instance :var "FROM-END-"
                                                                        :form nil))))
@@ -121,7 +129,7 @@
 (defmethod khazern:step-outro-forms ((clause for-as-elements) initialp)
   (declare (ignore initialp))
   #+(or abcl clasp sbcl)
-  (nconc (khazern:destructuring-set (khazern:var clause)
+  (nconc (khazern:destructuring-set (var clause)
                                     `(funcall ,(read-func clause) ,(in-ref clause)
                                               ,(iterator-ref clause)))
          (when (index-ref clause)
@@ -129,7 +137,7 @@
 	           (funcall ,(index-func clause) ,(in-ref clause)
 			    ,(iterator-ref clause))))))
   #-(or abcl clasp sbcl)
-  (nconc (khazern:destructuring-set (khazern:var clause)
+  (nconc (khazern:destructuring-set (var clause)
                                     `(elt ,(in-ref clause) ,(iterator-ref clause)))
          (when (index-ref clause)
            `((setq ,(index-ref clause) ,(iterator-ref clause))))))
