@@ -14,6 +14,10 @@
   (:default-initargs :preposition-names (list '(:in :of) :close)
                      :using-names (list :stream)))
 
+(defmethod initialize-instance :after ((instance for-as-stream) &rest initargs &key)
+  (declare (ignore initargs))
+  (khazern:add-binding instance (khazern:var instance)))
+
 (defmethod (setf khazern:iteration-path-preposition)
     (value (instance for-as-stream) (key (eql :in)))
   (setf (values (stream-ref instance) (stream-d-spec instance))

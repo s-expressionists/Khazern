@@ -10,6 +10,7 @@
            #:*loop-name*
            #:*placeholder-result*
            #:accumulation-category
+           #:add-binding
            #:add-destructuring-binding
            #:add-simple-binding
            #:analyze

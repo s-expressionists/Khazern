@@ -16,7 +16,7 @@ macro stubs LOOP and LOOP-FINISH."))
 
 ;;; Parsing interface
 
-(defgeneric parse-clause (client scope name)
+(defgeneric parse-clause (client scope name &key)
   (:documentation "Parse a clause based on its keyword name."))
 
 ;;; Variable mapping
@@ -171,7 +171,7 @@ the accumulation variable.")
 
 ;;; Iteration path interface
 
-(defgeneric make-iteration-path (client name &optional inclusive-form)
+(defgeneric make-iteration-path (client name var &optional inclusive-form)
   (:documentation "Make an iteration path based on client and name. The name will be a
 keyword. INCLUSIVE-FORM will be included if the iteration path was inclusive."))
 

@@ -40,7 +40,7 @@
   ((%count-ref :accessor count-ref)))
 
 (defmethod parse-clause
-    (client (scope body-scope) (keyword (eql :repeat)))
+    (client (scope body-scope) (keyword (eql :repeat)) &key)
   (let ((form (pop-token))
         (instance (make-instance 'repeat-clause
                                  :start *start*
@@ -72,7 +72,7 @@
                                                :accumulation-category :every)))
 
 (defmethod parse-clause
-    (client (scope body-scope) (keyword (eql :always)))
+    (client (scope body-scope) (keyword (eql :always)) &key)
   (make-instance 'always-clause
                  :start *start*
                  :form (pop-token)
@@ -97,7 +97,7 @@
                                                :accumulation-category :every)))
 
 (defmethod parse-clause
-    (client (scope body-scope) (keyword (eql :never)))
+    (client (scope body-scope) (keyword (eql :never)) &key)
   (make-instance 'never-clause 
                  :start *start*
                  :form (pop-token)
@@ -122,7 +122,7 @@
                                                :accumulation-category :some)))
 
 (defmethod parse-clause
-    (client (scope body-scope) (keyword (eql :thereis)))
+    (client (scope body-scope) (keyword (eql :thereis)) &key)
   (make-instance 'thereis-clause
                  :start *start*
                  :form (pop-token)
@@ -145,14 +145,14 @@
   ())
 
 (defmethod parse-clause
-    (client (scope body-scope) (keyword (eql :while)))
+    (client (scope body-scope) (keyword (eql :while)) &key)
   (make-instance 'while-clause
                  :start *start*
                  :form (pop-token)
                  :end *index*))
 
 (defmethod parse-clause
-    (client (scope body-scope) (keyword (eql :until)))
+    (client (scope body-scope) (keyword (eql :until)) &key)
   (make-instance 'while-clause
                  :start *start*
                  :form `(not ,(pop-token))

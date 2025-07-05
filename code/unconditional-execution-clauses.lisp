@@ -17,13 +17,13 @@
 (defclass do-clause (unconditional-clause compound-forms-mixin)
   ())
 
-(defmethod parse-clause (client (scope selectable-scope) (keyword (eql :do)))
+(defmethod parse-clause (client (scope selectable-scope) (keyword (eql :do)) &key)
   (make-instance 'do-clause
                  :start *start*
                  :forms (parse-compound-form+)
                  :end *index*))
 
-(defmethod parse-clause (client (scope selectable-scope) (keyword (eql :doing)))
+(defmethod parse-clause (client (scope selectable-scope) (keyword (eql :doing)) &key)
   (make-instance 'do-clause
                  :start *start*
                  :forms (parse-compound-form+)

@@ -21,21 +21,13 @@
 (defclass for-as-subclause (clause var-mixin)
   ())
 
-(defmethod (setf var) :after (binding (instance for-as-subclause))
-  (add-binding instance binding))
-
 (defun parse-for-as (client)
   (prog ((instance (make-instance 'for-as-clause :start *start*))
-         subclauses
-         var
-         start)
+         subclauses)
    next
-     (setf start *index*
-           var (parse-d-spec :type-spec *placeholder-result*)
-           (ignorablep var) t)
-     (push (do-parse-clause client instance start)
+     (push (do-parse-clause client instance *index*
+                            :var (parse-d-spec :type-spec *placeholder-result* :ignorable t))
            subclauses)
-     (setf (var (car subclauses)) var)
      (when (pop-token? :keywords '(:and))
        (go next))
      (setf (subclauses instance) (nreverse subclauses)
@@ -43,11 +35,11 @@
      (return instance)))
 
 (defmethod parse-clause
-    ((client standard-client) (scope body-scope) (keyword (eql :for)))
+    ((client standard-client) (scope body-scope) (keyword (eql :for)) &key)
   (parse-for-as client))
 
 (defmethod parse-clause
-    ((client standard-client) (scope body-scope) (keyword (eql :as)))
+    ((client standard-client) (scope body-scope) (keyword (eql :as)) &key)
   (parse-for-as client))
 
 (defmethod analyze ((clause for-as-subclause))
@@ -111,8 +103,8 @@
          :clause (when (numberp *start*)
                    (subseq *body* *start* *index*))))
 
-(defmethod make-iteration-path (client name &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore inclusive-form))
+(defmethod make-iteration-path (client name var &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore var inclusive-form))
   (error 'unknown-iteration-path
          :client client
          :name name
@@ -165,17 +157,19 @@
        (go next-preposition))))
 
 (defmethod parse-clause
-    ((client standard-client) (instance for-as-clause) (keyword (eql :being)))
+    ((client standard-client) (instance for-as-clause) (keyword (eql :being)) &key var)
   (let ((instance (if (pop-token? :keywords '(:each :the))
                       (make-iteration-path client
                                            (make-iteration-path-name client
-                                                                     (pop-token)))
+                                                                     (pop-token))
+                                           var)
                       (let ((form (pop-token)))
                         (pop-token :keywords '(:and))
                         (pop-token :keywords '(:its :each :his :her))
                         (make-iteration-path client
                                              (make-iteration-path-name client
                                                                        (pop-token) t)
+                                             var
                                              form)))))
     (parse-iteration-path-prepositions instance)
     instance))
@@ -218,6 +212,10 @@
   (:default-initargs :preposition-names (list '(:from :upfrom :downfrom)
                                               '(:to :upto :downto :above :below)
                                               :by)))
+
+(defmethod initialize-instance :after ((instance for-as-arithmetic) &rest initargs &key)
+  (declare (ignore initargs))
+  (add-binding instance (var instance)))
 
 (defclass for-as-arithmetic-up (for-as-arithmetic)
   ())
@@ -263,41 +261,43 @@
             (change-class instance 'for-as-arithmetic-down)))))
   nil)
 
-(defun parse-for-as-arithmetic (keyword)
+(defun parse-for-as-arithmetic (keyword var)
+  (check-nullable-simple-var-spec var)
   (let ((instance (make-instance 'for-as-arithmetic
-                                 :start *start*)))
+                                 :start *start*
+                                 :var var)))
     (push-token keyword)
     (parse-iteration-path-prepositions instance)
     (setf (end instance) *index*)
     instance))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :from)))
-  (parse-for-as-arithmetic keyword))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :from)) &key var)
+  (parse-for-as-arithmetic keyword var))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :upfrom)))
-  (parse-for-as-arithmetic keyword))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :upfrom)) &key var)
+  (parse-for-as-arithmetic keyword var))
 
 (defmethod parse-clause
-    ((client standard-client) (scope for-as-scope) (keyword (eql :downfrom)))
-  (parse-for-as-arithmetic keyword))
+    ((client standard-client) (scope for-as-scope) (keyword (eql :downfrom)) &key var)
+  (parse-for-as-arithmetic keyword var))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :to)))
-  (parse-for-as-arithmetic keyword))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :to)) &key var)
+  (parse-for-as-arithmetic keyword var))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :upto)))
-  (parse-for-as-arithmetic keyword))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :upto)) &key var)
+  (parse-for-as-arithmetic keyword var))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :downto)))
-  (parse-for-as-arithmetic keyword))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :downto)) &key var)
+  (parse-for-as-arithmetic keyword var))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :above)))
-  (parse-for-as-arithmetic keyword))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :above)) &key var)
+  (parse-for-as-arithmetic keyword var))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :below)))
-  (parse-for-as-arithmetic keyword))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :below)) &key var)
+  (parse-for-as-arithmetic keyword var))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :by)))
-  (parse-for-as-arithmetic keyword))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :by)) &key var)
+  (parse-for-as-arithmetic keyword var))
 
 ;;; FOR-AS-ARITHMETIC expansion methods
 
@@ -316,7 +316,6 @@
       (with-accessors ((next-type type-spec)
                        (next-form form))
           next-var
-        (check-nullable-simple-var-spec (var clause))
         (let ((val nil))
           (cond ((not (eq var-type *placeholder-result*))
                  (check-subtype var-type 'number)
@@ -373,6 +372,11 @@
             :initform '#'cdr)
    (%rest-var :accessor rest-var)))
 
+(defmethod initialize-instance :after ((instance for-as-list) &rest initargs &key)
+  (declare (ignore initargs))
+  (add-binding instance (var instance)))
+
+
 (defclass for-as-in-list (for-as-list)
   ())
 
@@ -387,11 +391,11 @@
   (setf (end instance) *index*)
   instance)
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :in)))
-  (parse-for-as-list (make-instance 'for-as-in-list :start *start*)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :in)) &key var)
+  (parse-for-as-list (make-instance 'for-as-in-list :start *start* :var var)))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :on)))
-  (parse-for-as-list (make-instance 'for-as-on-list :start *start*)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :on)) &key var)
+  (parse-for-as-list (make-instance 'for-as-on-list :start *start* :var var)))
 
 (defmethod step-intro-forms ((clause for-as-list) initialp)
   (unless initialp
@@ -435,12 +439,14 @@
 
 (defmethod initialize-instance :after ((instance for-as-equals-then) &rest initargs &key)
   (declare (ignore initargs))
+  (add-binding instance (var instance))
   (setf (temp-ref instance) (add-simple-binding instance :var "TMP")))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :=)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :=)) &key var)
   (let ((initial-form (pop-token)))
     (make-instance 'for-as-equals-then
                    :start *start*
+                   :var var
                    :initial-form initial-form
                    :subsequent-form (if (pop-token? :keywords '(:then))
                                         (pop-token)
@@ -472,14 +478,16 @@
 
 (defmethod initialize-instance :after ((instance for-as-across) &rest initargs &key)
   (declare (ignore initargs))
+  (add-binding instance (var instance))
   (setf (length-ref instance) (add-simple-binding instance :var "LENGTH" :form 0
                                                            :type 'fixnum)
         (index-ref instance) (add-simple-binding instance :var "INDEX" :form 0
                                                           :type 'fixnum)))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :across)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :across)) &key var)
   (let ((instance (make-instance 'for-as-across
-                                 :start *start*)))
+                                 :start *start*
+                                 :var var)))
     (setf (form-ref instance) (add-simple-binding instance :var "VECTOR" :form (pop-token)
                                                            :type 'vector)
           (end instance) *index*)
@@ -525,6 +533,7 @@
 
 (defmethod initialize-instance :after ((instance for-as-hash) &rest initargs &key)
   (declare (ignore initargs))
+  (add-binding instance (var instance))
   (setf (temp-entry-p-var instance) (add-simple-binding instance :var "ENTRYP")
         (temp-key-var instance) (add-simple-binding instance :var "KEY")
         (temp-value-var instance) (add-simple-binding instance :var "VALUE")))
@@ -538,39 +547,43 @@
   (:default-initargs :using-names (list :hash-key)))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :hash-key))
+    ((client standard-client) (name (eql :hash-key)) var
      &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-hash-key
+                     :var var
                      :start *start*)))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :hash-keys))
+    ((client standard-client) (name (eql :hash-keys)) var
      &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-hash-key
+                     :var var
                      :start *start*)))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :hash-value))
+    ((client standard-client) (name (eql :hash-value)) var
      &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-hash-value
+                     :var var
                      :start *start*)))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :hash-values))
+    ((client standard-client) (name (eql :hash-values)) var
      &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-hash-value
+                     :var var
                      :start *start*)))
 
 (defmethod (setf iteration-path-preposition) (expression (instance for-as-hash) key)
@@ -649,67 +662,74 @@
 
 (defmethod initialize-instance :after ((instance for-as-package) &rest initargs &key)
   (declare (ignore initargs))
+  (add-binding instance (var instance))
   (setf (temp-entry-p-var instance) (add-simple-binding instance :var "ENTRYP")
         (temp-symbol-var instance) (add-simple-binding instance :var "SYMBOL")))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :symbol))
+    ((client standard-client) (name (eql :symbol)) var
      &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-package
                      :start *start*
+                     :var var
                      :iterator-keywords '(:internal :external :inherited))))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :symbols))
+    ((client standard-client) (name (eql :symbols)) var
      &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-package
                      :start *start*
+                     :var var
                      :iterator-keywords '(:internal :external :inherited))))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :present-symbol))
+    ((client standard-client) (name (eql :present-symbol)) var
      &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-package
                      :start *start*
+                     :var var
                      :iterator-keywords '(:internal :external))))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :present-symbols))
+    ((client standard-client) (name (eql :present-symbols)) var
      &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-package
                      :start *start*
+                     :var var
                      :iterator-keywords '(:internal :external))))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :external-symbol))
+    ((client standard-client) (name (eql :external-symbol)) var
      &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-package
                      :start *start*
+                     :var var
                      :iterator-keywords '(:external))))
 
 (defmethod make-iteration-path
-    ((client standard-client) (name (eql :external-symbols))
+    ((client standard-client) (name (eql :external-symbols)) var
      &optional (inclusive-form nil inclusive-form-p))
   (declare (ignore inclusive-form))
   (if inclusive-form-p
       (call-next-method)
       (make-instance 'for-as-package
                      :start *start*
+                     :var var
                      :iterator-keywords '(:external))))
 
 (defmethod (setf iteration-path-preposition)
@@ -792,7 +812,7 @@
 ;;; WITH Parsers
 
 (defmethod parse-clause
-    ((client standard-client) (scope body-scope) (keyword (eql :with)))
+    ((client standard-client) (scope body-scope) (keyword (eql :with)) &key)
   (prog ((instance (make-instance 'with-clause
                     :start *start*))
          subclause

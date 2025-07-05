@@ -66,7 +66,7 @@
   (decf *index*)
   (push token *tokens*))
 
-(defmethod parse-clause (client scope name)
+(defmethod parse-clause (client scope name &key)
   (error 'unknown-parser
          :client client
          :scope scope
@@ -83,8 +83,8 @@
          :scope scope
          :name token))
 
-(defun do-parse-clause (client scope &optional (*start* *index*))
-  (parse-clause client scope (make-parser-name client scope (pop-token))))
+(defun do-parse-clause (client scope *start* &rest args)
+  (apply #'parse-clause client scope (make-parser-name client scope (pop-token)) args))
 
 (defun parse-type-spec (&key (default-type-spec t) ((:var-spec *var-spec*) nil))
   (if (pop-token? :keywords '(:of-type))
@@ -119,7 +119,7 @@
 (defun parse-parallel-clauses (client scope)
   (prog (clauses)
    next
-     (push (do-parse-clause client scope)
+     (push (do-parse-clause client scope *index*)
            clauses)
      (when (pop-token? :keywords '(:and))
        (go next))
@@ -129,7 +129,7 @@
   (prog ((scope (make-instance 'extended-superclause))
          clauses)
    next
-     (push (do-parse-clause client scope) clauses)
+     (push (do-parse-clause client scope *index*) clauses)
      (when *tokens*
        (go next))
      (setf (subclauses scope) (nreverse clauses))

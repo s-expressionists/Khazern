@@ -32,6 +32,7 @@
 
 (defmethod initialize-instance :after ((instance for-as-elements) &rest initargs &key)
   (declare (ignore initargs))
+  (khazern:add-binding instance (khazern:var instance))
   (setf (limit-ref instance) (khazern:add-simple-binding instance :var "LIMIT")
         (iterator-ref instance) (khazern:add-simple-binding instance :var "ITER"))
   #+(or abcl clasp sbcl)
