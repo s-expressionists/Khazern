@@ -53,7 +53,10 @@
 (defmethod khazern:analyze :after ((instance for-as-stream))
   (khazern:check-nullable-simple-var-spec (khazern:var instance))
   (setf (values (temp-ref instance) (temp-var instance))
-        (khazern:add-simple-binding instance :var "NEXT" :type `(or stream ,(khazern:type-spec (khazern:var instance))))))
+        (khazern:add-simple-binding instance
+                                    :var "NEXT"
+                                    :type `(or stream
+                                               ,(khazern:type-spec (khazern:var instance))))))
 
 (defmethod khazern:wrap-forms ((clause for-as-stream) forms)
   (if (close-ref clause)

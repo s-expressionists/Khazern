@@ -47,24 +47,12 @@
 (defmethod map-variables progn (function (clause var-mixin))
   (map-variables function (var clause)))
 
-(defmethod variable-list nconc ((clause var-mixin))
-  (destructuring-variable-list (var clause)))
-
-(defmethod declarations nconc ((clause var-mixin))
-  (destructuring-declarations (var clause)))
-
 (defclass other-var-mixin ()
   ((%other-var :accessor other-var
                :initarg :other-var)))
 
 (defmethod map-variables progn (function (clause other-var-mixin))
   (map-variables function (other-var clause)))
-
-(defmethod variable-list nconc ((clause other-var-mixin))
-  (destructuring-variable-list (other-var clause)))
-
-(defmethod declarations nconc ((clause other-var-mixin))
-  (destructuring-declarations (other-var clause)))
 
 (defclass compound-forms-mixin ()
   ((%forms :accessor forms
@@ -105,8 +93,12 @@
    (%end :accessor end
          :initarg :end
          :type fixnum)
-   (%simple-bindings :accessor simple-bindings
-                     :initform nil)))
+   (%bindings :accessor bindings
+              :initform nil)))
+
+(defun add-binding (clause binding)
+  (setf (bindings clause) (nconc (bindings clause) (list binding)))
+  binding)
 
 (defun add-simple-binding (clause
                            &key (var "FORM") (type t) accumulation-category (form nil formp)
@@ -117,26 +109,36 @@
 deduced based on the type."
   (if (and foldp (funcall fold-test form))
       (values form nil)
-      (let* ((ref (if (symbolp var)
-                       var
-                       (gensym var)))
-             (binding (make-instance 'simple-binding
-                                     :var-spec ref
+      (let ((ref (if (symbolp var)
+                     var
+                     (gensym var))))
+        (values ref
+                (add-binding clause
+                             (make-instance 'simple-binding
+                                            :var-spec ref
+                                            :type-spec type
+                                            :accumulation-category accumulation-category
+                                            :form (if formp
+                                                      form
+                                                      (deduce-initial-value type))
+                                            :ignorable ignorablep
+                                            :dynamic-extent dynamic-extent-p))))))
+
+(defun add-destructuring-binding (clause
+                                  &key var (type t) ((:ignorable ignorablep) nil)
+                                       ((:dynamic-extent dynamic-extent-p) nil))
+  "Add a destructuring binding."
+  (add-binding clause (make-instance 'destructuring-binding
+                                     :var-spec var
                                      :type-spec type
-                                     :accumulation-category accumulation-category
-                                     :form (if formp
-                                               form
-                                               (deduce-initial-value type))
                                      :ignorable ignorablep
                                      :dynamic-extent dynamic-extent-p)))
-        (setf (simple-bindings clause) (nconc (simple-bindings clause) (list binding)))
-        (values ref binding))))
 
 (defmethod variable-list nconc ((clause clause))
-  (mapcan #'simple-variable-list (simple-bindings clause)))
+  (mapcan #'variable-list (bindings clause)))
   
 (defmethod declarations nconc ((clause clause))
-  (mapcan #'simple-declarations (simple-bindings clause)))
+  (mapcan #'declarations (bindings clause)))
   
 (defclass simple-superclause (clause)
   ((%subclauses :accessor subclauses
@@ -195,7 +197,7 @@ deduced based on the type."
             (reduce #'wrap-forms (subclauses clause)
                     :from-end t :initial-value forms)))
 
-(defclass extended-superclause (selectable-superclause sequential-superclause)
+(defclass extended-superclause (sequential-superclause body-scope)
   ())
 
 (defclass binding-clause (clause)
@@ -229,7 +231,4 @@ deduced based on the type."
 (defclass body-clause (clause)
   ((%clause-group :accessor clause-group
                   :initform :main)))
-
-(defclass selectable-superclause (selectable-clause)
-  ())
 

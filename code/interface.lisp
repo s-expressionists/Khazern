@@ -6,6 +6,14 @@
 LOOP. KHAZERN:DEFINE-INTERFACE is then used with a subclass of the standard-client to create the
 macro stubs LOOP and LOOP-FINISH."))
 
+;;; Scopes
+
+(defclass selectable-scope () ())
+
+(defclass body-scope (selectable-scope) ())
+
+(defclass for-as-scope () ())
+
 ;;; Parsing interface
 
 (defgeneric parse-clause (client scope name)

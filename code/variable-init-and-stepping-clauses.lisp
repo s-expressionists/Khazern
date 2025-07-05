@@ -15,11 +15,14 @@
 ;;;   for-as-subclause ::= for-as-arithmetic | for-as-in-list | for-as-on-list |
 ;;;                        for-as-equals-then | for-as-across | for-as-iteration-path
 
-(defclass for-as-clause (binding-clause parallel-superclause)
+(defclass for-as-clause (binding-clause parallel-superclause for-as-scope)
   ())
 
 (defclass for-as-subclause (clause var-mixin)
   ())
+
+(defmethod (setf var) :after (binding (instance for-as-subclause))
+  (add-binding instance binding))
 
 (defun parse-for-as (client)
   (prog ((instance (make-instance 'for-as-clause :start *start*))
@@ -40,11 +43,11 @@
      (return instance)))
 
 (defmethod parse-clause
-    ((client standard-client) (scope extended-superclause) (keyword (eql :for)))
+    ((client standard-client) (scope body-scope) (keyword (eql :for)))
   (parse-for-as client))
 
 (defmethod parse-clause
-    ((client standard-client) (scope extended-superclause) (keyword (eql :as)))
+    ((client standard-client) (scope body-scope) (keyword (eql :as)))
   (parse-for-as client))
 
 (defmethod analyze ((clause for-as-subclause))
@@ -268,32 +271,32 @@
     (setf (end instance) *index*)
     instance))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :from)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :from)))
   (parse-for-as-arithmetic keyword))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :upfrom)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :upfrom)))
   (parse-for-as-arithmetic keyword))
 
 (defmethod parse-clause
-    ((client standard-client) (scope for-as-clause) (keyword (eql :downfrom)))
+    ((client standard-client) (scope for-as-scope) (keyword (eql :downfrom)))
   (parse-for-as-arithmetic keyword))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :to)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :to)))
   (parse-for-as-arithmetic keyword))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :upto)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :upto)))
   (parse-for-as-arithmetic keyword))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :downto)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :downto)))
   (parse-for-as-arithmetic keyword))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :above)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :above)))
   (parse-for-as-arithmetic keyword))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :below)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :below)))
   (parse-for-as-arithmetic keyword))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :by)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :by)))
   (parse-for-as-arithmetic keyword))
 
 ;;; FOR-AS-ARITHMETIC expansion methods
@@ -384,10 +387,10 @@
   (setf (end instance) *index*)
   instance)
 
-(defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :in)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :in)))
   (parse-for-as-list (make-instance 'for-as-in-list :start *start*)))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :on)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :on)))
   (parse-for-as-list (make-instance 'for-as-on-list :start *start*)))
 
 (defmethod step-intro-forms ((clause for-as-list) initialp)
@@ -434,7 +437,7 @@
   (declare (ignore initargs))
   (setf (temp-ref instance) (add-simple-binding instance :var "TMP")))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :=)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :=)))
   (let ((initial-form (pop-token)))
     (make-instance 'for-as-equals-then
                    :start *start*
@@ -474,7 +477,7 @@
         (index-ref instance) (add-simple-binding instance :var "INDEX" :form 0
                                                           :type 'fixnum)))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-clause) (keyword (eql :across)))
+(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :across)))
   (let ((instance (make-instance 'for-as-across
                                  :start *start*)))
     (setf (form-ref instance) (add-simple-binding instance :var "VECTOR" :form (pop-token)
@@ -585,8 +588,8 @@
   expression)
 
 (defmethod (setf iteration-path-using) (value (instance for-as-hash) key)
-  (setf (other-var instance) (make-instance 'destructuring-binding
-                                            :var-spec value))
+  (setf (other-var instance) (add-destructuring-binding instance
+                                                        :var value))
   value)
 
 (defmethod analyze ((clause for-as-hash))
@@ -782,10 +785,14 @@
 (defclass with-subclause-with-form (with-subclause form-ref-mixin)
   ())
 
+(defmethod initialize-instance :after ((instance with-subclause) &rest initargs &key)
+  (declare (ignore initargs))
+  (add-binding instance (var instance)))
+
 ;;; WITH Parsers
 
 (defmethod parse-clause
-    ((client standard-client) (scope extended-superclause) (keyword (eql :with)))
+    ((client standard-client) (scope body-scope) (keyword (eql :with)))
   (prog ((instance (make-instance 'with-clause
                     :start *start*))
          subclause

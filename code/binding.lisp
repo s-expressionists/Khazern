@@ -119,8 +119,7 @@
     (setf (type-spec instance)
           (traverse (var-spec instance) (type-spec instance)))))
 
-(defun destructuring-declarations (binding)
-  "Return the declarations of a destructuring binding."
+(defmethod declarations nconc ((binding destructuring-binding))
   (let ((result '())
         (variables '()))
     (map-variables (lambda (var type category)
@@ -136,8 +135,7 @@
       (push `(dynamic-extent ,@variables) result))
     (nreverse result)))
 
-(defun destructuring-variable-list (binding)
-  "Return the variable list of a destructuring binding."
+(defmethod variable-list nconc ((binding destructuring-binding))
   (let ((result '()))
     (map-variables (lambda (var type category)
                      (declare (ignore category))
@@ -150,7 +148,7 @@
              (temps binding))
     (nreverse result)))
 
-(defun simple-declarations (binding)
+(defmethod declarations nconc ((binding simple-binding))
   (with-accessors ((var-spec var-spec)
                    (type-spec type-spec)
                    (ignorablep ignorablep)
@@ -167,7 +165,7 @@
           (push `(dynamic-extent ,var-spec) decl)))
       decl)))
 
-(defun simple-variable-list (binding)
+(defmethod variable-list nconc ((binding simple-binding))
   (with-accessors ((var-spec var-spec)
                    (form form))
       binding

@@ -239,7 +239,7 @@
   ())
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-superclause) (keyword (eql :collect)))
+    ((client standard-client) (scope selectable-scope) (keyword (eql :collect)))
   (make-instance 'collect-clause
                  :start *start*
                  :form (pop-token)
@@ -247,7 +247,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-superclause) (keyword (eql :collecting)))
+    ((client standard-client) (scope selectable-scope) (keyword (eql :collecting)))
   (make-instance 'collect-clause
                  :start *start*
                  :form (pop-token)
@@ -265,7 +265,7 @@
   ())
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-superclause) (keyword (eql :append)))
+    ((client standard-client) (scope selectable-scope) (keyword (eql :append)))
   (make-instance 'append-clause
                  :start *start*
                  :form (pop-token)
@@ -273,7 +273,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-superclause) (keyword (eql :appending)))
+    ((client standard-client) (scope selectable-scope) (keyword (eql :appending)))
   (make-instance 'append-clause
                  :start *start*
                  :form (pop-token)
@@ -289,7 +289,7 @@
   ())
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-superclause) (keyword (eql :nconc)))
+    ((client standard-client) (scope selectable-scope) (keyword (eql :nconc)))
   (make-instance 'nconc-clause
                  :start *start*
                  :form (pop-token)
@@ -297,7 +297,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-superclause) (keyword (eql :nconcing)))
+    ((client standard-client) (scope selectable-scope) (keyword (eql :nconcing)))
   (make-instance 'nconc-clause
                  :start *start*
                  :form (pop-token)
@@ -313,7 +313,7 @@
   ())
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-superclause) (keyword (eql :count)))
+    ((client standard-client) (scope selectable-scope) (keyword (eql :count)))
   (make-instance 'count-clause
                  :start *start*
                  :form (pop-token)
@@ -322,7 +322,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-superclause) (keyword (eql :counting)))
+    ((client standard-client) (scope selectable-scope) (keyword (eql :counting)))
   (make-instance 'count-clause
                  :start *start*
                  :form (pop-token)
@@ -346,7 +346,7 @@
 ;;; MINIMIZE/MAXIMIZE parsers
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-superclause) (keyword (eql :minimize)))
+    ((client standard-client) (scope selectable-scope) (keyword (eql :minimize)))
   (make-instance 'extremum-clause
                  :start *start*
                  :form (pop-token)
@@ -356,7 +356,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-superclause) (keyword (eql :minimizing)))
+    ((client standard-client) (scope selectable-scope) (keyword (eql :minimizing)))
   (make-instance 'extremum-clause
                  :start *start*
                  :form (pop-token)
@@ -366,7 +366,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-superclause) (keyword (eql :maximize)))
+    ((client standard-client) (scope selectable-scope) (keyword (eql :maximize)))
   (make-instance 'extremum-clause
                  :start *start*
                  :form (pop-token)
@@ -376,7 +376,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-superclause) (keyword (eql :maximizing)))
+    ((client standard-client) (scope selectable-scope) (keyword (eql :maximizing)))
   (make-instance 'extremum-clause
                  :start *start*
                  :form (pop-token)
@@ -398,7 +398,7 @@
   ())
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-superclause) (keyword (eql :sum)))
+    ((client standard-client) (scope selectable-scope) (keyword (eql :sum)))
   (make-instance 'sum-clause
                  :start *start*
                  :form (pop-token)
@@ -407,7 +407,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-superclause) (keyword (eql :summing)))
+    ((client standard-client) (scope selectable-scope) (keyword (eql :summing)))
   (make-instance 'sum-clause
                  :start *start*
                  :form (pop-token)
