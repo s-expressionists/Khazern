@@ -22,31 +22,6 @@ To load Khazern extrinsically do the following
 (1 3)
 ```
 
-## Replacing Builtin LOOP with Khazern
-
-Replacing a Common Lisp's LOOP implementation with Khazern can be done
-with the khazern-instrinsic system. This system is actually intended
-for use as the CL implementation's original LOOP implementation.
-Because LOOP is in the COMMON-LISP package ASDF logic regarding
-recompilation of systems dependent on khazern-intrinsic may not be
-reliable. Instead if one wants to use Khazern as the LOOP
-implementation in a system it is better to use khazern-extrinsic and
-then SHADOWING-IMPORT-FROM in DEFPACKAGE.
-
-```common-lisp
-(cl:defpackage #:quux
-  (:use #:common-lisp)
-  (:shadowing-import-from #:khazern-extrinsic
-                          #:loop
-                          #:loop-finish))
-
-(cl:in-package #:quux)
-
-(defun wibble (s)
-  (loop for i across s
-        do (print i)))
-```
-
 ## Extending Khazern
 
 Khazern supports extension via iteration paths. The documentation
@@ -108,6 +83,65 @@ NIL
 2 
 3 
 NIL
+```
+
+## Replacing Builtin LOOP with Khazern
+
+Replacing a Common Lisp's LOOP implementation with Khazern can be done
+with the khazern-instrinsic system. This system is actually intended
+for use as the CL implementation's original LOOP implementation.
+Because LOOP is in the COMMON-LISP package ASDF logic regarding
+recompilation of systems dependent on khazern-intrinsic may not be
+reliable. Instead if one wants to use Khazern as the LOOP
+implementation in a system it is better to use khazern-extrinsic and
+then SHADOWING-IMPORT-FROM in DEFPACKAGE.
+
+```common-lisp
+;;; quux.asd
+
+
+(asdf:defsystem "quux"
+  :depends-on ("khazern-extrinsic")
+  :components ((:file "quux")))
+
+;;; quux.lisp
+
+(cl:defpackage #:quux
+  (:use #:common-lisp)
+  (:shadowing-import-from #:khazern-extrinsic
+                          #:loop
+                          #:loop-finish))
+
+(cl:in-package #:quux)
+
+(defun wibble (s)
+  (loop for i across s
+        do (print i)))
+```
+
+To use the extension system one need only replace the dependency in the ASD file.
+
+```common-lisp
+;;; quux.asd
+
+
+(asdf:defsystem "quux"
+  :depends-on ("khazern-extension-extrinsic")
+  :components ((:file "quux")))
+
+;;; quux.lisp
+
+(cl:defpackage #:quux
+  (:use #:common-lisp)
+  (:shadowing-import-from #:khazern-extrinsic
+                          #:loop
+                          #:loop-finish))
+
+(cl:in-package #:quux)
+
+(defun wibble (s)
+  (loop for i being the elements in s
+        do (print i)))
 ```
 
 [loop-iteration-paths]: https://github.com/yitzchak/loop-iteration-paths/
