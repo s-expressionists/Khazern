@@ -14,6 +14,7 @@
                 :components ((:file "packages")
                              (:file "interface")
                              (:file "utilities")
+                             (:file "types")
                              (:file "conditions")
                              (:file "conditions-english")
                              (:file "binding")

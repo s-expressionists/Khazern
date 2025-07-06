@@ -43,7 +43,7 @@
 
 (defmethod khazern:parse-iteration-path-using
     ((instance for-as-stream) (key (eql :stream)))
-  (let ((value (khazern:pop-token)))
+  (let ((value (khazern:pop-token :type 'khazern:simple-var)))
     (when (stream-d-spec instance)
       (setf (var-spec (stream-d-spec instance)) value
             (stream-ref instance) value))
@@ -138,7 +138,9 @@
 (defmethod khazern:parse-iteration-path-using
     ((instance for-as-lines) (key (eql :missing-newline-p)))
   (setf (missing-newline-p-var instance)
-        (khazern:add-simple-binding instance :var (khazern:pop-token) :ignorable t)))
+        (khazern:add-simple-binding instance
+                                    :var (khazern:pop-token :type 'khazern:simple-var)
+                                    :ignorable t)))
 
 (defmethod khazern:analyze ((instance for-as-lines))
   (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)

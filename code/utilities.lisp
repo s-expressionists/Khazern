@@ -139,9 +139,6 @@
            (d-var-spec-p (car object))
            (d-var-spec-p (cdr object)))))
 
-(deftype d-var-spec ()
-  `(satisfies d-var-spec-p))
-
 (defvar *var-spec* nil)
 
 (defun d-type-spec-p (object &optional (var-spec *var-spec*))
@@ -152,13 +149,9 @@
            (d-type-spec-p (car object) (car var-spec))
            (d-type-spec-p (cdr object) (cdr var-spec)))))
 
-(deftype d-type-spec ()
-  `(satisfies d-type-spec-p))
-
 (defun function-operator-p (value)
   (and (consp value)
        (eq (first value) 'cl:function)
        (cdr value)
        (symbolp (second value))
        (null (cddr value))))
-

@@ -84,7 +84,7 @@
     ((instance for-as-elements) (key (eql :index)))
   (setf (index-ref instance)
         (khazern:add-simple-binding instance
-                                    :var (khazern:pop-token :type 'symbol)
+                                    :var (khazern:pop-token :type 'khazern:simple-var)
                                     :type 'fixnum
                                     :form 0)))
 

@@ -134,10 +134,10 @@ deduced based on the type."
                                      :ignorable ignorablep
                                      :dynamic-extent dynamic-extent-p)))
 
-(defmethod variable-list nconc ((clause clause))
+(defmethod variable-list ((clause clause))
   (mapcan #'variable-list (bindings clause)))
   
-(defmethod declarations nconc ((clause clause))
+(defmethod declarations ((clause clause))
   (mapcan #'declarations (bindings clause)))
   
 (defclass simple-superclause (clause)

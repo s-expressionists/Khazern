@@ -8,9 +8,6 @@
 
 (defvar *toplevel*)
 
-(deftype simple-type-spec ()
-  '(or null (member fixnum float t)))
-
 (defun find-keyword (token keyword-or-keywords)
   (cond ((listp keyword-or-keywords)
          (some (lambda (keyword)
@@ -96,7 +93,7 @@
             default-type-spec))))
 
 (defun parse-d-spec (&key (type-spec t) ((:ignorable ignorablep) nil)
-                       ((:dynamic-extent dynamic-extent-p) nil))
+                          ((:dynamic-extent dynamic-extent-p) nil))
   (let ((var-spec (pop-token :type 'd-var-spec)))
     (make-instance 'destructuring-binding
                    :var-spec var-spec

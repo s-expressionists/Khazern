@@ -247,32 +247,40 @@
     (setf (end instance) *index*)
     instance))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :from)) &key var)
+(defmethod parse-clause
+    ((client standard-client) (scope for-as-scope) (keyword (eql :from)) &key var)
   (parse-for-as-arithmetic keyword var))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :upfrom)) &key var)
+(defmethod parse-clause
+    ((client standard-client) (scope for-as-scope) (keyword (eql :upfrom)) &key var)
   (parse-for-as-arithmetic keyword var))
 
 (defmethod parse-clause
     ((client standard-client) (scope for-as-scope) (keyword (eql :downfrom)) &key var)
   (parse-for-as-arithmetic keyword var))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :to)) &key var)
+(defmethod parse-clause
+    ((client standard-client) (scope for-as-scope) (keyword (eql :to)) &key var)
   (parse-for-as-arithmetic keyword var))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :upto)) &key var)
+(defmethod parse-clause
+    ((client standard-client) (scope for-as-scope) (keyword (eql :upto)) &key var)
   (parse-for-as-arithmetic keyword var))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :downto)) &key var)
+(defmethod parse-clause
+    ((client standard-client) (scope for-as-scope) (keyword (eql :downto)) &key var)
   (parse-for-as-arithmetic keyword var))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :above)) &key var)
+(defmethod parse-clause
+    ((client standard-client) (scope for-as-scope) (keyword (eql :above)) &key var)
   (parse-for-as-arithmetic keyword var))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :below)) &key var)
+(defmethod parse-clause
+    ((client standard-client) (scope for-as-scope) (keyword (eql :below)) &key var)
   (parse-for-as-arithmetic keyword var))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :by)) &key var)
+(defmethod parse-clause
+    ((client standard-client) (scope for-as-scope) (keyword (eql :by)) &key var)
   (parse-for-as-arithmetic keyword var))
 
 ;;; FOR-AS-ARITHMETIC expansion methods

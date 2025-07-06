@@ -18,6 +18,8 @@
            #:check-nullable-simple-var-spec
            #:clause
            #:clause-group
+           #:d-type-spec 
+           #:d-var-spec 
            #:declarations
            #:define-interface
            #:destructuring-set
@@ -29,12 +31,14 @@
            #:iteration-path-names
            #:make-iteration-path
            #:map-variables
+           #:nullable-simple-var
            #:parse-clause
            #:parse-iteration-path-preposition
            #:parse-iteration-path-using
            #:pop-token
            #:pop-token?
            #:prologue-forms
+           #:simple-var
            #:standard-client
            #:step-intro-forms
            #:step-outro-forms

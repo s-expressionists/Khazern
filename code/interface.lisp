@@ -34,8 +34,7 @@ the FUNCTION with the arguments var, type and category.")
 (defgeneric variable-list (clause)
   (:documentation "This generic function returns a list of variable and initial forms for use in
 LET or LET*.")
-  (:method-combination nconc)
-  (:method nconc (clause)
+  (:method (clause)
     (declare (ignore clause))
     '()))
 
@@ -43,8 +42,7 @@ LET or LET*.")
   (:documentation "The purpose of this generic function is to extract a list of declaration
 specifiers from the clause.  Notice that it is a list of declaration specifiers, not a list of
 declarations.  In other words, the symbol DECLARE is omitted.")
-  (:method-combination nconc)
-  (:method nconc (clause)
+  (:method (clause)
     (declare (ignore clause))
     '()))
 
