@@ -31,21 +31,27 @@
 (defvar *epilogue-tag*)
 
 (defun prologue-body-epilogue (body-clause)
-  (let ((start-tag (gensym "BODY")))
-    `((tagbody
-         ,@(prologue-forms body-clause)
-         ,@(step-intro-forms body-clause t)
-         ,@(step-outro-forms body-clause t)
-       ,start-tag
-         ,@(body-forms body-clause)
-         ,@(step-intro-forms body-clause nil)
-         ,@(step-outro-forms body-clause nil)
-         (go ,start-tag)
-       ,*epilogue-tag*
-         ,@(epilogue-forms body-clause)
-         (return-from ,*loop-name*
-           ,*accumulation-variable*)))))
-
+  (let* ((start-tag (gensym "BODY"))
+         (body `(tagbody
+                   ,@(prologue-forms body-clause)
+                   ,@(step-intro-forms body-clause t)
+                   ,@(step-outro-forms body-clause t)
+                 ,start-tag
+                   ,@(body-forms body-clause)
+                   ,@(step-intro-forms body-clause nil)
+                   ,@(step-outro-forms body-clause nil)
+                   (go ,start-tag)
+                 ,*epilogue-tag*
+                   ,@(epilogue-forms body-clause)
+                   (return-from ,*loop-name*
+                     ,*accumulation-variable*)))
+         (afterword (afterword-forms body-clause)))
+    (if afterword
+        `((unwind-protect
+               ,body
+            ,@afterword))
+        `(,body))))
+    
 (defun expand-extended-loop (client)
   (let* ((*accumulation-variable* nil)
          (*index* 0)

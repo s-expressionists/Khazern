@@ -28,7 +28,7 @@
      (push (do-parse-clause client instance *index*
                             :var (parse-d-spec :type-spec *placeholder-result* :ignorable t))
            subclauses)
-     (when (pop-token? :keywords '(:and))
+     (when (maybe-parse-token :keywords '(:and))
        (go next))
      (setf (subclauses instance) (nreverse subclauses)
            (end instance) *index*)
@@ -95,7 +95,7 @@
          (error 'unexpected-token-found
                 :found (car *tokens*)
                 :clause (subseq *body* *start* *index*)))
-       (setf keyword (nth-value 1 (pop-token :keywords using-names))
+       (setf keyword (nth-value 1 (parse-token :keywords using-names))
              using-names (delete-name keyword using-names))
        (parse-iteration-path-using instance keyword)
      (when *tokens*
@@ -104,6 +104,9 @@
 (defun parse-iteration-path-prepositions (instance)
   (multiple-value-bind (preposition-names required-preposition-names using-names)
       (iteration-path-names instance)
+    (setf preposition-names (copy-list preposition-names)
+          required-preposition-names (copy-list required-preposition-names)
+          using-names (copy-list using-names))
     (when using-names
       (pushnew :using preposition-names))
     (prog ((foundp nil)
@@ -113,33 +116,33 @@
        (when preposition-names
          (cond (required-preposition-names
                 (multiple-value-setq (token keyword)
-                  (pop-token :keywords preposition-names))
+                  (parse-token :keywords preposition-names))
                 (setf foundp t))
                (t
                 (multiple-value-setq (foundp token keyword)
-                  (pop-token? :keywords preposition-names))))
+                  (maybe-parse-token :keywords preposition-names))))
          (unless foundp
            (return instance))
          (setf preposition-names (delete-name keyword preposition-names)
                required-preposition-names (delete-name keyword required-preposition-names))
          (if (eq keyword :using)
-             (parse-iteration-path-usings instance using-names (pop-token :type 'cons))
+             (parse-iteration-path-usings instance using-names (parse-token :type 'cons))
              (parse-iteration-path-preposition instance keyword))
          (go next-preposition)))))
 
 (defmethod parse-clause
     ((client standard-client) (instance for-as-clause) (keyword (eql :being)) &key var)
-  (let ((instance (if (pop-token? :keywords '(:each :the))
+  (let ((instance (if (maybe-parse-token :keywords '(:each :the))
                       (make-iteration-path client
                                            (make-iteration-path-name client
-                                                                     (pop-token))
+                                                                     (parse-token))
                                            var)
-                      (let ((form (pop-token)))
-                        (pop-token :keywords '(:and))
-                        (pop-token :keywords '(:its :each :his :her))
+                      (let ((form (parse-token)))
+                        (parse-token :keywords '(:and))
+                        (parse-token :keywords '(:its :each :his :her))
                         (make-iteration-path client
                                              (make-iteration-path-name client
-                                                                       (pop-token) t)
+                                                                       (parse-token) t)
                                              var
                                              form)))))
     (parse-iteration-path-prepositions instance)
@@ -196,14 +199,14 @@
 ;;; FOR-AS-ARITHMETIC parsers
 
 (defmethod iteration-path-names ((instance for-as-arithmetic))
-  (values (list '(:from :upfrom :downfrom)
-                '(:to :upto :downto :above :below)
-                :by)
+  (values '((:from :upfrom :downfrom)
+            (:to :upto :downto :above :below)
+            :by)
           '()
           '()))
 
 (defmethod parse-iteration-path-preposition ((instance for-as-arithmetic) name)
-  (let ((value (pop-token)))
+  (let ((value (parse-token)))
     ;; parse the form
     (ecase name
       ((:to :upto :downto :above :below)
@@ -242,7 +245,7 @@
   (let ((instance (make-instance 'for-as-arithmetic
                                  :start *start*
                                  :var var)))
-    (push-token keyword)
+    (unparse-token keyword)
     (parse-iteration-path-prepositions instance)
     (setf (end instance) *index*)
     instance))
@@ -369,9 +372,9 @@
   ())
 
 (defun parse-for-as-list (instance)
-  (setf (rest-var instance) (add-simple-binding instance :var "REST" :form (pop-token)))
-  (when (pop-token? :keywords '(:by))
-    (setf (by-ref instance) (add-simple-binding instance :var "BY" :form (pop-token) :fold t
+  (setf (rest-var instance) (add-simple-binding instance :var "REST" :form (parse-token)))
+  (when (maybe-parse-token :keywords '(:by))
+    (setf (by-ref instance) (add-simple-binding instance :var "BY" :form (parse-token) :fold t
                                                          :fold-test 'function-operator-p)))
   (setf (end instance) *index*)
   instance)
@@ -428,13 +431,13 @@
   (setf (temp-ref instance) (add-simple-binding instance :var "TMP")))
 
 (defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :=)) &key var)
-  (let ((initial-form (pop-token)))
+  (let ((initial-form (parse-token)))
     (make-instance 'for-as-equals-then
                    :start *start*
                    :var var
                    :initial-form initial-form
-                   :subsequent-form (if (pop-token? :keywords '(:then))
-                                        (pop-token)
+                   :subsequent-form (if (maybe-parse-token :keywords '(:then))
+                                        (parse-token)
                                         initial-form)
                    :end *index*)))
 
@@ -473,7 +476,7 @@
   (let ((instance (make-instance 'for-as-across
                                  :start *start*
                                  :var var)))
-    (setf (form-ref instance) (add-simple-binding instance :var "VECTOR" :form (pop-token)
+    (setf (form-ref instance) (add-simple-binding instance :var "VECTOR" :form (parse-token)
                                                            :type 'vector)
           (end instance) *index*)
     instance))
@@ -568,14 +571,14 @@
                      :start *start*)))
 
 (defmethod iteration-path-names ((instance for-as-hash-key))
-  (values (list '(:in :of))
-          (list '(:in :of))
-          (list :hash-value)))
+  (values '((:in :of))
+          '((:in :of))
+          '(:hash-value)))
                      
 (defmethod iteration-path-names ((instance for-as-hash-value))
-  (values (list '(:in :of))
-          (list '(:in :of))
-          (list :hash-key)))
+  (values '((:in :of))
+          '((:in :of))
+          '(:hash-key)))
 
 (defmethod parse-iteration-path-preposition ((instance for-as-hash) key)
   (when (var-spec (other-var instance))
@@ -587,12 +590,12 @@
                     :hash-value)
           :clause (when (numberp *start*)
                     (subseq *body* *start* *index*))))
-  (setf (form-ref instance) (add-simple-binding instance :var "HT" :form (pop-token)
+  (setf (form-ref instance) (add-simple-binding instance :var "HT" :form (parse-token)
                                                          :type 'hash-table)))
 
 (defmethod parse-iteration-path-using ((instance for-as-hash) key)
   (setf (other-var instance) (add-destructuring-binding instance
-                                                        :var (pop-token :type 'd-var-spec))))
+                                                        :var (parse-token :type 'd-var-spec))))
 
 (defmethod analyze ((clause for-as-hash))
   (when (eq (type-spec (var clause)) *placeholder-result*)
@@ -720,12 +723,12 @@
                      :iterator-keywords '(:external))))
 
 (defmethod iteration-path-names ((instance for-as-package))
-  (values (list '(:in :of))
+  (values '((:in :of))
           '()
           '()))
 
 (defmethod parse-iteration-path-preposition ((instance for-as-package) key)
-  (setf (form-ref instance) (add-simple-binding instance :var "PKG" :form (pop-token)
+  (setf (form-ref instance) (add-simple-binding instance :var "PKG" :form (parse-token)
                                                          :type '(or character string symbol
                                                                  package))))
 
@@ -813,12 +816,12 @@
            subclause (make-instance 'with-subclause
                                     :start *start*
                                     :var (parse-d-spec :ignorable t)))
-     (when (pop-token? :keywords '(:=))
+     (when (maybe-parse-token :keywords '(:=))
        (change-class subclause 'with-subclause-with-form)
-       (setf (form-ref subclause) (add-simple-binding subclause :form (pop-token))))
+       (setf (form-ref subclause) (add-simple-binding subclause :form (parse-token))))
      (setf (end subclause) *index*)
      (push subclause subclauses)
-     (when (pop-token? :keywords '(:and))
+     (when (maybe-parse-token :keywords '(:and))
        (go next))
      (setf (subclauses instance) (nreverse subclauses)
            (end instance) *index*)

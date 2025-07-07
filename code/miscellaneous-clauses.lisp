@@ -31,7 +31,7 @@
 (defmethod parse-clause (client (scope body-scope) (keyword (eql :named)) &key)
   (make-instance 'name-clause
                  :start *start*
-                 :name (pop-token)
+                 :name (parse-token)
                  :end *index*))
 
 ;;; Clause RETURN-CLAUSE.
@@ -47,7 +47,7 @@
 (defmethod parse-clause (client (scope selectable-scope) (keyword (eql :return)) &key)
   (make-instance 'return-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :end *index*))
 
 (defmethod body-forms ((clause return-clause))
@@ -67,7 +67,7 @@
 (defmethod parse-clause (client (scope body-scope) (keyword (eql :initially)) &key)
   (make-instance 'initial-clause
                  :start *start*
-                 :forms (parse-compound-form+)
+                 :forms (parse-compound-forms)
                  :end *index*))
 
 (defmethod prologue-forms ((clause initial-clause))
@@ -87,7 +87,7 @@
 (defmethod parse-clause (client (scope body-scope) (keyword (eql :finally)) &key)
   (make-instance 'final-clause
                  :start *start*
-                 :forms (parse-compound-form+)
+                 :forms (parse-compound-forms)
                  :end *index*))
 
 (defmethod epilogue-forms ((clause final-clause))

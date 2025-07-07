@@ -45,46 +45,46 @@
   (setf (step-ref instance) (khazern:add-simple-binding instance :var "STEP" :type 'fixnum)))
 
 (defmethod khazern:iteration-path-names ((instance for-as-elements))
-  (values (list '(:in :of) :start :end :from-end)
-          (list '(:in :of))
-          (list :index)))
+  (values '((:in :of) :start :end :from-end)
+          '((:in :of))
+          '(:index)))
 
 (defmethod khazern:parse-iteration-path-preposition ((instance for-as-elements) (key (eql :in)))
   (setf (in-ref instance) (khazern:add-simple-binding instance
                                                       :var "IN"
-                                                      :form (khazern:pop-token)
+                                                      :form (khazern:parse-token)
                                                       :type 'sequence)))
 
 (defmethod khazern:parse-iteration-path-preposition ((instance for-as-elements) (key (eql :of)))
   (setf (in-ref instance) (khazern:add-simple-binding instance
                                                       :var "IN"
-                                                      :form (khazern:pop-token)
+                                                      :form (khazern:parse-token)
                                                       :type 'sequence)))
 
 (defmethod khazern:parse-iteration-path-preposition
     ((instance for-as-elements) (key (eql :start)))
   (setf (start-ref instance) (khazern:add-simple-binding instance
                                                          :var "START"
-                                                         :form (khazern:pop-token)
+                                                         :form (khazern:parse-token)
                                                          :fold t :type 'fixnum)))
 
 (defmethod khazern:parse-iteration-path-preposition
     ((instance for-as-elements) (key (eql :end)))
   (setf (end-ref instance) (khazern:add-simple-binding instance
-                                                       :var "END" :form (khazern:pop-token)
+                                                       :var "END" :form (khazern:parse-token)
                                                        :fold t :type 'fixnum)))
 
 (defmethod khazern:parse-iteration-path-preposition
     ((instance for-as-elements) (key (eql :from-end)))
   (setf (from-end-ref instance) (khazern:add-simple-binding instance
                                                             :var "FROM-END-"
-                                                            :form (khazern:pop-token))))
+                                                            :form (khazern:parse-token))))
 
 (defmethod khazern:parse-iteration-path-using
     ((instance for-as-elements) (key (eql :index)))
   (setf (index-ref instance)
         (khazern:add-simple-binding instance
-                                    :var (khazern:pop-token :type 'khazern:simple-var)
+                                    :var (khazern:parse-token :type 'khazern:simple-var)
                                     :type 'fixnum
                                     :form 0)))
 

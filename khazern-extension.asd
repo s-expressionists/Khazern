@@ -13,4 +13,5 @@
                 :components ((:file "packages")
                              (:file "elements")
                              (:file "stream")
+                             (:file "cleanup")
                              (:file "interface")))))

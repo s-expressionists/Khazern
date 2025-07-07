@@ -14,8 +14,8 @@
   ())
 
 (defun parse-into (&key default-type-spec accumulation-category)
-  (let ((var-spec (if (pop-token? :keywords '(:into))
-                      (pop-token :type 'symbol)
+  (let ((var-spec (if (maybe-parse-token :keywords '(:into))
+                      (parse-token :type 'symbol)
                       (default-accumulation-variable))))
     (make-instance 'simple-binding
                    :var-spec var-spec
@@ -242,7 +242,7 @@
     ((client standard-client) (scope selectable-scope) (keyword (eql :collect)) &key)
   (make-instance 'collect-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :accum-var (parse-into :accumulation-category :list)
                  :end *index*))
 
@@ -250,7 +250,7 @@
     ((client standard-client) (scope selectable-scope) (keyword (eql :collecting)) &key)
   (make-instance 'collect-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :accum-var (parse-into :accumulation-category :list)
                  :end *index*))
 
@@ -268,7 +268,7 @@
     ((client standard-client) (scope selectable-scope) (keyword (eql :append)) &key)
   (make-instance 'append-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :accum-var (parse-into :accumulation-category :list)
                  :end *index*))
 
@@ -276,7 +276,7 @@
     ((client standard-client) (scope selectable-scope) (keyword (eql :appending)) &key)
   (make-instance 'append-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :accum-var (parse-into :accumulation-category :list)
                  :end *index*))
 
@@ -292,7 +292,7 @@
     ((client standard-client) (scope selectable-scope) (keyword (eql :nconc)) &key)
   (make-instance 'nconc-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :accum-var (parse-into :accumulation-category :list)
                  :end *index*))
 
@@ -300,7 +300,7 @@
     ((client standard-client) (scope selectable-scope) (keyword (eql :nconcing)) &key)
   (make-instance 'nconc-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :accum-var (parse-into :accumulation-category :list)
                  :end *index*))
 
@@ -316,7 +316,7 @@
     ((client standard-client) (scope selectable-scope) (keyword (eql :count)) &key)
   (make-instance 'count-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :accum-var (parse-into :default-type-spec 'fixnum
                                         :accumulation-category :summation)
                  :end *index*))
@@ -325,7 +325,7 @@
     ((client standard-client) (scope selectable-scope) (keyword (eql :counting)) &key)
   (make-instance 'count-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :accum-var (parse-into :default-type-spec 'fixnum                         
                                         :accumulation-category :summation)
                  :end *index*))
@@ -349,7 +349,7 @@
     ((client standard-client) (scope selectable-scope) (keyword (eql :minimize)) &key)
   (make-instance 'extremum-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :func-name :min
                  :accum-var (parse-into :default-type-spec 'real                          
                                         :accumulation-category :extremum)
@@ -359,7 +359,7 @@
     ((client standard-client) (scope selectable-scope) (keyword (eql :minimizing)) &key)
   (make-instance 'extremum-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :func-name :min
                  :accum-var (parse-into :default-type-spec 'real                          
                                         :accumulation-category :extremum)
@@ -369,7 +369,7 @@
     ((client standard-client) (scope selectable-scope) (keyword (eql :maximize)) &key)
   (make-instance 'extremum-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :func-name :max
                  :accum-var (parse-into :default-type-spec 'real                        
                                         :accumulation-category :extremum)
@@ -379,7 +379,7 @@
     ((client standard-client) (scope selectable-scope) (keyword (eql :maximizing)) &key)
   (make-instance 'extremum-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :func-name :max
                  :accum-var (parse-into :default-type-spec 'real              
                                         :accumulation-category :extremum)
@@ -401,7 +401,7 @@
     ((client standard-client) (scope selectable-scope) (keyword (eql :sum)) &key)
   (make-instance 'sum-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :accum-var (parse-into :default-type-spec 'number                 
                                         :accumulation-category :summation)
                  :end *index*))
@@ -410,7 +410,7 @@
     ((client standard-client) (scope selectable-scope) (keyword (eql :summing)) &key)
   (make-instance 'sum-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :accum-var (parse-into :default-type-spec 'number                         
                                         :accumulation-category :summation)
                  :end *index*))

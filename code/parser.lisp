@@ -21,7 +21,7 @@
       (mapcan #'flatten-keywords keyword-or-keywords)
       (list keyword-or-keywords)))
 
-(defun pop-token (&key (type nil type-p) (keywords nil keywords-p))
+(defun parse-token (&key (type nil type-p) (keywords nil keywords-p))
   (when (null *tokens*)
     (error 'expected-token-but-end
            :expected-type type
@@ -45,7 +45,7 @@
         (incf *index*))
       (values (pop *tokens*) keyword))))
 
-(defun pop-token? (&key (type nil type-p) (keywords nil keywords-p))
+(defun maybe-parse-token (&key (type nil type-p) (keywords nil keywords-p))
   (let ((keyword nil))
     (cond ((or (null *tokens*)
                (and type-p
@@ -59,8 +59,9 @@
              (incf *index*))
            (values t (pop *tokens*) keyword)))))
 
-(defun push-token (token)
-  (decf *index*)
+(defun unparse-token (token)
+  (when *toplevel*
+    (decf *index*))
   (push token *tokens*))
 
 (defmethod parse-clause (client scope name &key &allow-other-keys)
@@ -81,20 +82,20 @@
          :name token))
 
 (defun do-parse-clause (client scope *start* &rest args)
-  (apply #'parse-clause client scope (make-parser-name client scope (pop-token)) args))
+  (apply #'parse-clause client scope (make-parser-name client scope (parse-token)) args))
 
 (defun parse-type-spec (&key (default-type-spec t) ((:var-spec *var-spec*) nil))
-  (if (pop-token? :keywords '(:of-type))
-      (pop-token :type 'd-type-spec)
+  (if (maybe-parse-token :keywords '(:of-type))
+      (parse-token :type 'd-type-spec)
       (multiple-value-bind (foundp type-spec)
-          (pop-token? :type 'simple-type-spec)
+          (maybe-parse-token :type 'simple-type-spec)
         (if foundp
             type-spec
             default-type-spec))))
 
 (defun parse-d-spec (&key (type-spec t) ((:ignorable ignorablep) nil)
                           ((:dynamic-extent dynamic-extent-p) nil))
-  (let ((var-spec (pop-token :type 'd-var-spec)))
+  (let ((var-spec (parse-token :type 'd-var-spec)))
     (make-instance 'destructuring-binding
                    :var-spec var-spec
                    :type-spec (parse-type-spec :default-type-spec type-spec
@@ -102,12 +103,12 @@
                    :ignorable ignorablep
                    :dynamic-extent dynamic-extent-p)))
 
-(defun parse-compound-form+ ()
+(defun parse-compound-forms ()
   (prog (forms)
-     (push (pop-token :type 'cons) forms)
+     (push (parse-token :type 'cons) forms)
    next
      (multiple-value-bind (foundp form)
-         (pop-token? :type 'cons)
+         (maybe-parse-token :type 'cons)
        (when foundp
          (push form forms)
          (go next)))
@@ -118,7 +119,7 @@
    next
      (push (do-parse-clause client scope *index*)
            clauses)
-     (when (pop-token? :keywords '(:and))
+     (when (maybe-parse-token :keywords '(:and))
        (go next))
      (return (nreverse clauses))))
 

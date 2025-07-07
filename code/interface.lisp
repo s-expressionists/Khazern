@@ -83,6 +83,11 @@ epilogue. The FINALLY clause is an obvious candidate for such code.")
     (declare (ignore clause))
     nil))
 
+(defgeneric afterword-forms (clause)
+  (:method (clause)
+    (declare (ignore clause))
+    nil))
+
 (defgeneric wrap-forms (clause forms)
   (:documentation "Once the LOOP prologue, the LOOP body, and the LOOP epilogue have all been
 constructed, a bunch of successive WRAPPERS are applied so as to obtain the final expansion.

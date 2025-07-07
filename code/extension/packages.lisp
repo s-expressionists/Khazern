@@ -9,4 +9,5 @@
   (pushnew :loop/iteration-path/characters *features*)
   (pushnew :loop/iteration-path/elements *features*)
   (pushnew :loop/iteration-path/lines *features*)
-  (pushnew :loop/iteration-path/objects *features*))
+  (pushnew :loop/iteration-path/objects *features*)
+  (pushnew :loop/cleanup *features*))

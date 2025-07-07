@@ -20,10 +20,10 @@
 (defun parse-conditional-clause-tail (client instance)
   (setf (then-clauses instance)
         (parse-parallel-clauses client instance))
-  (when (pop-token? :keywords '(:else))
+  (when (maybe-parse-token :keywords '(:else))
     (setf (else-clauses instance)
           (parse-parallel-clauses client instance)))
-  (pop-token? :keywords '(:end))
+  (maybe-parse-token :keywords '(:end))
   (setf (end instance) *index*)
   instance)
 
@@ -31,19 +31,19 @@
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
                                                 :start *start*
-                                                :condition (pop-token))))
+                                                :condition (parse-token))))
 
 (defmethod parse-clause (client (scope selectable-scope) (keyword (eql :when)) &key)
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
                                                 :start *start*
-                                                :condition (pop-token))))
+                                                :condition (parse-token))))
 
 (defmethod parse-clause (client (scope selectable-scope) (keyword (eql :unless)) &key)
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
                                                 :start *start*
-                                                :condition `(not ,(pop-token)))))
+                                                :condition `(not ,(parse-token)))))
 
 (defmethod body-forms ((clause conditional-clause))
   (let ((*it-var* (gensym)))

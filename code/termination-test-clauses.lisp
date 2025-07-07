@@ -41,7 +41,7 @@
 
 (defmethod parse-clause
     (client (scope body-scope) (keyword (eql :repeat)) &key)
-  (let ((form (pop-token))
+  (let ((form (parse-token))
         (instance (make-instance 'repeat-clause
                                  :start *start*
                                  :end *index*)))
@@ -75,7 +75,7 @@
     (client (scope body-scope) (keyword (eql :always)) &key)
   (make-instance 'always-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :end *index*))
 
 (defun expand-always (clause group)
@@ -100,7 +100,7 @@
     (client (scope body-scope) (keyword (eql :never)) &key)
   (make-instance 'never-clause 
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :end *index*))
 
 (defun expand-never (clause group)
@@ -125,7 +125,7 @@
     (client (scope body-scope) (keyword (eql :thereis)) &key)
   (make-instance 'thereis-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :end *index*))
 
 (defun expand-thereis (clause group)
@@ -148,14 +148,14 @@
     (client (scope body-scope) (keyword (eql :while)) &key)
   (make-instance 'while-clause
                  :start *start*
-                 :form (pop-token)
+                 :form (parse-token)
                  :end *index*))
 
 (defmethod parse-clause
     (client (scope body-scope) (keyword (eql :until)) &key)
   (make-instance 'while-clause
                  :start *start*
-                 :form `(not ,(pop-token))
+                 :form `(not ,(parse-token))
                  :end *index*))
 
 (defun expand-while (clause group)

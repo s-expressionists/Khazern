@@ -160,6 +160,9 @@ deduced based on the type."
 (defmethod epilogue-forms ((clause simple-superclause))
   (mapcan #'epilogue-forms (subclauses clause)))
 
+(defmethod afterword-forms ((clause simple-superclause))
+  (mapcan #'afterword-forms (subclauses clause)))
+
 (defmethod name ((clause simple-superclause))
   (some #'name (subclauses clause)))
 

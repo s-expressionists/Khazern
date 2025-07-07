@@ -20,13 +20,13 @@
 (defmethod parse-clause (client (scope selectable-scope) (keyword (eql :do)) &key)
   (make-instance 'do-clause
                  :start *start*
-                 :forms (parse-compound-form+)
+                 :forms (parse-compound-forms)
                  :end *index*))
 
 (defmethod parse-clause (client (scope selectable-scope) (keyword (eql :doing)) &key)
   (make-instance 'do-clause
                  :start *start*
-                 :forms (parse-compound-form+)
+                 :forms (parse-compound-forms)
                  :end *index*))
 
 (defmethod body-forms ((clause do-clause))
