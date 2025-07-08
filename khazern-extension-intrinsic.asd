@@ -9,6 +9,7 @@
   :depends-on ("khazern-intrinsic"
                "khazern-extension")
   :components ((:module code
-                :pathname "code/extension/"
+                :pathname "code/extension-intrinsic/"
                 :serial t
-                :components ((:file "intrinsic")))))
+                :components ((:file "packages")
+                             (:file "loop")))))

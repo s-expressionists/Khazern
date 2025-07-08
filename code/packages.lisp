@@ -18,6 +18,7 @@
            #:afterword-forms
            #:analyze
            #:body-forms
+           #:body-scope
            #:check-nullable-simple-var-spec
            #:clause
            #:clause-group
@@ -29,6 +30,7 @@
            #:dynamic-extent-p
            #:epilogue-forms
            #:expand-body
+           #:features-list
            #:form
            #:ignorablep
            #:iteration-path-names
@@ -42,6 +44,7 @@
            #:parse-iteration-path-using
            #:parse-token
            #:prologue-forms
+           #:selectable-scope
            #:simple-var
            #:standard-client
            #:step-intro-forms

@@ -10,9 +10,10 @@
                "khazern-extension")
   :in-order-to ((asdf:test-op (asdf:test-op "khazern-extension-extrinsic/test")))
   :components ((:module code
-                :pathname "code/extension/"
+                :pathname "code/extension-extrinsic/"
                 :serial t
-                :components ((:file "extrinsic")))))
+                :components ((:file "packages")
+                             (:file "loop")))))
 
 (asdf:defsystem "khazern-extension-extrinsic/test"
   :description "Test system for Khazern iteration path extrinsic extensions"
@@ -29,7 +30,7 @@
              (defparameter cl-user::*exit-on-test-failures* t)
              (uiop:symbol-call :parachute :test :khazern-extension-extrinsic/test))
   :components ((:module code
-                :pathname "code/extension/test/"
+                :pathname "code/extension-extrinsic/test/"
                 :serial t
                 :components ((:file "packages")
                              (:file "utility")

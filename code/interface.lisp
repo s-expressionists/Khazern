@@ -201,6 +201,14 @@ parsed."))
 (defun ensure-symbol (name &optional (package *package*))
   (intern (string name) package))
 
+(defgeneric features-list (client)
+  (:method-combination nconc)
+  (:method nconc (client)
+    (declare (ignore client))
+    nil)
+  (:method nconc ((client standard-client))
+    (list :loop/khazern)))
+
 (defmacro define-interface (client-var client-class &optional intrinsic)
   (declare (ignore client-class))
   "Create the macro stubs LOOP and LOOP-FINISH based on the client-var and client-class."
@@ -211,4 +219,8 @@ parsed."))
          '(go ,epilogue-tag))
 
        (defmacro ,(ensure-symbol '#:loop pkg) (&rest forms)
-         (khazern:expand-body ,client-var forms ',epilogue-tag)))))
+         (khazern:expand-body ,client-var forms ',epilogue-tag))
+
+       ,@(when intrinsic
+           `((eval-when (:compile-toplevel :load-toplevel :execute)
+               (setf *features* (nunion (features-list ,client-var) *features*))))))))

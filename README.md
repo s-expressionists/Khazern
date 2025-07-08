@@ -33,9 +33,9 @@ either the `khazern-extension-extrinsic` or
 
 ```common-lisp
 * (ql:quickload '(:khazern-extension-extrinsic :flexi-streams))
-* (ke:loop for i being the elements in #(1 2 3 4 5)
-             start 1 from-end t
-           do (print i))
+* (kee:loop for i being the elements in #(1 2 3 4 5)
+              start 1 from-end t
+            do (print i))
 
 5 
 4 
@@ -43,8 +43,8 @@ either the `khazern-extension-extrinsic` or
 2 
 NIL
 * (with-input-from-string (stream "a 233d0 #C(1 2) (wibble)")
-    (ke:loop for i being the objects in stream
-             do (print i)))
+    (kee:loop for i being the objects in stream
+              do (print i)))
 
 A 
 233.0d0 
@@ -52,8 +52,8 @@ A
 (WIBBLE) 
 NIL
 * (with-input-from-string (stream "abcd")
-    (ke:loop for i being the characters in stream
-             do (print i)))
+    (kee:loop for i being the characters in stream
+              do (print i)))
 
 #\a 
 #\b 
@@ -63,10 +63,10 @@ NIL
 * (with-input-from-string (stream "ab
 c
 d")
-    (ke:loop for i being the lines in stream
-               using (missing-newline-p j)
-             do (print i)
-                (print j)))
+    (kee:loop for i being the lines in stream
+                using (missing-newline-p j)
+              do (print i)
+                 (print j)))
 
 "ab" 
 NIL 
@@ -76,8 +76,8 @@ NIL
 T 
 NIL
 * (flexi-streams:with-input-from-sequence (stream #(1 2 3))
-    (ke:loop for i being the bytes in stream
-             do (print i)))
+    (kee:loop for i being the bytes in stream
+              do (print i)))
 
 1 
 2 
@@ -133,7 +133,7 @@ To use the extension system one need only replace the dependency in the ASD file
 
 (cl:defpackage #:quux
   (:use #:common-lisp)
-  (:shadowing-import-from #:khazern-extrinsic
+  (:shadowing-import-from #:khazern-extension-extrinsic
                           #:loop
                           #:loop-finish))
 

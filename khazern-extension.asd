@@ -11,7 +11,7 @@
                 :pathname "code/extension/"
                 :serial t
                 :components ((:file "packages")
+                             (:file "interface")
                              (:file "elements")
                              (:file "stream")
-                             (:file "cleanup")
-                             (:file "interface")))))
+                             (:file "cleanup")))))

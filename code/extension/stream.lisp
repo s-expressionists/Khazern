@@ -84,6 +84,22 @@
 
 (defclass for-as-bytes (for-as-stream) ())
 
+(defmethod khazern:make-iteration-path
+    ((client extension-client) (name (eql :byte)) var
+     &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-bytes :var var)))
+
+(defmethod khazern:make-iteration-path
+    ((client extension-client) (name (eql :bytes)) var
+     &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-bytes :var var)))
+
 (defmethod khazern:analyze ((instance for-as-bytes))
   (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
     (setf (khazern:type-spec (var instance)) 'integer)))
@@ -108,6 +124,22 @@
     (list* `(setq ,temp-var (read-char ,stream-ref nil ,stream-ref))
            (call-next-method))))
 
+(defmethod khazern:make-iteration-path
+    ((client extension-client) (name (eql :character)) var
+     &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-characters :var var)))
+
+(defmethod khazern:make-iteration-path
+    ((client extension-client) (name (eql :characters)) var
+     &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-characters :var var)))
+
 (defclass for-as-objects (for-as-stream) ())
 
 (defmethod khazern:analyze ((instance for-as-objects))
@@ -121,9 +153,41 @@
     (list* `(setq ,temp-var (read ,stream-ref nil ,stream-ref))
            (call-next-method))))
 
+(defmethod khazern:make-iteration-path
+    ((client extension-client) (name (eql :object)) var
+     &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-objects :var var)))
+
+(defmethod khazern:make-iteration-path
+    ((client extension-client) (name (eql :objects)) var
+     &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-objects :var var)))
+
 (defclass for-as-lines (for-as-stream)
   ((%missing-newline-p-var :accessor missing-newline-p-var
                            :initform (gensym "MISS"))))
+
+(defmethod khazern:make-iteration-path
+    ((client extension-client) (name (eql :line)) var
+     &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-lines :var var)))
+
+(defmethod khazern:make-iteration-path
+    ((client extension-client) (name (eql :lines)) var
+     &optional (inclusive-form nil inclusive-form-p))
+  (declare (ignore inclusive-form))
+  (if inclusive-form-p
+      (call-next-method)
+      (make-instance 'for-as-lines :var var)))
 
 (defmethod khazern:iteration-path-names ((instance for-as-stream))
   (values '((:in :of) :close)
