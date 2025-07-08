@@ -19,10 +19,10 @@
 
 (defun parse-conditional-clause-tail (client instance)
   (setf (then-clauses instance)
-        (parse-parallel-clauses client instance))
+        (parse-conjunctive-clauses client instance))
   (when (maybe-parse-token :keywords '(:else))
     (setf (else-clauses instance)
-          (parse-parallel-clauses client instance)))
+          (parse-conjunctive-clauses client instance)))
   (maybe-parse-token :keywords '(:end))
   (setf (end instance) *index*)
   instance)

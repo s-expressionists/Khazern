@@ -22,18 +22,14 @@
   ())
 
 (defun parse-for-as (client)
-  (prog ((instance (make-instance 'for-as-clause :start *start*))
-         subclauses)
-   next
-     (push (do-parse-clause client instance *index*
-                            :var (parse-d-spec :type-spec *placeholder-result* :ignorable t))
-           subclauses)
-     (when (maybe-parse-token :keywords '(:and))
-       (go next))
-     (setf (subclauses instance) (nreverse subclauses)
-           (end instance) *index*)
-     (return instance)))
-
+  (let ((instance (make-instance 'for-as-clause :start *start*)))
+    (setf (subclauses instance)
+          (parse-conjunctive-clauses client instance
+                                     :var (parse-d-spec :type-spec *placeholder-result*
+                                                        :ignorable t))
+          (end instance) *index*)
+    instance))
+  
 (defmethod parse-clause
     ((client standard-client) (scope body-scope) (keyword (eql :for)) &key)
   (parse-for-as client))

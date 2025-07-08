@@ -114,14 +114,16 @@
          (go next)))
      (return (nreverse forms))))
 
-(defun parse-parallel-clauses (client scope)
-  (prog (clauses)
-   next
-     (push (do-parse-clause client scope *index*)
-           clauses)
-     (when (maybe-parse-token :keywords '(:and))
-       (go next))
-     (return (nreverse clauses))))
+(defmacro parse-conjunctive-clauses (client scope &rest args)
+  (let ((clauses-var (gensym "CLAUSES"))
+        (next-tag (gensym "NEXT")))
+    `(prog (,clauses-var)
+      ,next-tag
+        (push (do-parse-clause ,client ,scope *index* ,@args)
+              ,clauses-var)
+        (when (maybe-parse-token :keywords '(:and))
+          (go ,next-tag))
+        (return (nreverse ,clauses-var)))))
 
 (defun parse-body (client)
   (prog ((scope (make-instance 'extended-superclause))
