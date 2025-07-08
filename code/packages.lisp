@@ -31,6 +31,7 @@
            #:epilogue-forms
            #:expand-body
            #:features-list
+           #:for-as-hash
            #:form
            #:ignorablep
            #:iteration-path-names
@@ -38,11 +39,15 @@
            #:map-variables
            #:maybe-parse-token
            #:nullable-simple-var
+           #:other-var
            #:parse-clause
            #:parse-compound-forms
+           #:parse-d-spec
            #:parse-iteration-path-preposition
            #:parse-iteration-path-using
            #:parse-token
+           #:parse-type-spec
+           #:parse-var-spec
            #:prologue-forms
            #:selectable-scope
            #:simple-var
@@ -52,6 +57,7 @@
            #:symbol-equal
            #:type-spec
            #:unparse-token
+           #:var
            #:var-spec
            #:variable-list
            #:wrap-forms))

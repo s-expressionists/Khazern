@@ -81,7 +81,7 @@
          :clause (when (numberp *start*)
                    (subseq *body* *start* *index*))))
 
-(defun parse-iteration-path-usings (instance using-names using)
+(defun parse-iteration-path-usings (client instance using-names using)
   (trivial-with-current-source-form:with-current-source-form (using)
     (prog ((*tokens* using)
            (*toplevel* nil)
@@ -93,13 +93,13 @@
                 :clause (subseq *body* *start* *index*)))
        (setf keyword (nth-value 1 (parse-token :keywords using-names))
              using-names (delete-name keyword using-names))
-       (parse-iteration-path-using instance keyword)
+       (parse-iteration-path-using client instance keyword)
      (when *tokens*
        (go next-using)))))
 
-(defun parse-iteration-path-prepositions (instance)
+(defun parse-iteration-path-prepositions (client instance)
   (multiple-value-bind (preposition-names required-preposition-names using-names)
-      (iteration-path-names instance)
+      (iteration-path-names client instance)
     (setf preposition-names (copy-list preposition-names)
           required-preposition-names (copy-list required-preposition-names)
           using-names (copy-list using-names))
@@ -122,8 +122,8 @@
          (setf preposition-names (delete-name keyword preposition-names)
                required-preposition-names (delete-name keyword required-preposition-names))
          (if (eq keyword :using)
-             (parse-iteration-path-usings instance using-names (parse-token :type 'cons))
-             (parse-iteration-path-preposition instance keyword))
+             (parse-iteration-path-usings client instance using-names (parse-token :type 'cons))
+             (parse-iteration-path-preposition client instance keyword))
          (go next-preposition)))))
 
 (defmethod parse-clause
@@ -141,7 +141,7 @@
                                                                        (parse-token) t)
                                              var
                                              form)))))
-    (parse-iteration-path-prepositions instance)
+    (parse-iteration-path-prepositions client instance)
     instance))
 
 ;;; 6.1.2.1.1 FOR-AS-ARITHMETIC subclause
@@ -194,14 +194,14 @@
 ;;;
 ;;; FOR-AS-ARITHMETIC parsers
 
-(defmethod iteration-path-names ((instance for-as-arithmetic))
+(defmethod iteration-path-names ((client standard-client) (instance for-as-arithmetic))
   (values '((:from :upfrom :downfrom)
             (:to :upto :downto :above :below)
             :by)
           '()
           '()))
 
-(defmethod parse-iteration-path-preposition ((instance for-as-arithmetic) name)
+(defmethod parse-iteration-path-preposition ((client standard-client) (instance for-as-arithmetic) name)
   (let ((value (parse-token)))
     ;; parse the form
     (ecase name
@@ -236,51 +236,51 @@
               (change-class instance 'for-as-arithmetic-down))))))
   nil)
 
-(defun parse-for-as-arithmetic (keyword var)
+(defun parse-for-as-arithmetic (client keyword var)
   (check-nullable-simple-var-spec var)
   (let ((instance (make-instance 'for-as-arithmetic
                                  :start *start*
                                  :var var)))
     (unparse-token keyword)
-    (parse-iteration-path-prepositions instance)
+    (parse-iteration-path-prepositions client instance)
     (setf (end instance) *index*)
     instance))
 
 (defmethod parse-clause
     ((client standard-client) (scope for-as-scope) (keyword (eql :from)) &key var)
-  (parse-for-as-arithmetic keyword var))
+  (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
     ((client standard-client) (scope for-as-scope) (keyword (eql :upfrom)) &key var)
-  (parse-for-as-arithmetic keyword var))
+  (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
     ((client standard-client) (scope for-as-scope) (keyword (eql :downfrom)) &key var)
-  (parse-for-as-arithmetic keyword var))
+  (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
     ((client standard-client) (scope for-as-scope) (keyword (eql :to)) &key var)
-  (parse-for-as-arithmetic keyword var))
+  (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
     ((client standard-client) (scope for-as-scope) (keyword (eql :upto)) &key var)
-  (parse-for-as-arithmetic keyword var))
+  (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
     ((client standard-client) (scope for-as-scope) (keyword (eql :downto)) &key var)
-  (parse-for-as-arithmetic keyword var))
+  (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
     ((client standard-client) (scope for-as-scope) (keyword (eql :above)) &key var)
-  (parse-for-as-arithmetic keyword var))
+  (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
     ((client standard-client) (scope for-as-scope) (keyword (eql :below)) &key var)
-  (parse-for-as-arithmetic keyword var))
+  (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
     ((client standard-client) (scope for-as-scope) (keyword (eql :by)) &key var)
-  (parse-for-as-arithmetic keyword var))
+  (parse-for-as-arithmetic client keyword var))
 
 ;;; FOR-AS-ARITHMETIC expansion methods
 
@@ -566,17 +566,17 @@
                      :var var
                      :start *start*)))
 
-(defmethod iteration-path-names ((instance for-as-hash-key))
+(defmethod iteration-path-names ((client standard-client) (instance for-as-hash-key))
   (values '((:in :of))
           '((:in :of))
           '(:hash-value)))
                      
-(defmethod iteration-path-names ((instance for-as-hash-value))
+(defmethod iteration-path-names ((client standard-client) (instance for-as-hash-value))
   (values '((:in :of))
           '((:in :of))
           '(:hash-key)))
 
-(defmethod parse-iteration-path-preposition ((instance for-as-hash) key)
+(defmethod parse-iteration-path-preposition ((client standard-client) (instance for-as-hash) key)
   (when (var-spec (other-var instance))
     (warn 'invalid-iteration-path-preposition-order
           :first-preposition :using
@@ -589,9 +589,10 @@
   (setf (form-ref instance) (add-simple-binding instance :var "HT" :form (parse-token)
                                                          :type 'hash-table)))
 
-(defmethod parse-iteration-path-using ((instance for-as-hash) key)
-  (setf (other-var instance) (add-destructuring-binding instance
-                                                        :var (parse-token :type 'd-var-spec))))
+(defmethod parse-iteration-path-using ((client standard-client) (instance for-as-hash) key)
+  (declare (ignore key))
+  (setf (other-var instance) (add-binding instance
+                                          (parse-var-spec :ignorable t))))
 
 (defmethod analyze ((clause for-as-hash))
   (when (eq (type-spec (var clause)) *placeholder-result*)
@@ -718,12 +719,12 @@
                      :var var
                      :iterator-keywords '(:external))))
 
-(defmethod iteration-path-names ((instance for-as-package))
+(defmethod iteration-path-names ((client standard-client) (instance for-as-package))
   (values '((:in :of))
           '()
           '()))
 
-(defmethod parse-iteration-path-preposition ((instance for-as-package) key)
+(defmethod parse-iteration-path-preposition ((client standard-client) (instance for-as-package) key)
   (setf (form-ref instance) (add-simple-binding instance :var "PKG" :form (parse-token)
                                                          :type '(or character string symbol
                                                                  package))))

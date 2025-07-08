@@ -93,6 +93,15 @@
             type-spec
             default-type-spec))))
 
+(defun parse-var-spec (&key (type-spec t) ((:ignorable ignorablep) nil)
+                            ((:dynamic-extent dynamic-extent-p) nil))
+  (let ((var-spec (parse-token :type 'd-var-spec)))
+    (make-instance 'destructuring-binding
+                   :var-spec var-spec
+                   :type-spec type-spec
+                   :ignorable ignorablep
+                   :dynamic-extent dynamic-extent-p)))
+
 (defun parse-d-spec (&key (type-spec t) ((:ignorable ignorablep) nil)
                           ((:dynamic-extent dynamic-extent-p) nil))
   (let ((var-spec (parse-token :type 'd-var-spec)))

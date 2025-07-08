@@ -14,4 +14,5 @@
                              (:file "interface")
                              (:file "elements")
                              (:file "stream")
+                             (:file "for-as-hash")
                              (:file "cleanup")))))

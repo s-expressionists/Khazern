@@ -18,31 +18,31 @@
   (declare (ignore initargs))
   (khazern:add-binding instance (var instance)))
 
-(defmethod khazern:iteration-path-names ((instance for-as-stream))
+(defmethod khazern:iteration-path-names ((client extension-client) (instance for-as-stream))
   (values '((:in :of) :close)
           '()
           '(:stream)))
 
 (defmethod khazern:parse-iteration-path-preposition
-    ((instance for-as-stream) (key (eql :in)))
+    ((client extension-client) (instance for-as-stream) (key (eql :in)))
   (setf (values (stream-ref instance) (stream-d-spec instance))
         (khazern:add-simple-binding instance :var (or (stream-var instance) "STREAM")
                                              :form (khazern:parse-token) :type 'stream)))
 
 (defmethod khazern:parse-iteration-path-preposition
-    ((instance for-as-stream) (key (eql :of)))
+    ((client extension-client) (instance for-as-stream) (key (eql :of)))
   (setf (values (stream-ref instance) (stream-d-spec instance))
         (khazern:add-simple-binding instance :var (or (stream-var instance) "STREAM")
                                              :form (khazern:parse-token) :type 'stream)))
 
 (defmethod khazern:parse-iteration-path-preposition
-    ((instance for-as-stream) (key (eql :close)))
+    ((client extension-client) (instance for-as-stream) (key (eql :close)))
   (setf (close-ref instance) (khazern:add-simple-binding instance
                                                          :var "CLOSEP"
                                                          :form (khazern:parse-token))))
 
 (defmethod khazern:parse-iteration-path-using
-    ((instance for-as-stream) (key (eql :stream)))
+    ((client extension-client) (instance for-as-stream) (key (eql :stream)))
   (let ((value (khazern:parse-token :type 'khazern:simple-var)))
     (when (stream-d-spec instance)
       (setf (var-spec (stream-d-spec instance)) value
@@ -189,13 +189,13 @@
       (call-next-method)
       (make-instance 'for-as-lines :var var)))
 
-(defmethod khazern:iteration-path-names ((instance for-as-stream))
+(defmethod khazern:iteration-path-names ((client extension-client) (instance for-as-stream))
   (values '((:in :of) :close)
           '()
           '(:stream :missing-newline-p)))
 
 (defmethod khazern:parse-iteration-path-using
-    ((instance for-as-lines) (key (eql :missing-newline-p)))
+    ((client extension-client) (instance for-as-lines) (key (eql :missing-newline-p)))
   (setf (missing-newline-p-var instance)
         (khazern:add-simple-binding instance
                                     :var (khazern:parse-token :type 'khazern:simple-var)

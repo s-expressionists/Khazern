@@ -167,26 +167,24 @@ the accumulation variable.")
     (declare (ignore instance name ref))
     nil))
 
-;;; Iteration path interface
-
-(defgeneric make-iteration-path (client name var &optional inclusive-form)
-  (:documentation "Make an iteration path based on client and name. The name will be a
-keyword. INCLUSIVE-FORM will be included if the iteration path was inclusive."))
-
-(defgeneric iteration-path-names (instance)
-  (:documentation "Return (VALUES PREPOSITION-NAMES REQUIRED-PREPOSITION-NAMES USING-NAMES).
-Each is a list of names or name groups. These lists will be modified as the iteration path is
-parsed."))
-
 ;;; Parsing interface
 
 (defgeneric parse-clause (client scope name &key)
   (:documentation "Parse a clause based on its keyword name."))
 
-(defgeneric parse-iteration-path-preposition (instance name)
+(defgeneric make-iteration-path (client name var &optional inclusive-form)
+  (:documentation "Make an iteration path based on client and name. The name will be a
+keyword. INCLUSIVE-FORM will be included if the iteration path was inclusive."))
+
+(defgeneric iteration-path-names (client instance)
+  (:documentation "Return (VALUES PREPOSITION-NAMES REQUIRED-PREPOSITION-NAMES USING-NAMES).
+Each is a list of names or name groups. These lists will be modified as the iteration path is
+parsed."))
+
+(defgeneric parse-iteration-path-preposition (client instance name)
   (:documentation "Parse the next item as a preposition value."))
 
-(defgeneric parse-iteration-path-using (instance name)
+(defgeneric parse-iteration-path-using (client instance name)
   (:documentation "Parse the next item as a using value."))
 
 ;;; Clause analysis
