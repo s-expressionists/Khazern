@@ -6,8 +6,7 @@
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
-  :depends-on ("khazern-extrinsic"
-               "khazern-extension")
+  :depends-on ("khazern-extension")
   :in-order-to ((asdf:test-op (asdf:test-op "khazern-extension-extrinsic/test")))
   :components ((:module code
                 :pathname "code/extension-extrinsic/"
