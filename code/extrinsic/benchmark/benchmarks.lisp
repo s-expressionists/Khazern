@@ -22,7 +22,7 @@
   (random-double-floats 100))
 
 (define-benchmark expansion
-  (tma:macroexpand-all
+  (trivial-macroexpand-all:macroexpand-all
     '(loop for i in '(1 324 2345 323 2 4 235 252)
            when (oddp i)
              do (print i)
