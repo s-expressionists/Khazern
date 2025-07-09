@@ -64,13 +64,13 @@
     (decf *index*))
   (push token *tokens*))
 
-(defmethod parse-clause (client scope name &key &allow-other-keys)
+(defmethod parse-clause (client region name &key &allow-other-keys)
   (error 'unknown-parser
          :client client
-         :scope scope
+         :region region
          :name name))
 
-(defun make-parser-name (client scope token)
+(defun make-parser-name (client region token)
   (when (symbolp token)
     (multiple-value-bind (name status)
         (find-symbol (symbol-name token) :keyword)
@@ -78,11 +78,11 @@
         (return-from make-parser-name name))))
   (error 'unknown-parser
          :client client
-         :scope scope
+         :region region
          :name token))
 
-(defun do-parse-clause (client scope *start* &rest args)
-  (apply #'parse-clause client scope (make-parser-name client scope (parse-token)) args))
+(defun do-parse-clause (client region *start* &rest args)
+  (apply #'parse-clause client region (make-parser-name client region (parse-token)) args))
 
 (defun parse-type-spec (&key (default-type-spec t) ((:var-spec *var-spec*) nil))
   (if (maybe-parse-token :keywords '(:of-type))
@@ -123,26 +123,38 @@
          (go next)))
      (return (nreverse forms))))
 
-(defmacro parse-conjunctive-clauses (client scope &rest args)
+(defmacro parse-conjunctive-clauses (client region &rest args)
   (let ((clauses-var (gensym "CLAUSES"))
         (next-tag (gensym "NEXT")))
     `(prog (,clauses-var)
       ,next-tag
-        (push (do-parse-clause ,client ,scope *index* ,@args)
+        (push (do-parse-clause ,client ,region *index* ,@args)
               ,clauses-var)
         (when (maybe-parse-token :keywords '(:and))
           (go ,next-tag))
         (return (nreverse ,clauses-var)))))
 
 (defun parse-body (client)
-  (prog ((scope (make-instance 'extended-superclause))
+  (prog ((region (make-instance 'extended-superclause))
          clauses)
    next
-     (push (do-parse-clause client scope *index*) clauses)
+     (push (do-parse-clause client region *index*) clauses)
      (when *tokens*
        (go next))
-     (setf (subclauses scope) (nreverse clauses))
-     (return scope)))
+     (setf (subclauses region) (nreverse clauses))
+     (return region)))
 
 (defparameter *placeholder-result* (cons nil nil))
+
+(defun parse-into (&key default-type-spec accumulation-category)
+  (let ((var-spec (if (maybe-parse-token :keywords '(:into))
+                      (parse-token :type 'symbol)
+                      (default-accumulation-variable))))
+    (make-instance 'simple-binding
+                   :var-spec var-spec
+                   :type-spec (if default-type-spec
+                                  (parse-type-spec :default-type-spec default-type-spec
+                                                   :var-spec var-spec)
+                                  t)
+                   :accumulation-category accumulation-category)))
 

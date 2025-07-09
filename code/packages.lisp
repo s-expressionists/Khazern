@@ -18,7 +18,7 @@
            #:afterword-forms
            #:analyze
            #:body-forms
-           #:body-scope
+           #:body-region
            #:check-nullable-simple-var-spec
            #:clause
            #:clause-group
@@ -43,13 +43,14 @@
            #:parse-clause
            #:parse-compound-forms
            #:parse-d-spec
+           #:parse-into
            #:parse-iteration-path-preposition
            #:parse-iteration-path-using
            #:parse-token
            #:parse-type-spec
            #:parse-var-spec
            #:prologue-forms
-           #:selectable-scope
+           #:selectable-region
            #:simple-var
            #:standard-client
            #:step-intro-forms

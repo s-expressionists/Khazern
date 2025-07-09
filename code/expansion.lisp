@@ -21,10 +21,7 @@
       (setf *accumulation-variable* (gensym "ACC"))))
 
 (defun accumulation-reference (var ref)
-  (loop for clause in (subclauses *extended-superclause*)
-        for tail = (accumulation-clause-reference clause var ref)
-        when tail
-          return tail))
+  (accumulation-scope-reference *extended-superclause* var ref))
 
 (defvar *loop-name*)
 
@@ -145,7 +142,7 @@
                    clause)
     (maphash (lambda (name pair)
                (when (cdr pair)
-                 (push (make-accumulation-clause name (car pair) (cdr pair))
+                 (push (make-accumulation-scope name (car pair) (cdr pair))
                        (subclauses clause))))
              variables)))
 

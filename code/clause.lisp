@@ -145,6 +145,11 @@ deduced based on the type."
                 :initarg :subclauses
                 :initform nil)))
 
+(defmethod accumulation-scope-reference ((clause simple-superclause) name ref)
+  (some (lambda (subclause)
+          (accumulation-scope-reference subclause name ref))
+        (subclauses clause)))
+
 (defmethod analyze :before ((clause simple-superclause))
   (mapc #'analyze (subclauses clause)))
 
@@ -200,7 +205,7 @@ deduced based on the type."
             (reduce #'wrap-forms (subclauses clause)
                     :from-end t :initial-value forms)))
 
-(defclass extended-superclause (sequential-superclause body-scope)
+(defclass extended-superclause (sequential-superclause body-region)
   ())
 
 (defclass binding-clause (clause)

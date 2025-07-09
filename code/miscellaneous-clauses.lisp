@@ -28,7 +28,7 @@
              :found-group group
              :expected-group :name)))
 
-(defmethod parse-clause (client (scope body-scope) (keyword (eql :named)) &key)
+(defmethod parse-clause (client (region body-region) (keyword (eql :named)) &key)
   (make-instance 'name-clause
                  :start *start*
                  :name (parse-token)
@@ -44,7 +44,7 @@
 (defclass return-clause (unconditional-clause form-mixin)
   ())
 
-(defmethod parse-clause (client (scope selectable-scope) (keyword (eql :return)) &key)
+(defmethod parse-clause (client (region selectable-region) (keyword (eql :return)) &key)
   (make-instance 'return-clause
                  :start *start*
                  :form (parse-token)
@@ -64,7 +64,7 @@
 (defclass initial-clause (body-clause compound-forms-mixin)
   ())
 
-(defmethod parse-clause (client (scope body-scope) (keyword (eql :initially)) &key)
+(defmethod parse-clause (client (region body-region) (keyword (eql :initially)) &key)
   (make-instance 'initial-clause
                  :start *start*
                  :forms (parse-compound-forms)
@@ -84,7 +84,7 @@
 (defclass final-clause (body-clause compound-forms-mixin)
   ())
 
-(defmethod parse-clause (client (scope body-scope) (keyword (eql :finally)) &key)
+(defmethod parse-clause (client (region body-region) (keyword (eql :finally)) &key)
   (make-instance 'final-clause
                  :start *start*
                  :forms (parse-compound-forms)

@@ -8,11 +8,11 @@ macro stubs LOOP and LOOP-FINISH."))
 
 ;;; Scopes
 
-(defclass selectable-scope () ())
+(defclass selectable-region () ())
 
-(defclass body-scope (selectable-scope) ())
+(defclass body-region (selectable-region) ())
 
-(defclass for-as-scope () ())
+(defclass for-as-region () ())
 
 ;;; Variable mapping
 
@@ -154,12 +154,12 @@ accumulation category. The category should be a keyword. Currently used categori
 
 ;;; Accumulation clause interface
 
-(defgeneric make-accumulation-clause (name type category)
+(defgeneric make-accumulation-scope (name type category)
   (:documentation "Create an accumulation clause based on the category. This is the clause that
 will contain the bindings or wrappers that are common to all of the accumulation clauses and
 will be inserted at the beginning of the clause list."))
 
-(defgeneric accumulation-clause-reference (instance name ref)
+(defgeneric accumulation-scope-reference (instance name ref)
   (:documentation "Return a symbol that represents the lexical name of REF in the accumulation
 variable NAME. For example, a REF of :TAIL for list accumulation will return the tail cons of
 the accumulation variable.")
@@ -169,7 +169,7 @@ the accumulation variable.")
 
 ;;; Parsing interface
 
-(defgeneric parse-clause (client scope name &key)
+(defgeneric parse-clause (client region name &key)
   (:documentation "Parse a clause based on its keyword name."))
 
 (defgeneric make-iteration-path (client name var &optional inclusive-form)

@@ -8,7 +8,7 @@
                   :initform :main)))
 
 (defmethod khazern:parse-clause
-    ((client extension-client) (scope khazern:body-scope) (keyword (eql :cleanup)) &key)
+    ((client extension-client) (region khazern:body-region) (keyword (eql :cleanup)) &key)
   (make-instance 'cleanup-clause
                  :start khazern:*start*
                  :forms (khazern:parse-compound-forms)

@@ -15,7 +15,7 @@
 ;;;   for-as-subclause ::= for-as-arithmetic | for-as-in-list | for-as-on-list |
 ;;;                        for-as-equals-then | for-as-across | for-as-iteration-path
 
-(defclass for-as-clause (binding-clause parallel-superclause for-as-scope)
+(defclass for-as-clause (binding-clause parallel-superclause for-as-region)
   ())
 
 (defclass for-as-subclause (clause var-mixin)
@@ -31,11 +31,11 @@
     instance))
   
 (defmethod parse-clause
-    ((client standard-client) (scope body-scope) (keyword (eql :for)) &key)
+    ((client standard-client) (region body-region) (keyword (eql :for)) &key)
   (parse-for-as client))
 
 (defmethod parse-clause
-    ((client standard-client) (scope body-scope) (keyword (eql :as)) &key)
+    ((client standard-client) (region body-region) (keyword (eql :as)) &key)
   (parse-for-as client))
 
 (defmethod analyze ((clause for-as-subclause))
@@ -247,39 +247,39 @@
     instance))
 
 (defmethod parse-clause
-    ((client standard-client) (scope for-as-scope) (keyword (eql :from)) &key var)
+    ((client standard-client) (region for-as-region) (keyword (eql :from)) &key var)
   (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
-    ((client standard-client) (scope for-as-scope) (keyword (eql :upfrom)) &key var)
+    ((client standard-client) (region for-as-region) (keyword (eql :upfrom)) &key var)
   (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
-    ((client standard-client) (scope for-as-scope) (keyword (eql :downfrom)) &key var)
+    ((client standard-client) (region for-as-region) (keyword (eql :downfrom)) &key var)
   (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
-    ((client standard-client) (scope for-as-scope) (keyword (eql :to)) &key var)
+    ((client standard-client) (region for-as-region) (keyword (eql :to)) &key var)
   (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
-    ((client standard-client) (scope for-as-scope) (keyword (eql :upto)) &key var)
+    ((client standard-client) (region for-as-region) (keyword (eql :upto)) &key var)
   (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
-    ((client standard-client) (scope for-as-scope) (keyword (eql :downto)) &key var)
+    ((client standard-client) (region for-as-region) (keyword (eql :downto)) &key var)
   (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
-    ((client standard-client) (scope for-as-scope) (keyword (eql :above)) &key var)
+    ((client standard-client) (region for-as-region) (keyword (eql :above)) &key var)
   (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
-    ((client standard-client) (scope for-as-scope) (keyword (eql :below)) &key var)
+    ((client standard-client) (region for-as-region) (keyword (eql :below)) &key var)
   (parse-for-as-arithmetic client keyword var))
 
 (defmethod parse-clause
-    ((client standard-client) (scope for-as-scope) (keyword (eql :by)) &key var)
+    ((client standard-client) (region for-as-region) (keyword (eql :by)) &key var)
   (parse-for-as-arithmetic client keyword var))
 
 ;;; FOR-AS-ARITHMETIC expansion methods
@@ -375,10 +375,10 @@
   (setf (end instance) *index*)
   instance)
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :in)) &key var)
+(defmethod parse-clause ((client standard-client) (region for-as-region) (keyword (eql :in)) &key var)
   (parse-for-as-list (make-instance 'for-as-in-list :start *start* :var var)))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :on)) &key var)
+(defmethod parse-clause ((client standard-client) (region for-as-region) (keyword (eql :on)) &key var)
   (parse-for-as-list (make-instance 'for-as-on-list :start *start* :var var)))
 
 (defmethod step-intro-forms ((clause for-as-list) initialp)
@@ -426,7 +426,7 @@
   (add-binding instance (var instance))
   (setf (temp-ref instance) (add-simple-binding instance :var "TMP")))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :=)) &key var)
+(defmethod parse-clause ((client standard-client) (region for-as-region) (keyword (eql :=)) &key var)
   (let ((initial-form (parse-token)))
     (make-instance 'for-as-equals-then
                    :start *start*
@@ -468,7 +468,7 @@
         (index-ref instance) (add-simple-binding instance :var "INDEX" :form 0
                                                           :type 'fixnum)))
 
-(defmethod parse-clause ((client standard-client) (scope for-as-scope) (keyword (eql :across)) &key var)
+(defmethod parse-clause ((client standard-client) (region for-as-region) (keyword (eql :across)) &key var)
   (let ((instance (make-instance 'for-as-across
                                  :start *start*
                                  :var var)))
@@ -802,7 +802,7 @@
 ;;; WITH Parsers
 
 (defmethod parse-clause
-    ((client standard-client) (scope body-scope) (keyword (eql :with)) &key)
+    ((client standard-client) (region body-region) (keyword (eql :with)) &key)
   (prog ((instance (make-instance 'with-clause
                     :start *start*))
          subclause

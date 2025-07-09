@@ -7,9 +7,9 @@
 (defmethod acclimation:report-condition
     ((condition unknown-parser) stream (language acclimation:english))
   (format stream
-          "~@<Unknown parser ~a with client ~a and scope ~a.~:@>"
+          "~@<Unknown parser ~a with client ~a and region ~a.~:@>"
           (name condition) (class-name (class-of (client condition)))
-          (class-name (class-of (scope condition)))))
+          (class-name (class-of (region condition)))))
 
 (defmethod acclimation:report-condition
     ((condition unknown-iteration-path) stream (language acclimation:english))

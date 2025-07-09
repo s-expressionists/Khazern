@@ -23,7 +23,7 @@
 (defclass every-accumulation-clause (clause)
   ())
 
-(defmethod make-accumulation-clause (name type (category (eql :every)))
+(defmethod make-accumulation-scope (name type (category (eql :every)))
   (let ((instance (make-instance 'every-accumulation-clause)))
     (add-simple-binding instance :var name :type type :accumulation-category category :form t)
     instance))
@@ -31,7 +31,7 @@
 (defclass some-accumulation-clause (clause)
   ())
 
-(defmethod make-accumulation-clause (name type (category (eql :some)))
+(defmethod make-accumulation-scope (name type (category (eql :some)))
   (let ((instance (make-instance 'some-accumulation-clause)))
     (add-simple-binding instance :var name :type type :accumulation-category category :form nil)
     instance))
@@ -40,7 +40,7 @@
   ((%count-ref :accessor count-ref)))
 
 (defmethod parse-clause
-    (client (scope body-scope) (keyword (eql :repeat)) &key)
+    (client (region body-region) (keyword (eql :repeat)) &key)
   (let ((form (parse-token))
         (instance (make-instance 'repeat-clause
                                  :start *start*
@@ -72,7 +72,7 @@
                                                :accumulation-category :every)))
 
 (defmethod parse-clause
-    (client (scope body-scope) (keyword (eql :always)) &key)
+    (client (region body-region) (keyword (eql :always)) &key)
   (make-instance 'always-clause
                  :start *start*
                  :form (parse-token)
@@ -97,7 +97,7 @@
                                                :accumulation-category :every)))
 
 (defmethod parse-clause
-    (client (scope body-scope) (keyword (eql :never)) &key)
+    (client (region body-region) (keyword (eql :never)) &key)
   (make-instance 'never-clause 
                  :start *start*
                  :form (parse-token)
@@ -122,7 +122,7 @@
                                                :accumulation-category :some)))
 
 (defmethod parse-clause
-    (client (scope body-scope) (keyword (eql :thereis)) &key)
+    (client (region body-region) (keyword (eql :thereis)) &key)
   (make-instance 'thereis-clause
                  :start *start*
                  :form (parse-token)
@@ -145,14 +145,14 @@
   ())
 
 (defmethod parse-clause
-    (client (scope body-scope) (keyword (eql :while)) &key)
+    (client (region body-region) (keyword (eql :while)) &key)
   (make-instance 'while-clause
                  :start *start*
                  :form (parse-token)
                  :end *index*))
 
 (defmethod parse-clause
-    (client (scope body-scope) (keyword (eql :until)) &key)
+    (client (region body-region) (keyword (eql :until)) &key)
   (make-instance 'while-clause
                  :start *start*
                  :form `(not ,(parse-token))

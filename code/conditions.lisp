@@ -19,8 +19,8 @@
 (define-condition unknown-parser (loop-parse-error)
   ((%client :reader client
             :initarg :client)
-   (%scope :reader scope
-           :initarg :scope)
+   (%region :reader region
+           :initarg :region)
    (%name :reader name
           :initarg :name)))
 

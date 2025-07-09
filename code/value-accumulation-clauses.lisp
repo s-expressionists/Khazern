@@ -13,92 +13,65 @@
 (defclass accumulation-clause (selectable-clause accumulation-mixin form-mixin)
   ())
 
-(defun parse-into (&key default-type-spec accumulation-category)
-  (let ((var-spec (if (maybe-parse-token :keywords '(:into))
-                      (parse-token :type 'symbol)
-                      (default-accumulation-variable))))
-    (make-instance 'simple-binding
-                   :var-spec var-spec
-                   :type-spec (if default-type-spec
-                                  (parse-type-spec :default-type-spec default-type-spec :var-spec var-spec)
-                                  t)
-                   :accumulation-category accumulation-category)))
-
-(defclass list-accumulation-clause (clause)
-  ((%head :accessor head)
-   (%tail :accessor tail)
-   (%accum :accessor accum)
-   (%append-func :accessor append-func
-                 :initform nil)
-   (%nconc-func :accessor nconc-func
+(defclass accumulation-scope (clause)
+  ((%accum-ref :accessor accum-ref
+               :initarg :accum-ref
+               :initform nil)
+   (%accum-var :accessor accum-var
+               :initarg :accum-var
+               :initform nil)
+   (%references :accessor references
                 :initform nil)))
 
-(defmethod initialize-instance :after ((instance list-accumulation-clause) &rest initargs &key)
+(defmethod accumulation-scope-reference ((instance accumulation-scope) name ref)
+  (when (eq name (accum-ref instance))
+    (let ((val (getf (references instance) ref)))
+      (or val
+          (setf (getf (references instance) ref) (gensym (symbol-name name)))
+         nil))))
+
+(defclass list-accumulation-scope (accumulation-scope) ())
+
+(defmethod initialize-instance :after ((instance list-accumulation-scope) &rest initargs &key)
   (declare (ignore initargs))
-  (setf (head instance) (add-simple-binding instance :var "HEAD" :type 'cons
-                                                     :form '(cons nil nil) :dynamic-extent t)
-        (tail instance) (add-simple-binding instance :var "TAIL" :type 'cons
-                                                     :form (head instance))))
+  (let ((head (add-simple-binding instance
+                                  :var "HEAD" :type 'cons
+                                  :form '(cons nil nil)
+                                  :dynamic-extent t)))
+    (setf (getf (references instance) :head) head
+          (getf (references instance) :tail) (add-simple-binding instance
+                                                                 :var "TAIL" :type 'cons
+                                                                 :form head))))
 
-(defmethod accumulation-clause-reference
-    ((instance list-accumulation-clause) name (ref (eql :tail)))
-  (and (eq name (accum instance))
-       (tail instance)))
-                                       
-(defmethod accumulation-clause-reference
-    ((instance list-accumulation-clause) name (ref (eql :append)))
-  (cond ((not (eq name (accum instance)))
-         nil)
-        ((null (append-func instance))
-         (setf (append-func instance) (gensym "APPEND")))
-        (t
-         (append-func instance))))
+(defmethod make-accumulation-scope (name type (category (eql :list)))
+  (declare (ignore type))
+  (make-instance 'list-accumulation-scope :accum-ref name))
 
-(defmethod accumulation-clause-reference
-    ((instance list-accumulation-clause) name (ref (eql :nconc)))
-  (cond ((not (eq name (accum instance)))
-         nil)
-        ((null (nconc-func instance))
-         (setf (nconc-func instance) (gensym "NCONC")))
-        (t
-         (nconc-func instance))))
-
-(defmethod make-accumulation-clause (name type (category (eql :list)))
-  (let ((instance (make-instance 'list-accumulation-clause)))
-    (setf (accum instance) (add-simple-binding instance :var name
-                                                        :type type
-                                                        :accumulation-category category
-                                                        :ignorable t))
-    instance))
-
-(defmethod wrap-forms ((instance list-accumulation-clause) forms)
-  (let ((head (head instance))
-        (tail (tail instance))
-        (into-var (accum instance)))
-    (with-accessors ((append-func append-func)
-                     (nconc-func nconc-func))
-        instance
+(defmethod wrap-forms ((instance list-accumulation-scope) forms)
+  (destructuring-bind (&key head tail append nconc)
+      (references instance)
+    (let ((into-var (accum-ref instance)))
       `((symbol-macrolet ((,into-var (cdr ,head)))
-          ,@(if (or append-func nconc-func)
-                `((flet (,@(when append-func
-                             `((,append-func (value)
-                                 (tagbody
-                                  repeat
-                                    (cond ((consp value)
-                                           (rplacd ,tail
-                                                   (setq ,tail (cons (car value) nil)))
-                                           (setq value (cdr value))
-                                           (go repeat))
-                                          (t
-                                           (rplacd ,tail value)))))))
-                         ,@(when nconc-func
-                             `((,nconc-func (value)
-                                 (tagbody
-                                    (rplacd ,tail value)
-                                  repeat
-                                    (when (consp (cdr ,tail))
-                                      (setq ,tail (cdr ,tail))
-                                      (go repeat)))))))
+          ,@(if (or append nconc)
+                `((flet (,@(when append
+                             `((,append (value)
+                                        (tagbody
+                                         repeat
+                                           (cond ((consp value)
+                                                  (rplacd ,tail
+                                                          (setq ,tail (cons (car value) nil)))
+                                                  (setq value (cdr value))
+                                                  (go repeat))
+                                                 (t
+                                                  (rplacd ,tail value)))))))
+                         ,@(when nconc
+                             `((,nconc (value)
+                                       (tagbody
+                                          (rplacd ,tail value)
+                                        repeat
+                                          (when (consp (cdr ,tail))
+                                            (setq ,tail (cdr ,tail))
+                                            (go repeat)))))))
                     ,@forms))
                 forms))))))
 
@@ -155,82 +128,60 @@
              (accumulate-func)))
           (accumulate-func)))))
 
-(defclass summation-accumulation-clause (clause)
+(defclass summation-accumulation-scope (accumulation-scope)
   ())
 
-(defmethod make-accumulation-clause (name type (category (eql :summation)))
-  (let ((instance (make-instance 'summation-accumulation-clause)))
-    (add-simple-binding instance :var name
-                                 :type (if (eq type 'complex)
-                                           'number
-                                           type)
-                                 :form (coerce 0 type)
-                                 :accumulation-category category)
+(defmethod make-accumulation-scope (name type (category (eql :summation)))
+  (let ((instance (make-instance 'summation-accumulation-scope)))
+    (setf (values (accum-ref instance) (accum-var instance))
+          (add-simple-binding instance :var name
+                                       :type (if (eq type 'complex)
+                                                 'number
+                                                 type)
+                                       :form (coerce 0 type)
+                                       :accumulation-category category))
     instance))
 
-(defclass extremum-accumulation-clause (clause)
-  ((%first-var :accessor first-var)
-   (%accum-var :accessor accum-var)
-   (%max-func :accessor max-func
-              :initform nil)
-   (%min-func :accessor min-func
-              :initform nil)))
+(defclass extremum-accumulation-scope (accumulation-scope)
+  ((%first-var :accessor first-var)))
 
-(defmethod initialize-instance :after ((instance extremum-accumulation-clause) &rest initargs &key)
+(defmethod initialize-instance :after
+    ((instance extremum-accumulation-scope) &rest initargs &key)
   (declare (ignore initargs))
   (setf (first-var instance) (add-simple-binding instance :var "FIRST" :type 'boolean :form t)))
 
-(defmethod make-accumulation-clause (name type (category (eql :extremum)))
-  (let ((instance (make-instance 'extremum-accumulation-clause)))
-    (setf (accum-var instance)
-          (nth-value 1 (add-simple-binding instance :var name
-                                                    :type type
-                                                    :form (coerce 0 type)
-                                                    :accumulation-category category
-                                                    :ignorable t)))
+(defmethod make-accumulation-scope (name type (category (eql :extremum)))
+  (let ((instance (make-instance 'extremum-accumulation-scope)))
+    (setf (values (accum-ref instance) (accum-var instance))
+          (add-simple-binding instance :var name
+                                       :type type
+                                       :form (coerce 0 type)
+                                       :accumulation-category category
+                                       :ignorable t))
     instance))
 
-(defmethod accumulation-clause-reference
-    ((instance extremum-accumulation-clause) name (ref (eql :max)))
-  (cond ((not (eq name (var-spec (accum-var instance))))
-         nil)
-        ((null (max-func instance))
-         (setf (max-func instance) (gensym "MAX")))
-        (t
-         (max-func instance))))
-
-(defmethod accumulation-clause-reference
-    ((instance extremum-accumulation-clause) name (ref (eql :min)))
-  (cond ((not (eq name (var-spec (accum-var instance))))
-         nil)
-        ((null (min-func instance))
-         (setf (min-func instance) (gensym "MIN")))
-        (t
-         (min-func instance))))
-
-(defmethod wrap-forms ((instance extremum-accumulation-clause) forms)
-  (let ((first-var (first-var instance))
-        (into-var (var-spec (accum-var instance)))
-        (into-type (type-spec (accum-var instance))))
-    (with-accessors ((max-func max-func)
-                     (min-func min-func))
-        instance
-      `((flet (,@(when max-func
-                   `((,max-func (value)
-                       (let ((coerced-value (coerce value ',into-type)))
-                         (declare (type ,into-type coerced-value))
-                         (when (or ,first-var
-                                   (> coerced-value ,into-var))
-                           (setq ,into-var coerced-value
-                                 ,first-var nil))))))
-               ,@(when min-func
-                   `((,min-func (value)
-                       (let ((coerced-value (coerce value ',into-type)))
-                         (declare (type ,into-type coerced-value))
-                         (when (or ,first-var
-                                   (< coerced-value ,into-var))
-                           (setq ,into-var coerced-value
-                                 ,first-var nil)))))))
+(defmethod wrap-forms ((instance extremum-accumulation-scope) forms)
+  (destructuring-bind (&key max min)
+      (references instance)
+    (let ((first-var (first-var instance))
+          (into-var (accum-ref instance))
+          (into-type (type-spec (accum-var instance))))
+      `((flet (,@(when max
+                   `((,max (value)
+                           (let ((coerced-value (coerce value ',into-type)))
+                             (declare (type ,into-type coerced-value))
+                             (when (or ,first-var
+                                       (> coerced-value ,into-var))
+                               (setq ,into-var coerced-value
+                                     ,first-var nil))))))
+               ,@(when min
+                   `((,min (value)
+                           (let ((coerced-value (coerce value ',into-type)))
+                             (declare (type ,into-type coerced-value))
+                             (when (or ,first-var
+                                       (< coerced-value ,into-var))
+                               (setq ,into-var coerced-value
+                                     ,first-var nil)))))))
           ,@forms)))))
       
 ;;; COLLECT clause
@@ -239,7 +190,7 @@
   ())
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-scope) (keyword (eql :collect)) &key)
+    ((client standard-client) (region selectable-region) (keyword (eql :collect)) &key)
   (make-instance 'collect-clause
                  :start *start*
                  :form (parse-token)
@@ -247,7 +198,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-scope) (keyword (eql :collecting)) &key)
+    ((client standard-client) (region selectable-region) (keyword (eql :collecting)) &key)
   (make-instance 'collect-clause
                  :start *start*
                  :form (parse-token)
@@ -265,7 +216,7 @@
   ())
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-scope) (keyword (eql :append)) &key)
+    ((client standard-client) (region selectable-region) (keyword (eql :append)) &key)
   (make-instance 'append-clause
                  :start *start*
                  :form (parse-token)
@@ -273,7 +224,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-scope) (keyword (eql :appending)) &key)
+    ((client standard-client) (region selectable-region) (keyword (eql :appending)) &key)
   (make-instance 'append-clause
                  :start *start*
                  :form (parse-token)
@@ -289,7 +240,7 @@
   ())
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-scope) (keyword (eql :nconc)) &key)
+    ((client standard-client) (region selectable-region) (keyword (eql :nconc)) &key)
   (make-instance 'nconc-clause
                  :start *start*
                  :form (parse-token)
@@ -297,7 +248,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-scope) (keyword (eql :nconcing)) &key)
+    ((client standard-client) (region selectable-region) (keyword (eql :nconcing)) &key)
   (make-instance 'nconc-clause
                  :start *start*
                  :form (parse-token)
@@ -313,7 +264,7 @@
   ())
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-scope) (keyword (eql :count)) &key)
+    ((client standard-client) (region selectable-region) (keyword (eql :count)) &key)
   (make-instance 'count-clause
                  :start *start*
                  :form (parse-token)
@@ -322,7 +273,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-scope) (keyword (eql :counting)) &key)
+    ((client standard-client) (region selectable-region) (keyword (eql :counting)) &key)
   (make-instance 'count-clause
                  :start *start*
                  :form (parse-token)
@@ -346,7 +297,7 @@
 ;;; MINIMIZE/MAXIMIZE parsers
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-scope) (keyword (eql :minimize)) &key)
+    ((client standard-client) (region selectable-region) (keyword (eql :minimize)) &key)
   (make-instance 'extremum-clause
                  :start *start*
                  :form (parse-token)
@@ -356,7 +307,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-scope) (keyword (eql :minimizing)) &key)
+    ((client standard-client) (region selectable-region) (keyword (eql :minimizing)) &key)
   (make-instance 'extremum-clause
                  :start *start*
                  :form (parse-token)
@@ -366,7 +317,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-scope) (keyword (eql :maximize)) &key)
+    ((client standard-client) (region selectable-region) (keyword (eql :maximize)) &key)
   (make-instance 'extremum-clause
                  :start *start*
                  :form (parse-token)
@@ -376,7 +327,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-scope) (keyword (eql :maximizing)) &key)
+    ((client standard-client) (region selectable-region) (keyword (eql :maximizing)) &key)
   (make-instance 'extremum-clause
                  :start *start*
                  :form (parse-token)
@@ -398,7 +349,7 @@
   ())
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-scope) (keyword (eql :sum)) &key)
+    ((client standard-client) (region selectable-region) (keyword (eql :sum)) &key)
   (make-instance 'sum-clause
                  :start *start*
                  :form (parse-token)
@@ -407,7 +358,7 @@
                  :end *index*))
 
 (defmethod parse-clause
-    ((client standard-client) (scope selectable-scope) (keyword (eql :summing)) &key)
+    ((client standard-client) (region selectable-region) (keyword (eql :summing)) &key)
   (make-instance 'sum-clause
                  :start *start*
                  :form (parse-token)
