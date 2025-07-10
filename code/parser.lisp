@@ -158,3 +158,48 @@
                                   t)
                    :accumulation-category accumulation-category)))
 
+
+(defun parse-usings (client instance using-names using)
+  (trivial-with-current-source-form:with-current-source-form (using)
+    (prog ((*tokens* using)
+           (*toplevel* nil)
+           keyword)
+     next-using
+       (unless using-names
+         (error 'unexpected-token-found
+                :found (car *tokens*)
+                :clause (subseq *body* *start* *index*)))
+       (setf keyword (nth-value 1 (parse-token :keywords using-names))
+             using-names (delete-name keyword using-names))
+       (parse-using client instance keyword)
+     (when *tokens*
+       (go next-using)))))
+
+(defun parse-prepositions (client instance)
+  (multiple-value-bind (preposition-names required-preposition-names using-names)
+      (preposition-names client instance)
+    (setf preposition-names (copy-list preposition-names)
+          required-preposition-names (copy-list required-preposition-names)
+          using-names (copy-list using-names))
+    (when using-names
+      (pushnew :using preposition-names))
+    (prog ((foundp nil)
+           (token nil)
+           (keyword nil))
+     next-preposition
+       (when preposition-names
+         (cond (required-preposition-names
+                (multiple-value-setq (token keyword)
+                  (parse-token :keywords preposition-names))
+                (setf foundp t))
+               (t
+                (multiple-value-setq (foundp token keyword)
+                  (maybe-parse-token :keywords preposition-names))))
+         (unless foundp
+           (return instance))
+         (setf preposition-names (delete-name keyword preposition-names)
+               required-preposition-names (delete-name keyword required-preposition-names))
+         (if (eq keyword :using)
+             (parse-usings client instance using-names (parse-token :type 'cons))
+             (parse-preposition client instance keyword))
+         (go next-preposition)))))

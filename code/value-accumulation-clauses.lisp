@@ -25,10 +25,22 @@
 
 (defmethod accumulation-scope-reference ((instance accumulation-scope) name ref)
   (when (eq name (accum-ref instance))
-    (let ((val (getf (references instance) ref)))
-      (or val
-          (setf (getf (references instance) ref) (gensym (symbol-name name)))
-         nil))))
+    (or (getf (references instance) ref)
+        (setf (getf (references instance) ref) (gensym (symbol-name ref))))))
+
+(defmethod wrap-forms ((instance accumulation-scope) forms)
+  (wrap-flet (prog (definitions
+                    (references (references instance)))
+              next
+                (when references
+                  (setf definitions (nconc (accumulation-scope-functions instance
+                                                                         (car references))
+                                           definitions)
+                        references (cddr references))
+                  (go next))
+                (return definitions))
+             nil
+             forms))
 
 (defclass list-accumulation-scope (accumulation-scope) ())
 
@@ -47,33 +59,44 @@
   (declare (ignore type))
   (make-instance 'list-accumulation-scope :accum-ref name))
 
-(defmethod wrap-forms ((instance list-accumulation-scope) forms)
-  (destructuring-bind (&key head tail append nconc)
-      (references instance)
-    (let ((into-var (accum-ref instance)))
-      `((symbol-macrolet ((,into-var (cdr ,head)))
-          ,@(if (or append nconc)
-                `((flet (,@(when append
-                             `((,append (value)
-                                        (tagbody
-                                         repeat
-                                           (cond ((consp value)
-                                                  (rplacd ,tail
-                                                          (setq ,tail (cons (car value) nil)))
-                                                  (setq value (cdr value))
-                                                  (go repeat))
-                                                 (t
-                                                  (rplacd ,tail value)))))))
-                         ,@(when nconc
-                             `((,nconc (value)
-                                       (tagbody
-                                          (rplacd ,tail value)
-                                        repeat
-                                          (when (consp (cdr ,tail))
-                                            (setq ,tail (cdr ,tail))
-                                            (go repeat)))))))
-                    ,@forms))
-                forms))))))
+(defmethod accumulation-scope-functions ((instance list-accumulation-scope) (ref (eql :collect)))
+  (let ((tail (getf (references instance) :tail))
+        (name (getf (references instance) ref)))
+    `((,name (value)
+        (rplacd ,tail
+                (setq ,tail (cons value nil)))))))
+
+(defmethod accumulation-scope-functions ((instance list-accumulation-scope) (ref (eql :append)))
+  (let ((tail (getf (references instance) :tail))
+        (name (getf (references instance) ref)))
+    `((,name (value)
+        (tagbody
+         repeat
+           (cond ((consp value)
+                  (rplacd ,tail
+                          (setq ,tail (cons (car value) nil)))
+                  (setq value (cdr value))
+                  (go repeat))
+                 (t
+                  (rplacd ,tail value))))))))
+
+(defmethod accumulation-scope-functions ((instance list-accumulation-scope) (ref (eql :nconc)))
+  (let ((tail (getf (references instance) :tail))
+        (name (getf (references instance) ref)))
+    `((,name (value)
+        (tagbody
+           (rplacd ,tail value)
+         repeat
+           (when (consp (cdr ,tail))
+             (setq ,tail (cdr ,tail))
+             (go repeat)))))))
+
+(defmethod wrap-forms :around ((instance list-accumulation-scope) forms)
+  (declare (ignore forms))
+  (let ((into (accum-ref instance))
+        (head (getf (references instance) :head)))
+    `((symbol-macrolet ((,into (cdr ,head)))
+        ,@(call-next-method)))))
 
 (defun accumulate-form (var name form)
   (let ((tail (accumulation-reference var :tail)))
@@ -160,29 +183,25 @@
                                        :ignorable t))
     instance))
 
-(defmethod wrap-forms ((instance extremum-accumulation-scope) forms)
-  (destructuring-bind (&key max min)
-      (references instance)
-    (let ((first-var (first-var instance))
-          (into-var (accum-ref instance))
-          (into-type (type-spec (accum-var instance))))
-      `((flet (,@(when max
-                   `((,max (value)
-                           (let ((coerced-value (coerce value ',into-type)))
-                             (declare (type ,into-type coerced-value))
-                             (when (or ,first-var
-                                       (> coerced-value ,into-var))
-                               (setq ,into-var coerced-value
-                                     ,first-var nil))))))
-               ,@(when min
-                   `((,min (value)
-                           (let ((coerced-value (coerce value ',into-type)))
-                             (declare (type ,into-type coerced-value))
-                             (when (or ,first-var
-                                       (< coerced-value ,into-var))
-                               (setq ,into-var coerced-value
-                                     ,first-var nil)))))))
-          ,@forms)))))
+(defmethod accumulation-scope-functions ((instance extremum-accumulation-scope) (ref (eql :max)))
+  (let ((name (getf (references instance) ref)))
+    `((,name (value)
+        (let ((coerced-value (coerce value ',into-type)))
+          (declare (type ,into-type coerced-value))
+          (when (or ,first-var
+                    (> coerced-value ,into-var))
+            (setq ,into-var coerced-value
+                  ,first-var nil)))))))
+
+(defmethod accumulation-scope-functions ((instance extremum-accumulation-scope) (ref (eql :min)))
+  (let ((name (getf (references instance) ref)))
+    `((,name (value)
+        (let ((coerced-value (coerce value ',into-type)))
+          (declare (type ,into-type coerced-value))
+          (when (or ,first-var
+                    (< coerced-value ,into-var))
+            (setq ,into-var coerced-value
+                  ,first-var nil)))))))
       
 ;;; COLLECT clause
 
@@ -206,9 +225,8 @@
                  :end *index*))
 
 (defmethod body-forms ((clause collect-clause))
-  (let ((tail (accumulation-reference (var-spec (accum-var clause)) :tail)))
-    `((rplacd ,tail
-              (setq ,tail (cons ,(it-form (form clause)) nil))))))
+  `((,(accumulation-reference  (var-spec (accum-var clause)) :collect)
+     ,(it-form (form clause)))))
 
 ;;; APPEND clause
 
@@ -284,9 +302,15 @@
 (defmethod analyze ((clause count-clause))
   (check-subtype (type-spec (accum-var clause)) 'number))
 
+(defmethod accumulation-scope-functions ((instance summation-accumulation-scope) (ref (eql :count)))
+  (let ((name (getf (references instance) ref)))
+    `((,name (value)
+        (when value
+          (incf ,(var-spec (accum-var instance))))))))
+
 (defmethod body-forms ((clause count-clause))
-  `((when ,(it-form (form clause))
-      (incf ,(var-spec (accum-var clause))))))
+  `((,(accumulation-reference  (var-spec (accum-var clause)) :count)
+     ,(it-form (form clause)))))
 
 ;;; MINIMIZE/MAXIMIZE clause
 

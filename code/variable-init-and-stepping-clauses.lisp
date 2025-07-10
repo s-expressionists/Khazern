@@ -54,11 +54,6 @@
 ;;;   path-using            ::= USING ({simple-var simple-var}+)
 ;;;   path-preposition      ::= name form
 
-(defun delete-name (name names)
-  (delete-if (lambda (keyword-or-keywords)
-               (find-keyword name keyword-or-keywords))
-             names))
-
 (defun make-iteration-path-name (client token &optional inclusive-form-p)
   (when (symbolp token)
     (multiple-value-bind (name status)
@@ -81,50 +76,6 @@
          :clause (when (numberp *start*)
                    (subseq *body* *start* *index*))))
 
-(defun parse-iteration-path-usings (client instance using-names using)
-  (trivial-with-current-source-form:with-current-source-form (using)
-    (prog ((*tokens* using)
-           (*toplevel* nil)
-           keyword)
-     next-using
-       (unless using-names
-         (error 'unexpected-token-found
-                :found (car *tokens*)
-                :clause (subseq *body* *start* *index*)))
-       (setf keyword (nth-value 1 (parse-token :keywords using-names))
-             using-names (delete-name keyword using-names))
-       (parse-iteration-path-using client instance keyword)
-     (when *tokens*
-       (go next-using)))))
-
-(defun parse-iteration-path-prepositions (client instance)
-  (multiple-value-bind (preposition-names required-preposition-names using-names)
-      (iteration-path-names client instance)
-    (setf preposition-names (copy-list preposition-names)
-          required-preposition-names (copy-list required-preposition-names)
-          using-names (copy-list using-names))
-    (when using-names
-      (pushnew :using preposition-names))
-    (prog ((foundp nil)
-           (token nil)
-           (keyword nil))
-     next-preposition
-       (when preposition-names
-         (cond (required-preposition-names
-                (multiple-value-setq (token keyword)
-                  (parse-token :keywords preposition-names))
-                (setf foundp t))
-               (t
-                (multiple-value-setq (foundp token keyword)
-                  (maybe-parse-token :keywords preposition-names))))
-         (unless foundp
-           (return instance))
-         (setf preposition-names (delete-name keyword preposition-names)
-               required-preposition-names (delete-name keyword required-preposition-names))
-         (if (eq keyword :using)
-             (parse-iteration-path-usings client instance using-names (parse-token :type 'cons))
-             (parse-iteration-path-preposition client instance keyword))
-         (go next-preposition)))))
 
 (defmethod parse-clause
     ((client standard-client) (instance for-as-clause) (keyword (eql :being)) &key var)
@@ -141,7 +92,7 @@
                                                                        (parse-token) t)
                                              var
                                              form)))))
-    (parse-iteration-path-prepositions client instance)
+    (parse-prepositions client instance)
     instance))
 
 ;;; 6.1.2.1.1 FOR-AS-ARITHMETIC subclause
@@ -194,14 +145,14 @@
 ;;;
 ;;; FOR-AS-ARITHMETIC parsers
 
-(defmethod iteration-path-names ((client standard-client) (instance for-as-arithmetic))
+(defmethod preposition-names ((client standard-client) (instance for-as-arithmetic))
   (values '((:from :upfrom :downfrom)
             (:to :upto :downto :above :below)
             :by)
           '()
           '()))
 
-(defmethod parse-iteration-path-preposition ((client standard-client) (instance for-as-arithmetic) name)
+(defmethod parse-preposition ((client standard-client) (instance for-as-arithmetic) name)
   (let ((value (parse-token)))
     ;; parse the form
     (ecase name
@@ -242,7 +193,7 @@
                                  :start *start*
                                  :var var)))
     (unparse-token keyword)
-    (parse-iteration-path-prepositions client instance)
+    (parse-prepositions client instance)
     (setf (end instance) *index*)
     instance))
 
@@ -566,17 +517,17 @@
                      :var var
                      :start *start*)))
 
-(defmethod iteration-path-names ((client standard-client) (instance for-as-hash-key))
+(defmethod preposition-names ((client standard-client) (instance for-as-hash-key))
   (values '((:in :of))
           '((:in :of))
           '(:hash-value)))
                      
-(defmethod iteration-path-names ((client standard-client) (instance for-as-hash-value))
+(defmethod preposition-names ((client standard-client) (instance for-as-hash-value))
   (values '((:in :of))
           '((:in :of))
           '(:hash-key)))
 
-(defmethod parse-iteration-path-preposition ((client standard-client) (instance for-as-hash) key)
+(defmethod parse-preposition ((client standard-client) (instance for-as-hash) key)
   (when (var-spec (other-var instance))
     (warn 'invalid-iteration-path-preposition-order
           :first-preposition :using
@@ -589,7 +540,7 @@
   (setf (form-ref instance) (add-simple-binding instance :var "HT" :form (parse-token)
                                                          :type 'hash-table)))
 
-(defmethod parse-iteration-path-using ((client standard-client) (instance for-as-hash) key)
+(defmethod parse-using ((client standard-client) (instance for-as-hash) key)
   (declare (ignore key))
   (setf (other-var instance) (add-binding instance
                                           (parse-var-spec :ignorable t))))
@@ -719,12 +670,12 @@
                      :var var
                      :iterator-keywords '(:external))))
 
-(defmethod iteration-path-names ((client standard-client) (instance for-as-package))
+(defmethod preposition-names ((client standard-client) (instance for-as-package))
   (values '((:in :of))
           '()
           '()))
 
-(defmethod parse-iteration-path-preposition ((client standard-client) (instance for-as-package) key)
+(defmethod parse-preposition ((client standard-client) (instance for-as-package) key)
   (setf (form-ref instance) (add-simple-binding instance :var "PKG" :form (parse-token)
                                                          :type '(or character string symbol
                                                                  package))))

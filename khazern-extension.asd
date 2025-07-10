@@ -15,4 +15,5 @@
                              (:file "elements")
                              (:file "stream")
                              (:file "for-as-hash")
-                             (:file "cleanup")))))
+                             (:file "cleanup")
+                             (:file "list-accum")))))

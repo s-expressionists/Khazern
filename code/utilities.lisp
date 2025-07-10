@@ -59,6 +59,27 @@
         (t
          forms)))
 
+(defun wrap-macrolet (definitions forms)
+  (if definitions
+      `((macrolet ,definitions
+          ,@forms))
+      forms))
+
+(defun wrap-flet (definitions declarations forms)
+  (cond ((and definitions declarations)
+         `((flet ,definitions
+             (declare ,@declarations)
+             ,@forms)))
+        (definitions
+         `((flet ,definitions
+             ,@forms)))
+        (declarations
+         `((locally
+               (declare ,@declarations)
+             ,@forms)))
+        (t
+         forms)))
+
 ;;; This is very hacky
 (defun numeric-types ()
   (let ((types (list 'complex 'number)))
@@ -155,3 +176,9 @@
        (cdr value)
        (symbolp (second value))
        (null (cddr value))))
+
+(defun delete-name (name names)
+  (delete-if (lambda (keyword-or-keywords)
+               (find-keyword name keyword-or-keywords))
+             names))
+

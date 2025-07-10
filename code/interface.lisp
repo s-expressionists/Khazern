@@ -167,6 +167,11 @@ the accumulation variable.")
     (declare (ignore instance name ref))
     nil))
 
+(defgeneric accumulation-scope-functions (instance ref)
+  (:method (instance ref)
+    (declare (ignore instance ref))
+    nil))
+
 ;;; Parsing interface
 
 (defgeneric parse-clause (client region name &key)
@@ -176,15 +181,14 @@ the accumulation variable.")
   (:documentation "Make an iteration path based on client and name. The name will be a
 keyword. INCLUSIVE-FORM will be included if the iteration path was inclusive."))
 
-(defgeneric iteration-path-names (client instance)
+(defgeneric preposition-names (client instance)
   (:documentation "Return (VALUES PREPOSITION-NAMES REQUIRED-PREPOSITION-NAMES USING-NAMES).
-Each is a list of names or name groups. These lists will be modified as the iteration path is
-parsed."))
+Each is a list of names or name groups."))
 
-(defgeneric parse-iteration-path-preposition (client instance name)
+(defgeneric parse-preposition (client instance name)
   (:documentation "Parse the next item as a preposition value."))
 
-(defgeneric parse-iteration-path-using (client instance name)
+(defgeneric parse-using (client instance name)
   (:documentation "Parse the next item as a using value."))
 
 ;;; Clause analysis

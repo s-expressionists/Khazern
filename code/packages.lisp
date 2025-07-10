@@ -34,7 +34,7 @@
            #:for-as-hash
            #:form
            #:ignorablep
-           #:iteration-path-names
+           #:preposition-names
            #:make-iteration-path
            #:map-variables
            #:maybe-parse-token
@@ -44,10 +44,11 @@
            #:parse-compound-forms
            #:parse-d-spec
            #:parse-into
-           #:parse-iteration-path-preposition
-           #:parse-iteration-path-using
+           #:parse-preposition
+           #:parse-prepositions
            #:parse-token
            #:parse-type-spec
+           #:parse-using
            #:parse-var-spec
            #:prologue-forms
            #:selectable-region
