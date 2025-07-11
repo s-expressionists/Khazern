@@ -6,7 +6,7 @@
   ())
 
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:body-region) (keyword (eql :accum)) &key)
+    ((client extension-client) (region khazern:body-region) (keyword (eql :accumulate)) &key)
   (let ((instance (make-instance 'accum-clause :start khazern::*start*)))
     (setf (khazern::subclauses instance)
           (khazern::parse-conjunctive-clauses client instance)
