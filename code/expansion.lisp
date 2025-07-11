@@ -55,7 +55,7 @@
          (*tokens* *body*)
          (*toplevel* t)
          (*extended-superclause* (parse-body client)))
-    (analyze *extended-superclause*)
+    (analyze client *extended-superclause*)
     (let ((*loop-name* (name *extended-superclause*)))
       `(block ,*loop-name*
          ,@(wrap-forms *extended-superclause*
@@ -100,53 +100,76 @@
             clauses
             :initial-value :main :from-end t)))
 
-(defun check-variables (clause)
+(defstruct binding-info
+  type
+  category
+  references)
+
+(defun check-variables (client clause)
   (let ((variables (make-hash-table)))
-    (map-variables (lambda (name type category)
-                     (multiple-value-bind (pair presentp)
+    (map-variables (lambda (name type category references)
+                     (multiple-value-bind (info presentp)
                          (gethash name variables)
                        (cond ((not presentp)
-                              (setf (gethash name variables) (cons type category)))
+                              (setf (gethash name variables)
+                                    (make-binding-info :type type :category category
+                                                       :references references)))
                              ((and (null category)
-                                   (null (cdr pair)))
+                                   (null (binding-info-category info)))
                               (error 'multiple-variable-occurrences
                                      :bound-variable name))
                              ((or (null category)
-                                  (null (cdr pair)))
+                                  (null (binding-info-category info)))
                               (error 'iteration-accumulation-overlap
                                      :bound-variable name))
-                             ((not (eq category (cdr pair)))
+                             ((not (eq category (binding-info-category info)))
                               (error 'multiple-accumulation-occurrences
                                      :bound-variable name
                                      :first-clause category
-                                     :second-clause (cdr pair)))
+                                     :second-clause (binding-info-category info)))
                              (t
-                              (let ((sub12 (subtypep type (car pair)))
-                                    (sub21 (subtypep (car pair) type)))
+                              (tagbody
+                               next
+                                 (when references
+                                   (setf (getf (binding-info-references info)
+                                               (first references))
+                                         (or (getf (binding-info-references info)
+                                                   (first references))
+                                             (second references))
+                                         references (cddr references))
+                                   (go next)))
+                              (setf (binding-info-references info)
+                                    (union  (binding-info-references info) references))
+                              (let ((sub12 (subtypep type (binding-info-type info)))
+                                    (sub21 (subtypep (binding-info-type info) type)))
                                 (unless (and sub12 sub21)
                                   (let ((replacement-type
-                                          (cond (sub12 (car pair))
+                                          (cond (sub12 (binding-info-type info))
                                                 (sub21 type)
                                                 ((and (subtypep type 'number)
-                                                      (subtypep (car pair) 'number))
-                                                 (numeric-super-type type (car pair)))
+                                                      (subtypep (binding-info-type info)
+                                                                'number))
+                                                 (numeric-super-type type
+                                                                     (binding-info-type info)))
                                                 (t))))
                                     (warn 'conflicting-types
                                           :name (if (eq name *accumulation-variable*)
                                                     nil
                                                     name)
                                           :type1 type
-                                          :type2 (car pair)
+                                          :type2 (binding-info-type info)
                                           :replacement-type replacement-type)
-                                    (setf (car pair) replacement-type))))))))
+                                    (setf (binding-info-type info) replacement-type))))))))
                    clause)
-    (maphash (lambda (name pair)
-               (when (cdr pair)
-                 (push (make-accumulation-scope name (car pair) (cdr pair))
+    (maphash (lambda (name info)
+               (when (binding-info-category info)
+                 (push (make-accumulation-scope client name (binding-info-type info)
+                                                (binding-info-category info)
+                                                (binding-info-references info))
                        (subclauses clause))))
              variables)))
 
 ;;; FIXME: Add more analyses.
-(defmethod analyze ((clause extended-superclause))
+(defmethod analyze ((client standard-client) (clause extended-superclause))
   (verify-clause-order clause)
-  (check-variables clause))
+  (check-variables client clause))

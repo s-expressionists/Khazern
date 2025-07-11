@@ -88,7 +88,7 @@
                                     :type 'fixnum
                                     :form 0)))
 
-(defmethod khazern:analyze ((instance for-as-elements))
+(defmethod khazern:analyze ((client extension-client) (instance for-as-elements))
   (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
     (setf (khazern:type-spec (var instance)) t))
   (unless (from-end-ref instance)

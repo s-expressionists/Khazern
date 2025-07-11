@@ -17,6 +17,9 @@
   ((%accumulation-category :accessor accumulation-category
                            :initarg :accumulation-category
                            :initform nil)
+   (%accumulation-references :accessor accumulation-references
+                             :initarg :accumulation-references
+                             :initform nil)
    (%form :accessor form
           :initarg :form
           :initform nil)))
@@ -82,7 +85,8 @@
              (cond ((null var-spec))
                    ((symbolp var-spec)
                     (funcall function var-spec (or type-spec t)
-                             (accumulation-category binding)))
+                             (accumulation-category binding)
+                             (accumulation-references binding)))
                    ((symbolp type-spec)
                     (traverse (car var-spec) type-spec)
                     (traverse (cdr var-spec) type-spec))
@@ -122,8 +126,8 @@
 (defmethod declarations ((binding destructuring-binding))
   (let ((result '())
         (variables '()))
-    (map-variables (lambda (var type category)
-                     (declare (ignore category))
+    (map-variables (lambda (var type category references)
+                     (declare (ignore category references))
                      (unless (eq type t)
                        (push `(type ,type ,var) result))
                      (push var variables))
@@ -137,8 +141,8 @@
 
 (defmethod variable-list ((binding destructuring-binding))
   (let ((result '()))
-    (map-variables (lambda (var type category)
-                     (declare (ignore category))
+    (map-variables (lambda (var type category references)
+                     (declare (ignore category references))
                      (push (list var (deduce-initial-value type))
                            result))
                    binding)

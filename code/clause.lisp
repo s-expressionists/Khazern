@@ -150,8 +150,10 @@ deduced based on the type."
           (accumulation-scope-reference subclause name ref))
         (subclauses clause)))
 
-(defmethod analyze :before ((clause simple-superclause))
-  (mapc #'analyze (subclauses clause)))
+(defmethod analyze :before ((client standard-client) (clause simple-superclause))
+  (mapc (lambda (clause)
+          (analyze client clause))
+        (subclauses clause)))
 
 (defmethod map-variables progn (function (clause simple-superclause))
   (map-variables function (subclauses clause)))

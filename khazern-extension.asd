@@ -16,4 +16,5 @@
                              (:file "stream")
                              (:file "for-as-hash")
                              (:file "cleanup")
-                             (:file "list-accum")))))
+                             (:file "list-accum")
+                             (:file "accum")))))

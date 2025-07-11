@@ -23,7 +23,8 @@
 (defclass every-accumulation-clause (clause)
   ())
 
-(defmethod make-accumulation-scope (name type (category (eql :every)))
+(defmethod make-accumulation-scope ((client standard-client) name type (category (eql :every)) references)
+  (declare (ignore references))
   (let ((instance (make-instance 'every-accumulation-clause)))
     (add-simple-binding instance :var name :type type :accumulation-category category :form t)
     instance))
@@ -31,7 +32,8 @@
 (defclass some-accumulation-clause (clause)
   ())
 
-(defmethod make-accumulation-scope (name type (category (eql :some)))
+(defmethod make-accumulation-scope ((client standard-client) name type (category (eql :some)) references)
+  (declare (ignore references))
   (let ((instance (make-instance 'some-accumulation-clause)))
     (add-simple-binding instance :var name :type type :accumulation-category category :form nil)
     instance))

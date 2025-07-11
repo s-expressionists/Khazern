@@ -146,7 +146,7 @@
 
 (defparameter *placeholder-result* (cons nil nil))
 
-(defun parse-into (&key default-type-spec accumulation-category)
+(defun parse-into (&key default-type-spec accumulation-category accumulation-references)
   (let ((var-spec (if (maybe-parse-token :keywords '(:into))
                       (parse-token :type 'symbol)
                       (default-accumulation-variable))))
@@ -156,7 +156,8 @@
                                   (parse-type-spec :default-type-spec default-type-spec
                                                    :var-spec var-spec)
                                   t)
-                   :accumulation-category accumulation-category)))
+                   :accumulation-category accumulation-category
+                   :accumulation-references accumulation-references)))
 
 
 (defun parse-usings (client instance using-names using)

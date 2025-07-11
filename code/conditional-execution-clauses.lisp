@@ -13,9 +13,13 @@
   (map-variables function (then-clauses clause))
   (map-variables function (else-clauses clause)))
 
-(defmethod analyze ((clause conditional-clause))
-  (mapc #'analyze (then-clauses clause))
-  (mapc #'analyze (else-clauses clause)))
+(defmethod analyze ((client standard-client) (clause conditional-clause))
+  (mapc (lambda (clause)
+          (analyze client clause))
+        (then-clauses clause))
+  (mapc (lambda (clause)
+          (analyze client clause))
+        (else-clauses clause)))
 
 (defun parse-conditional-clause-tail (client instance)
   (setf (then-clauses instance)

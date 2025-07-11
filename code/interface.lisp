@@ -152,9 +152,21 @@ accumulation category. The category should be a keyword. Currently used categori
 (defgeneric (setf accumulation-category) (value binding)
   (:documentation "Set the accumulation category of the binding."))
 
+(defgeneric accumulation-references (binding)
+  (:documentation "Return the accumulation category of the binding. There can be multiple
+accumulation clauses that have the same binding name as long as they all have the same
+accumulation category. The category should be a keyword. Currently used categories are :LIST,
+:SUMMATION, :EXTREMUM, :EVERY and :SOME.")
+  (:method (binding)
+    (declare (ignore binding))
+    nil))
+
+(defgeneric (setf accumulation-references) (value binding)
+  (:documentation "Set the accumulation category of the binding."))
+
 ;;; Accumulation clause interface
 
-(defgeneric make-accumulation-scope (name type category)
+(defgeneric make-accumulation-scope (client name type category references)
   (:documentation "Create an accumulation clause based on the category. This is the clause that
 will contain the bindings or wrappers that are common to all of the accumulation clauses and
 will be inserted at the beginning of the clause list."))
@@ -167,9 +179,9 @@ the accumulation variable.")
     (declare (ignore instance name ref))
     nil))
 
-(defgeneric accumulation-scope-functions (instance ref)
-  (:method (instance ref)
-    (declare (ignore instance ref))
+(defgeneric accumulation-scope-functions (client name type category reference symbol &key)
+  (:method (client name type category reference symbol &key)
+    (declare (ignore client name type category reference symbol))
     nil))
 
 ;;; Parsing interface
@@ -193,10 +205,10 @@ Each is a list of names or name groups."))
 
 ;;; Clause analysis
 
-(defgeneric analyze (clause-or-clauses)
+(defgeneric analyze (client clause-or-clauses)
   (:documentation "Analyze the clause for semantic errors.")
-  (:method (clause-or-clauses)
-    (declare (ignore clause-or-clauses))))
+  (:method (client clause-or-clauses)
+    (declare (ignore client clause-or-clauses))))
 
 ;;; Interface declaration
 

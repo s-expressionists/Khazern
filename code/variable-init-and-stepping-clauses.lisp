@@ -38,7 +38,7 @@
     ((client standard-client) (region body-region) (keyword (eql :as)) &key)
   (parse-for-as client))
 
-(defmethod analyze ((clause for-as-subclause))
+(defmethod analyze ((client standard-client) (clause for-as-subclause))
   (when (eq (type-spec (var clause)) *placeholder-result*)
     (setf (type-spec (var clause)) t))
   (check-type-spec (var clause)))
@@ -235,7 +235,7 @@
 
 ;;; FOR-AS-ARITHMETIC expansion methods
 
-(defmethod analyze ((clause for-as-arithmetic))
+(defmethod analyze ((client standard-client) (clause for-as-arithmetic))
   (unless (typep clause '(or for-as-arithmetic-down for-as-arithmetic-up))
     (change-class clause 'for-as-arithmetic-up))
   (with-accessors ((next-var next-var)
@@ -388,7 +388,7 @@
                                         initial-form)
                    :end *index*)))
 
-(defmethod analyze ((clause for-as-equals-then))
+(defmethod analyze ((client standard-client) (clause for-as-equals-then))
   (when (eq (type-spec (var clause)) *placeholder-result*)
     (setf (type-spec (var clause)) t))
   (check-type-spec (var clause)))
@@ -545,7 +545,7 @@
   (setf (other-var instance) (add-binding instance
                                           (parse-var-spec :ignorable t))))
 
-(defmethod analyze ((clause for-as-hash))
+(defmethod analyze ((client standard-client) (clause for-as-hash))
   (when (eq (type-spec (var clause)) *placeholder-result*)
     (setf (type-spec (var clause)) t))
   (check-type-spec (var clause)))
@@ -680,7 +680,7 @@
                                                          :type '(or character string symbol
                                                                  package))))
 
-(defmethod analyze ((clause for-as-package))
+(defmethod analyze ((client standard-client) (clause for-as-package))
   (check-nullable-simple-var-spec (var clause))
   (when (eq (type-spec (var clause)) *placeholder-result*)
     (setf (type-spec (var clause)) t))
@@ -775,7 +775,7 @@
            (end instance) *index*)
      (return instance)))  
 
-(defmethod analyze ((instance with-subclause))
+(defmethod analyze ((client standard-client) (instance with-subclause))
   (check-type-spec (var instance)))
 
 (defmethod wrap-forms ((subclause with-subclause-with-form) forms)

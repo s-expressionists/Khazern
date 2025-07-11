@@ -49,7 +49,7 @@
             (stream-ref instance) value))
     (setf (stream-var instance) value)))
 
-(defmethod khazern:analyze :before ((instance for-as-stream))
+(defmethod khazern:analyze :before ((client extension-client) (instance for-as-stream))
   (cond ((stream-ref instance))
         ((stream-var instance)
          (setf (stream-ref instance) (khazern:add-simple-binding instance
@@ -59,7 +59,7 @@
         (t
          (setf (stream-ref instance) '*standard-input*))))
 
-(defmethod khazern:analyze :after ((instance for-as-stream))
+(defmethod khazern:analyze :after ((client extension-client) (instance for-as-stream))
   (khazern:check-nullable-simple-var-spec (var instance))
   (setf (values (temp-ref instance) (temp-var instance))
         (khazern:add-simple-binding instance
@@ -100,7 +100,7 @@
       (call-next-method)
       (make-instance 'for-as-bytes :var var)))
 
-(defmethod khazern:analyze ((instance for-as-bytes))
+(defmethod khazern:analyze ((client extension-client) (instance for-as-bytes))
   (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
     (setf (khazern:type-spec (var instance)) 'integer)))
 
@@ -113,7 +113,7 @@
 
 (defclass for-as-characters (for-as-stream) ())
 
-(defmethod khazern:analyze ((instance for-as-characters))
+(defmethod khazern:analyze ((client extension-client) (instance for-as-characters))
   (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
     (setf (khazern:type-spec (var instance)) 'character)))
 
@@ -142,7 +142,7 @@
 
 (defclass for-as-objects (for-as-stream) ())
 
-(defmethod khazern:analyze ((instance for-as-objects))
+(defmethod khazern:analyze ((client extension-client) (instance for-as-objects))
   (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
     (setf (khazern:type-spec (var instance)) t)))
 
@@ -201,7 +201,7 @@
                                     :var (khazern:parse-token :type 'khazern:simple-var)
                                     :ignorable t)))
 
-(defmethod khazern:analyze ((instance for-as-lines))
+(defmethod khazern:analyze ((client extension-client) (instance for-as-lines))
   (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
     (setf (khazern:type-spec (var instance)) 'string)))
 

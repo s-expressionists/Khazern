@@ -8,7 +8,8 @@
   (let ((instance (make-instance 'adjoin-clause
                  :start khazern:*start*
                  :form (khazern:parse-token)
-                 :accum-var (khazern:parse-into :accumulation-category :list)
+                 :accum-var (khazern:parse-into :accumulation-category :list
+                                                :accumulation-references '(:adjoin nil))
                  :end khazern:*index*)))
     (khazern:parse-prepositions client instance)
     instance))
@@ -31,12 +32,15 @@
           '()
           '()))
 
-(defmethod khazern:body-forms ((clause adjoin-clause))
-  (let ((head (khazern::accumulation-reference (khazern::var-spec (khazern::accum-var clause))
-                                               :head))
-        (tail (khazern::accumulation-reference (khazern::var-spec (khazern::accum-var clause))
-                                               :tail)))
-    `((rplacd ,head
-              (adjoin ,(khazern::it-form (khazern::form clause)) (cdr ,head) ,@(args clause)))
+(defmethod khazern::accumulation-scope-functions
+    ((client extension-client) name type (category (eql :list)) (reference (eql :adjoin)) symbol
+     &key head tail &allow-other-keys)
+  `((,symbol (value &rest args)
+      (rplacd ,head
+              (apply #'adjoin value (cdr ,head) args))
       (when (eq ,head ,tail)
         (setq ,tail (cdr ,head))))))
+
+(defmethod khazern:body-forms ((clause adjoin-clause))
+   `((,(khazern::accumulation-reference  (khazern::var-spec (khazern::accum-var clause)) :adjoin)
+     ,(khazern::it-form (khazern::form clause)))))
