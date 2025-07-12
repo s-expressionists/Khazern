@@ -42,6 +42,44 @@
      (keyword (eql :unioning)) &key)
   (parse-set-accumulation client :union))
 
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:selectable-region) (keyword (eql :nunion)) &key)
+  (parse-set-accumulation client :union))
+
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:selectable-region)
+     (keyword (eql :nunioning)) &key)
+  (parse-set-accumulation client :union))
+
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:selectable-region) (keyword (eql :disjoin)) &key)
+  (parse-set-accumulation client :disjoin))
+
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:selectable-region)
+     (keyword (eql :disjoining)) &key)
+  (parse-set-accumulation client :disjoin))
+
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:selectable-region) (keyword (eql :intersection))
+     &key)
+  (parse-set-accumulation client :intersect))
+
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:selectable-region)
+     (keyword (eql :intersecting)) &key)
+  (parse-set-accumulation client :intersect))
+
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:selectable-region) (keyword (eql :nintersection))
+     &key)
+  (parse-set-accumulation client :intersect))
+
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:selectable-region)
+     (keyword (eql :nintersecting)) &key)
+  (parse-set-accumulation client :intersect))
+
 (defmethod khazern::accumulation-scope-functions
     ((client extension-client) name type (category (eql :list)) (reference (eql :adjoin)) symbol
      &key head tail &allow-other-keys)
@@ -65,6 +103,15 @@
                      (setq ,tail (cdr ,head)))
                    (go next)))))
           nil))
+
+(defmethod khazern::accumulation-scope-functions
+    ((client extension-client) name type (category (eql :list)) (reference (eql :disjoin)) symbol
+     &key head tail &allow-other-keys)
+  (values `((,symbol (value &rest args)
+              (rplacd ,head
+                      (apply #'delete value (cdr ,head) args))
+              (setq ,tail (last ,head))))
+          `((inline ,symbol))))
 
 (defmethod khazern:body-forms ((clause set-accumulation-clause))
   `((,(khazern::accumulation-reference (khazern::var-spec (khazern::accum-var clause))
