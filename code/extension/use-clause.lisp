@@ -32,51 +32,51 @@
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region use-region) (keyword (eql :collect)) &key)
-  (parse-use-subclause :collect :accumulation-category :list))
+  (parse-use-subclause :collect :accumulation-category :sequence))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region use-region) (keyword (eql :collecting)) &key)
-  (parse-use-subclause :collect :accumulation-category :list))
+  (parse-use-subclause :collect :accumulation-category :sequence))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region use-region) (keyword (eql :nconc)) &key)
-  (parse-use-subclause :nconc :accumulation-category :list))
+  (parse-use-subclause :nconc :accumulation-category :sequence))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region use-region) (keyword (eql :nconcing)) &key)
-  (parse-use-subclause :nconc :accumulation-category :list))
+  (parse-use-subclause :nconc :accumulation-category :sequence))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region use-region) (keyword (eql :append)) &key)
-  (parse-use-subclause :append :accumulation-category :list))
+  (parse-use-subclause :append :accumulation-category :sequence))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region use-region) (keyword (eql :appending)) &key)
-  (parse-use-subclause :append :accumulation-category :list))
+  (parse-use-subclause :append :accumulation-category :sequence))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region use-region) (keyword (eql :adjoin)) &key)
-  (parse-use-subclause :adjoin :accumulation-category :list))
+  (parse-use-subclause :adjoin :accumulation-category :sequence))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region use-region) (keyword (eql :adjoining)) &key)
-  (parse-use-subclause :adjoin :accumulation-category :list))
+  (parse-use-subclause :adjoin :accumulation-category :sequence))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region use-region) (keyword (eql :union)) &key)
-  (parse-use-subclause :union :accumulation-category :list))
+  (parse-use-subclause :union :accumulation-category :sequence))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region use-region) (keyword (eql :unioning)) &key)
-  (parse-use-subclause :union :accumulation-category :list))
+  (parse-use-subclause :union :accumulation-category :sequence))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region use-region) (keyword (eql :disjoin)) &key)
-  (parse-use-subclause :disjoin :accumulation-category :list))
+  (parse-use-subclause :disjoin :accumulation-category :sequence))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region use-region) (keyword (eql :disjoining)) &key)
-  (parse-use-subclause :disjoin :accumulation-category :list))
+  (parse-use-subclause :disjoin :accumulation-category :sequence))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region use-region) (keyword (eql :maximize)) &key)

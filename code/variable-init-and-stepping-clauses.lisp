@@ -326,10 +326,12 @@
   (setf (end instance) *index*)
   instance)
 
-(defmethod parse-clause ((client standard-client) (region for-as-region) (keyword (eql :in)) &key var)
+(defmethod parse-clause
+    ((client standard-client) (region for-as-region) (keyword (eql :in)) &key var)
   (parse-for-as-list (make-instance 'for-as-in-list :start *start* :var var)))
 
-(defmethod parse-clause ((client standard-client) (region for-as-region) (keyword (eql :on)) &key var)
+(defmethod parse-clause
+    ((client standard-client) (region for-as-region) (keyword (eql :on)) &key var)
   (parse-for-as-list (make-instance 'for-as-on-list :start *start* :var var)))
 
 (defmethod step-intro-forms ((clause for-as-list) initialp)
@@ -377,7 +379,8 @@
   (add-binding instance (var instance))
   (setf (temp-ref instance) (add-simple-binding instance :var "TMP")))
 
-(defmethod parse-clause ((client standard-client) (region for-as-region) (keyword (eql :=)) &key var)
+(defmethod parse-clause
+    ((client standard-client) (region for-as-region) (keyword (eql :=)) &key var)
   (let ((initial-form (parse-token)))
     (make-instance 'for-as-equals-then
                    :start *start*
@@ -419,7 +422,8 @@
         (index-ref instance) (add-simple-binding instance :var "INDEX" :form 0
                                                           :type 'fixnum)))
 
-(defmethod parse-clause ((client standard-client) (region for-as-region) (keyword (eql :across)) &key var)
+(defmethod parse-clause
+    ((client standard-client) (region for-as-region) (keyword (eql :across)) &key var)
   (let ((instance (make-instance 'for-as-across
                                  :start *start*
                                  :var var)))

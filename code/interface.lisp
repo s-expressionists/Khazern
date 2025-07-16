@@ -166,6 +166,8 @@ accumulation category. The category should be a keyword. Currently used categori
 
 ;;; Accumulation clause interface
 
+(defgeneric make-accumulation-clause (client category reference &key start end var form))
+
 (defgeneric make-accumulation-scope (client name type category references)
   (:documentation "Create an accumulation clause based on the category. This is the clause that
 will contain the bindings or wrappers that are common to all of the accumulation clauses and
@@ -195,7 +197,10 @@ keyword. INCLUSIVE-FORM will be included if the iteration path was inclusive."))
 
 (defgeneric preposition-names (client instance)
   (:documentation "Return (VALUES PREPOSITION-NAMES REQUIRED-PREPOSITION-NAMES USING-NAMES).
-Each is a list of names or name groups."))
+Each is a list of names or name groups.")
+  (:method (client instance)
+    (declare (ignore client instance))
+    (values nil nil nil)))
 
 (defgeneric parse-preposition (client instance name)
   (:documentation "Parse the next item as a preposition value."))
