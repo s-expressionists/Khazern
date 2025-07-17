@@ -21,7 +21,7 @@
       (setf *accumulation-variable* (gensym "ACC"))))
 
 (defun accumulation-reference (var ref)
-  (accumulation-scope-reference *extended-superclause* var ref))
+  (accumulation-scope-reference *extended-superclause* ref var))
 
 (defvar *loop-name*)
 

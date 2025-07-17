@@ -146,19 +146,19 @@
 
 (defparameter *placeholder-result* (cons nil nil))
 
-(defun parse-into (&key default-type-spec accumulation-category accumulation-references)
+(defun parse-into (&key (default-type-spec t) ((:parse-type-spec parse-type-spec-p) nil)
+                        accumulation-category accumulation-references)
   (let ((var-spec (if (maybe-parse-token :keywords '(:into))
                       (parse-token :type 'symbol)
                       (default-accumulation-variable))))
     (make-instance 'simple-binding
                    :var-spec var-spec
-                   :type-spec (if default-type-spec
+                   :type-spec (if parse-type-spec-p
                                   (parse-type-spec :default-type-spec default-type-spec
                                                    :var-spec var-spec)
-                                  t)
+                                  default-type-spec)
                    :accumulation-category accumulation-category
                    :accumulation-references accumulation-references)))
-
 
 (defun parse-usings (client instance using-names using)
   (trivial-with-current-source-form:with-current-source-form (using)
@@ -204,3 +204,17 @@
              (parse-usings client instance using-names (parse-token :type 'cons))
              (parse-preposition client instance keyword))
          (go next-preposition)))))
+
+(defun parse-accumulation (client instance
+                           &key (default-type-spec t) ((:parse-type-spec parse-type-spec-p) nil)
+                                accumulation-category accumulation-references)
+  (setf (start instance) *start*
+        (form instance) (parse-token)
+        (var instance) (parse-into :default-type-spec default-type-spec
+                                   :parse-type-spec parse-type-spec-p
+                                   :accumulation-category accumulation-category
+                                   :accumulation-references accumulation-references))
+  (parse-prepositions client instance)
+  (setf (end instance) *index*)
+  instance)
+

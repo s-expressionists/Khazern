@@ -145,9 +145,9 @@ deduced based on the type."
                 :initarg :subclauses
                 :initform nil)))
 
-(defmethod accumulation-scope-reference ((clause simple-superclause) name ref)
+(defmethod accumulation-scope-reference ((clause simple-superclause) ref &optional name)
   (some (lambda (subclause)
-          (accumulation-scope-reference subclause name ref))
+          (accumulation-scope-reference subclause ref name))
         (subclauses clause)))
 
 (defmethod analyze :before ((client standard-client) (clause simple-superclause))

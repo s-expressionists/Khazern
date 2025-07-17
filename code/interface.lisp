@@ -166,24 +166,22 @@ accumulation category. The category should be a keyword. Currently used categori
 
 ;;; Accumulation clause interface
 
-(defgeneric make-accumulation-clause (client category reference &key start end var form))
-
 (defgeneric make-accumulation-scope (client name type category references)
   (:documentation "Create an accumulation clause based on the category. This is the clause that
 will contain the bindings or wrappers that are common to all of the accumulation clauses and
 will be inserted at the beginning of the clause list."))
 
-(defgeneric accumulation-scope-reference (instance name ref)
+(defgeneric accumulation-scope-reference (instance ref &optional name)
   (:documentation "Return a symbol that represents the lexical name of REF in the accumulation
 variable NAME. For example, a REF of :TAIL for list accumulation will return the tail cons of
 the accumulation variable.")
-  (:method (instance name ref)
-    (declare (ignore instance name ref))
+  (:method (instance ref &optional name)
+    (declare (ignore instance ref name))
     nil))
 
-(defgeneric accumulation-scope-functions (client name type category reference symbol &key)
-  (:method (client name type category reference symbol &key)
-    (declare (ignore client name type category reference symbol))
+(defgeneric accumulation-scope-functions (client instance reference name)
+  (:method (client instance reference name)
+    (declare (ignore client instance reference name))
     nil))
 
 ;;; Parsing interface
