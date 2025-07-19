@@ -40,6 +40,7 @@
            #:maybe-parse-token
            #:nullable-simple-var
            #:other-var
+           #:parse-accumulation
            #:parse-clause
            #:parse-compound-forms
            #:parse-d-spec

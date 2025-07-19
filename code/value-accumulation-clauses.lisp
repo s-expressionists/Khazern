@@ -13,11 +13,15 @@
 (defclass accumulation-clause (selectable-clause var-mixin form-mixin)
   ((%reference :accessor reference
                :initarg :reference
-               :initform nil)))
+               :initform nil)
+   (%args :accessor args
+          :initform nil)))
 
 (defmethod body-forms ((clause accumulation-clause))
-  `((,(accumulation-reference (var-spec (var clause)) (reference clause))
-     ,(it-form (form clause)))))
+  (accumulation-forms (accumulation-scope (var-spec (var clause)))
+                      (reference clause)
+                      (it-form (form clause))
+                      (args clause)))
 
 (defclass accumulation-scope (clause)
   ((%accum-ref :accessor accum-ref
@@ -33,6 +37,9 @@
    (%function-declarations :accessor function-declarations
                            :initform nil)))
 
+(defmethod accumulation-forms ((instance accumulation-scope) reference form args)
+  `((,(getf (references instance) reference) ,form ,@args)))
+
 (defmethod make-accumulation-scope :around
     ((client standard-client) name type category references)
   (declare (ignore type references))
@@ -42,6 +49,7 @@
        next
          (when references
            (setf symbol (or (second references)
+                            (getf (references instance) (first references))
                             (gensym (symbol-name (first references))))
                  (getf (references instance) (first references)) symbol)
            (multiple-value-bind (definitions declarations)
@@ -62,9 +70,9 @@
         (setf (getf (references instance) ref) (gensym (symbol-name ref))))))
 
 (defmethod wrap-forms ((instance accumulation-scope) forms)
-  (wrap-flet (function-definitions instance)
-             (function-declarations instance)
-             forms))
+  (wrap-labels (function-definitions instance)
+               (function-declarations instance)
+               forms))
 
 ;;; COLLECT/APPEND/NCONC clause
 
@@ -181,13 +189,10 @@
              (accumulate-func)))
           (accumulate-func)))))
 
-(defclass list-accumulation-clause (accumulation-clause)
-  ())
-
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :collect)) &key)
   (parse-accumulation client
-                      (make-instance 'list-accumulation-clause :reference :collect)
+                      (make-instance 'accumulation-clause :reference :collect)
                       :default-type-spec 'list
                       :accumulation-category :sequence
                       :accumulation-references '(:collect nil)))
@@ -195,7 +200,7 @@
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :collecting)) &key)
   (parse-accumulation client
-                      (make-instance 'list-accumulation-clause :reference :collect)
+                      (make-instance 'accumulation-clause :reference :collect)
                       :default-type-spec 'list
                       :accumulation-category :sequence
                       :accumulation-references '(:collect nil)))
@@ -203,7 +208,7 @@
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :append)) &key)
   (parse-accumulation client
-                      (make-instance 'list-accumulation-clause :reference :append)
+                      (make-instance 'accumulation-clause :reference :append)
                       :default-type-spec 'list
                       :accumulation-category :sequence
                       :accumulation-references '(:append nil)))
@@ -211,7 +216,7 @@
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :appending)) &key)
   (parse-accumulation client
-                      (make-instance 'list-accumulation-clause :reference :append)
+                      (make-instance 'accumulation-clause :reference :append)
                       :default-type-spec 'list
                       :accumulation-category :sequence
                       :accumulation-references '(:append nil)))
@@ -219,7 +224,7 @@
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :nconc)) &key)
   (parse-accumulation client
-                      (make-instance 'list-accumulation-clause :reference :nconc)
+                      (make-instance 'accumulation-clause :reference :nconc)
                       :default-type-spec 'list
                       :accumulation-category :sequence
                       :accumulation-references '(:nconc nil)))
@@ -227,12 +232,12 @@
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :nconcing)) &key)
   (parse-accumulation client
-                      (make-instance 'list-accumulation-clause :reference :nconc)
+                      (make-instance 'accumulation-clause :reference :nconc)
                       :default-type-spec 'list
                       :accumulation-category :sequence
                       :accumulation-references '(:nconc nil)))
 
-(defmethod body-forms ((clause list-accumulation-clause))
+#+(or)(defmethod body-forms ((clause list-accumulation-clause))
   `((,(accumulation-reference  (var-spec (var clause)) (reference clause))
      ,(it-form (form clause)))))
 
@@ -244,6 +249,7 @@
 (defmethod make-accumulation-scope
     ((client standard-client) name type (category (eql :summation)) references)
   (declare (ignore references))
+  (check-subtype type 'number)
   (let ((instance (make-instance 'summation-accumulation-scope)))
     (setf (values (accum-ref instance) (accum-var instance))
           (add-simple-binding instance :var name
@@ -254,13 +260,10 @@
                                        :accumulation-category category))
     instance))
 
-(defclass summation-accumulation-clause (accumulation-clause)
-  ())
-
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :count)) &key)
   (parse-accumulation client
-                      (make-instance 'summation-accumulation-clause :reference :count)
+                      (make-instance 'accumulation-clause :reference :count)
                       :default-type-spec 'fixnum
                       :parse-type-spec t
                       :accumulation-category :summation
@@ -269,7 +272,7 @@
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :counting)) &key)
   (parse-accumulation client
-                      (make-instance 'summation-accumulation-clause :reference :count)
+                      (make-instance 'accumulation-clause :reference :count)
                       :default-type-spec 'fixnum
                       :parse-type-spec t
                       :accumulation-category :summation
@@ -278,7 +281,7 @@
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :sum)) &key)
   (parse-accumulation client
-                      (make-instance 'summation-accumulation-clause :reference :sum)
+                      (make-instance 'accumulation-clause :reference :sum)
                       :default-type-spec 'number
                       :parse-type-spec t
                       :accumulation-category :summation
@@ -287,14 +290,11 @@
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :summing)) &key)
   (parse-accumulation client
-                      (make-instance 'summation-accumulation-clause :reference :sum)
+                      (make-instance 'accumulation-clause :reference :sum)
                       :default-type-spec 'number
                       :parse-type-spec t
                       :accumulation-category :summation
                       :accumulation-references '(:sum nil)))
-
-(defmethod analyze ((client standard-client) (clause summation-accumulation-clause))
-  (check-subtype (type-spec (var clause)) 'number))
 
 (defmethod accumulation-scope-functions
     ((client standard-client) (instance summation-accumulation-scope) (reference (eql :count))
@@ -327,6 +327,7 @@
 (defmethod make-accumulation-scope
     ((client standard-client) name type (category (eql :extremum)) references)
   (declare (ignore references))
+  (check-subtype type 'real)
   (let ((instance (make-instance 'extremum-accumulation-scope)))
     (setf (values (accum-ref instance) (accum-var instance))
           (add-simple-binding instance :var name
@@ -363,12 +364,10 @@
             (setq ,var coerced-value
                   ,firstp nil)))))))
 
-(defclass extremum-accumulation-clause (accumulation-clause) ())
-
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :minimize)) &key)
   (parse-accumulation client
-                      (make-instance 'extremum-accumulation-clause :reference :min)
+                      (make-instance 'accumulation-clause :reference :min)
                       :default-type-spec 'real
                       :parse-type-spec t
                       :accumulation-category :extremum
@@ -377,7 +376,7 @@
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :minimizing)) &key)
   (parse-accumulation client
-                      (make-instance 'extremum-accumulation-clause :reference :min)
+                      (make-instance 'accumulation-clause :reference :min)
                       :default-type-spec 'real
                       :parse-type-spec t
                       :accumulation-category :extremum
@@ -386,7 +385,7 @@
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :maximize)) &key)
   (parse-accumulation client
-                      (make-instance 'extremum-accumulation-clause :reference :max)
+                      (make-instance 'accumulation-clause :reference :max)
                       :default-type-spec 'real
                       :parse-type-spec t
                       :accumulation-category :extremum
@@ -395,11 +394,8 @@
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :maximizing)) &key)
   (parse-accumulation client
-                      (make-instance 'extremum-accumulation-clause :reference :max)
+                      (make-instance 'accumulation-clause :reference :max)
                       :default-type-spec 'real
                       :parse-type-spec t
                       :accumulation-category :extremum
                       :accumulation-references '(:max nil)))
-
-(defmethod analyze ((client standard-client) (clause extremum-accumulation-clause))
-  (check-subtype (type-spec (var clause)) 'real))

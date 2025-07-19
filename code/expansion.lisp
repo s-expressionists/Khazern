@@ -16,12 +16,17 @@
 
 (defvar *extended-superclause*)
 
+(defvar *accumulation-scopes*)
+
 (defun default-accumulation-variable ()
   (or *accumulation-variable*
       (setf *accumulation-variable* (gensym "ACC"))))
 
 (defun accumulation-reference (var ref)
   (accumulation-scope-reference *extended-superclause* ref var))
+
+(defun accumulation-scope (var)
+  (gethash var *accumulation-scopes*))
 
 (defvar *loop-name*)
 
@@ -54,6 +59,7 @@
          (*index* 0)
          (*tokens* *body*)
          (*toplevel* t)
+         (*accumulation-scopes* (make-hash-table))
          (*extended-superclause* (parse-body client)))
     (analyze client *extended-superclause*)
     (let ((*loop-name* (name *extended-superclause*)))
@@ -163,10 +169,11 @@
                    clause)
     (maphash (lambda (name info)
                (when (binding-info-category info)
-                 (push (make-accumulation-scope client name (binding-info-type info)
-                                                (binding-info-category info)
-                                                (binding-info-references info))
-                       (subclauses clause))))
+                 (let ((instance (make-accumulation-scope client name (binding-info-type info)
+                                                          (binding-info-category info)
+                                                          (binding-info-references info))))
+                   (setf (gethash name *accumulation-scopes*) instance)
+                   (push instance (subclauses clause)))))
              variables)))
 
 ;;; FIXME: Add more analyses.

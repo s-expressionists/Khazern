@@ -70,32 +70,62 @@
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :collect))
      &key)
-  (khazern::parse-accumulation-clause client :sequence :collect 'list))
+    (khazern:parse-accumulation client
+                      (make-instance 'khazern::accumulation-clause :reference :collect)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:collect nil)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :collecting))
      &key)
-  (khazern::parse-accumulation-clause client :sequence :collect 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'khazern::accumulation-clause :reference :collect)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:collect nil)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :append))
      &key)
-  (khazern::parse-accumulation-clause client :sequence :append 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'khazern::accumulation-clause :reference :append)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:collect nil :append nil)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :appending))
      &key)
-  (khazern::parse-accumulation-clause client :sequence :append 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'khazern::accumulation-clause :reference :append)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:collect nil :append nil)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :nconc))
      &key)
-  (khazern::parse-accumulation-clause client :sequence :nconc 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'khazern::accumulation-clause :reference :nconc)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:collect nil :nconc nil)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :nconcing))
      &key)
-  (khazern::parse-accumulation-clause client :sequence :nconc 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'khazern::accumulation-clause :reference :nconc)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:collect nil :nconc nil)))
 
 (defmethod khazern::accumulation-scope-functions
     ((client extension-client) (instance vector-accumulation-scope) (reference (eql :collect))
@@ -105,9 +135,55 @@
                 (vector-push-extend value ,var)))
             `((inline ,name)))))
 
-(defclass set-accumulation-clause (khazern::accumulation-clause)
-  ((%args :accessor args
-          :initform nil)))
+(defmethod khazern::accumulation-scope-functions
+    ((client extension-client) (instance vector-accumulation-scope) (reference (eql :append))
+     name)
+  (let ((collect-name (khazern::accumulation-scope-reference instance :collect)))
+      (values `((,name (value)
+                  (map nil #',collect-name value)))
+              `((inline ,name)))))
+
+(defmethod khazern::accumulation-scope-functions
+    ((client extension-client) (instance vector-accumulation-scope) (reference (eql :nconc))
+     name)
+  (let ((collect-name (khazern::accumulation-scope-reference instance :collect)))
+      (values `((,name (value)
+                  (map nil #',collect-name value)))
+              `((inline ,name)))))
+
+(defmethod khazern::accumulation-scope-functions
+    ((client extension-client) (instance khazern::list-accumulation-scope)
+     (reference (eql :append)) name)
+  (let ((list-name (gensym (symbol-name reference)))
+        (collect-name (khazern::accumulation-scope-reference instance :collect)))
+    (multiple-value-bind (definitions declarations)
+        (call-next-method client instance reference list-name)
+      (values (list* `(,name (value)
+                        (cond ((consp value)
+                               (,list-name value))
+                              (value
+                               (map nil #',collect-name value))))
+                     definitions)
+              (list* `(inline ,name)
+                     declarations)))))
+
+(defmethod khazern::accumulation-scope-functions
+    ((client extension-client) (instance khazern::list-accumulation-scope)
+     (reference (eql :nconc)) name)
+  (let ((list-name (gensym (symbol-name reference)))
+        (collect-name (khazern::accumulation-scope-reference instance :collect)))
+    (multiple-value-bind (definitions declarations)
+        (call-next-method client instance reference list-name)
+      (values (list* `(,name (value)
+                        (cond ((consp value)
+                               (,list-name value))
+                              (value
+                               (map nil #',collect-name value))))
+                     definitions)
+              (list* `(inline ,name)
+                     declarations)))))
+
+(defclass set-accumulation-clause (khazern::accumulation-clause) ())
 
 (defmethod khazern:preposition-names
     ((client extension-client) (clause set-accumulation-clause))
@@ -119,91 +195,121 @@
     ((client extension-client) (instance set-accumulation-clause) name)
   (setf (args instance) (nconc (args instance) (list name (khazern:parse-token)))))
 
-(defmethod khazern::make-accumulation-clause
-    ((client extension-client) (category (eql :sequence)) (reference (eql :adjoin))
-     &key start end var form)
-  (make-instance 'set-accumulation-clause
-                 :start start
-                 :end end
-                 :accum-var var
-                 :form form
-                 :reference reference))
-
-(defmethod khazern::make-accumulation-clause
-    ((client extension-client) (category (eql :sequence)) (reference (eql :union))
-     &key start end var form)
-  (make-instance 'set-accumulation-clause
-                 :start start
-                 :end end
-                 :accum-var var
-                 :form form
-                 :reference reference))
-
-(defmethod khazern::make-accumulation-clause
-    ((client extension-client) (category (eql :sequence)) (reference (eql :nunion))
-     &key start end var form)
-  (make-instance 'set-accumulation-clause
-                 :start start
-                 :end end
-                 :accum-var var
-                 :form form
-                 :reference reference))
-
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :adjoin)) &key)
-  (khazern::parse-accumulation-clause client :sequence :adjoin 'list))
-
+  (khazern:parse-accumulation client
+                      (make-instance 'set-accumulation-clause :reference :adjoin)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:adjoin nil)))
+ 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region)
      (keyword (eql :adjoining)) &key)
-  (khazern::parse-accumulation-clause client :sequence :adjoin 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'set-accumulation-clause :reference :adjoin)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:adjoin nil)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :union)) &key)
-  (khazern::parse-accumulation-clause client :sequence :union 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'set-accumulation-clause :reference :union)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:adjoin nil :union nil)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region)
      (keyword (eql :unioning)) &key)
-  (khazern::parse-accumulation-clause client :sequence :union 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'set-accumulation-clause :reference :union)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:adjoin nil :union nil)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :nunion)) &key)
-  (khazern::parse-accumulation-clause client :sequence :nunion 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'set-accumulation-clause :reference :nunion)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:adjoin nil :nunion nil)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region)
      (keyword (eql :nunioning)) &key)
-  (khazern::parse-accumulation-clause client :sequence :nunion 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'set-accumulation-clause :reference :nunion)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:adjoin nil :nunion nil)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :disjoin)) &key)
-  (khazern::parse-accumulation-clause client :sequence :disjoin 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'set-accumulation-clause :reference :disjoin)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:disjoin nil)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region)
      (keyword (eql :disjoining)) &key)
-  (khazern::parse-accumulation-clause client :sequence :disjoin 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'set-accumulation-clause :reference :disjoin)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:disjoin nil)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :intersection))
      &key)
-  (khazern::parse-accumulation-clause client :sequence :intersect 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'set-accumulation-clause :reference :intersect)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:intersect nil)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region)
      (keyword (eql :intersecting)) &key)
-  (khazern::parse-accumulation-clause client :sequence :intersect 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'set-accumulation-clause :reference :intersect)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:intersect nil)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :nintersection))
      &key)
-  (khazern::parse-accumulation-clause client :sequence :intersect 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'set-accumulation-clause :reference :nintersect)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:nintersect nil)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region)
      (keyword (eql :nintersecting)) &key)
-  (khazern::parse-accumulation-clause client :sequence :intersect 'list))
+  (khazern:parse-accumulation client
+                      (make-instance 'set-accumulation-clause :reference :nintersect)
+                      :default-type-spec 'list
+                      :parse-type-spec t
+                      :accumulation-category :sequence
+                      :accumulation-references '(:nintersect nil)))
 
 (defmethod khazern::accumulation-scope-functions
     ((client extension-client) (instance khazern::list-accumulation-scope)
@@ -226,39 +332,50 @@
             `((inline ,name)))))
 
 (defmethod khazern::accumulation-scope-functions
-    ((client extension-client) (instance khazern::list-accumulation-scope)
+    ((client extension-client) (instance khazern::sequence-accumulation-scope)
      (reference (eql :union)) name)
-  (let ((head (khazern::accumulation-scope-reference instance :head))
-        (tail (khazern::accumulation-scope-reference instance :tail)))
+  (let ((adjoin-name (khazern::accumulation-scope-reference instance :adjoin)))
     (values `((,name (value &rest args)
-                (tagbody
-                 next
-                   (when value
-                     (unless (apply #'member (car value) (cdr ,head) args)
-                       (rplacd ,tail
-                          (setq ,tail (cons (car value) nil))))
-                     (setq value (cdr value))
-                     (go next)))))
-            nil)))
+                (map nil (lambda (item)
+                           (apply #',adjoin-name item args))
+                     value)))
+            `((inline ,name)))))
+
+(defmethod khazern::accumulation-scope-functions
+    ((client extension-client) (instance khazern::sequence-accumulation-scope)
+     (reference (eql :nunion)) name)
+  (let ((adjoin-name (khazern::accumulation-scope-reference instance :adjoin)))
+    (values `((,name (value &rest args)
+                (map nil (lambda (item)
+                           (apply #',adjoin-name item args))
+                     value)))
+            `((inline ,name)))))
 
 (defmethod khazern::accumulation-scope-functions
     ((client extension-client) (instance khazern::list-accumulation-scope)
      (reference (eql :nunion)) name)
   (let ((head (khazern::accumulation-scope-reference instance :head))
-        (tail (khazern::accumulation-scope-reference instance :tail)))
-    (values `((,name (value &rest args)
-                (tagbody
-                 next
-                   (when value
-                     (cond ((apply #'member (car value) (cdr ,head) args)
-                            (setq value (cdr value)))
-                           (t
-                            (rplacd ,tail
-                                    (setq ,tail value))
-                            (setq value (cdr value))
-                            (rplacd ,tail nil)))
-                     (go next)))))
-            nil)))
+        (tail (khazern::accumulation-scope-reference instance :tail))
+        (seq-name (gensym (symbol-name reference))))
+    (multiple-value-bind (definitions declarations)
+        (call-next-method client instance reference seq-name)
+      (values (list* `(,name (value &rest args)
+                        (cond ((consp value)
+                               (tagbody
+                                next
+                                  (when value
+                                    (cond ((apply #'member (car value) (cdr ,head) args)
+                                           (setq value (cdr value)))
+                                          (t
+                                           (rplacd ,tail
+                                                   (setq ,tail value))
+                                           (setq value (cdr value))
+                                           (rplacd ,tail nil)))
+                                    (go next))))
+                              (value
+                               (apply #',seq-name value args))))
+                     definitions)
+              declarations))))
 
 (defmethod khazern::accumulation-scope-functions
     ((client extension-client) (instance khazern::list-accumulation-scope)
@@ -270,8 +387,3 @@
                         (apply #'delete value (cdr ,head) args))
                        (setq ,tail (last ,head))))
             `((inline ,name)))))
-
-(defmethod khazern:body-forms ((clause set-accumulation-clause))
-  `((,(khazern::accumulation-reference (khazern::var-spec (khazern::accum-var clause))
-                                       (khazern::reference clause))
-     ,(khazern::it-form (khazern::form clause)) ,@(args clause))))

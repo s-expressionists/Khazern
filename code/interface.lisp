@@ -184,6 +184,8 @@ the accumulation variable.")
     (declare (ignore client instance reference name))
     nil))
 
+(defgeneric accumulation-forms (instance reference form args))
+
 ;;; Parsing interface
 
 (defgeneric parse-clause (client region name &key)

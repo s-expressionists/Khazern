@@ -80,6 +80,21 @@
         (t
          forms)))
 
+(defun wrap-labels (definitions declarations forms)
+  (cond ((and definitions declarations)
+         `((labels ,definitions
+             (declare ,@declarations)
+             ,@forms)))
+        (definitions
+         `((labels ,definitions
+             ,@forms)))
+        (declarations
+         `((locally
+               (declare ,@declarations)
+             ,@forms)))
+        (t
+         forms)))
+
 ;;; This is very hacky
 (defun numeric-types ()
   (let ((types (list 'complex 'number)))
