@@ -16,5 +16,5 @@
                              (:file "stream")
                              (:file "for-as-hash")
                              (:file "cleanup")
-                             (:file "set-accumulation")
+                             (:file "sequence-accumulation")
                              (:file "use-clause")))))

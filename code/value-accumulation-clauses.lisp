@@ -94,6 +94,7 @@
 (defmethod make-accumulation-scope
     ((client standard-client) name type (category (eql :sequence)) references)
   (declare (ignore type references))
+  (check-subtype type 'list)
   (make-instance 'list-accumulation-scope :accum-ref name))
 
 (defmethod accumulation-scope-functions
