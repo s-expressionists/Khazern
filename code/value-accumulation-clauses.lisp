@@ -32,7 +32,7 @@
 
 (defmethod make-scope :around
     ((client standard-client) name type category references)
-  (declare (ignore type references))
+  (declare (ignore type))
   (let ((instance (call-next-method)))
     (when (typep instance 'scope)
       (prog ((symbol nil))
@@ -43,8 +43,7 @@
                             (gensym (symbol-name (first references))))
                  (getf (references instance) (first references)) symbol)
            (multiple-value-bind (definitions declarations)
-               (scope-functions
-                      client instance (first references) symbol)
+               (scope-functions client instance (first references) symbol)
              (setf (function-definitions instance) (nconc (function-definitions instance)
                                                           definitions)
                    (function-declarations instance) (nconc (function-declarations instance)
@@ -81,7 +80,7 @@
 
 (defmethod make-scope
     ((client standard-client) name type (category (eql :sequence)) references)
-  (declare (ignore type references))
+  (declare (ignore references))
   (check-subtype type 'list)
   (make-instance 'list-scope
                  :var (make-instance 'simple-binding

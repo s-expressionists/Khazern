@@ -141,8 +141,6 @@
                                              (second references))
                                          references (cddr references))
                                    (go next)))
-                              (setf (binding-info-references info)
-                                    (union  (binding-info-references info) references))
                               (let ((sub12 (subtypep type (binding-info-type info)))
                                     (sub21 (subtypep (binding-info-type info) type)))
                                 (unless (and sub12 sub21)
