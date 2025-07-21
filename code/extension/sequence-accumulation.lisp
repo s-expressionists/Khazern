@@ -269,22 +269,26 @@
               (list* `(inline ,name)
                      declarations)))))
 
-(defclass set-accumulation-clause (khazern:accumulation-clause) ())
+(defclass key-test-accumulation-clause (khazern:accumulation-clause) ())
 
 (defmethod khazern:preposition-names
-    ((client extension-client) (clause set-accumulation-clause))
+    ((client extension-client) (clause key-test-accumulation-clause))
   (values '(:key :test)
           '()
           '()))
 
-(defmethod khazern:parse-preposition
-    ((client extension-client) (instance set-accumulation-clause) name)
-  (setf (args instance) (nconc (args instance) (list name (khazern:parse-token)))))
+(defclass key-predicate-accumulation-clause (khazern:accumulation-clause) ())
+
+(defmethod khazern:preposition-names
+    ((client extension-client) (clause key-predicate-accumulation-clause))
+  (values '(:key :predicate)
+          '(:predicate)
+          '()))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :adjoin)) &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :adjoin)
+                              (make-instance 'key-test-accumulation-clause :reference :adjoin)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
@@ -294,7 +298,7 @@
     ((client extension-client) (region khazern:selectable-region)
      (keyword (eql :adjoining)) &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :adjoin)
+                              (make-instance 'key-test-accumulation-clause :reference :adjoin)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
@@ -303,7 +307,7 @@
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :union)) &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :union)
+                              (make-instance 'key-test-accumulation-clause :reference :union)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
@@ -313,7 +317,7 @@
     ((client extension-client) (region khazern:selectable-region)
      (keyword (eql :unioning)) &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :union)
+                              (make-instance 'key-test-accumulation-clause :reference :union)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
@@ -322,7 +326,7 @@
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :nunion)) &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :nunion)
+                              (make-instance 'key-test-accumulation-clause :reference :nunion)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
@@ -332,7 +336,7 @@
     ((client extension-client) (region khazern:selectable-region)
      (keyword (eql :nunioning)) &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :nunion)
+                              (make-instance 'key-test-accumulation-clause :reference :nunion)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
@@ -341,7 +345,8 @@
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :intersection))
      &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :intersect)
+                              (make-instance 'key-test-accumulation-clause
+                                             :reference :intersect)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
@@ -351,7 +356,8 @@
     ((client extension-client) (region khazern:selectable-region)
      (keyword (eql :intersecting)) &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :intersect)
+                              (make-instance 'key-test-accumulation-clause
+                                             :reference :intersect)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
@@ -361,7 +367,8 @@
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :nintersection))
      &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :intersect)
+                              (make-instance 'key-test-accumulation-clause
+                                             :reference :intersect)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
@@ -371,7 +378,8 @@
     ((client extension-client) (region khazern:selectable-region)
      (keyword (eql :nintersecting)) &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :intersect)
+                              (make-instance 'key-test-accumulation-clause
+                                             :reference :intersect)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
@@ -380,7 +388,7 @@
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :disjoin)) &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :disjoin)
+                              (make-instance 'key-test-accumulation-clause :reference :disjoin)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
@@ -390,7 +398,7 @@
     ((client extension-client) (region khazern:selectable-region)
      (keyword (eql :disjoining)) &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :disjoin)
+                              (make-instance 'key-test-accumulation-clause :reference :disjoin)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
@@ -400,45 +408,55 @@
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :difference))
      &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :difference)
+                              (make-instance 'key-test-accumulation-clause
+                                             :reference :difference)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
                               :scope-references '(:disjoin nil :difference nil)))
-
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :differencing))
      &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :difference)
+                              (make-instance 'key-test-accumulation-clause
+                                             :reference :difference)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
                               :scope-references '(:disjoin nil :difference nil)))
-
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :ndifference))
      &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :difference)
+                              (make-instance 'key-test-accumulation-clause
+                                             :reference :difference)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
                               :scope-references '(:disjoin nil :difference nil)))
-
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:selectable-region) (keyword (eql :ndifferencing))
      &key)
   (khazern:parse-accumulation client
-                              (make-instance 'set-accumulation-clause :reference :difference)
+                              (make-instance 'key-test-accumulation-clause
+                                             :reference :difference)
                               :default-type-spec 'list
                               :parse-type-spec t
                               :category :sequence
                               :scope-references '(:disjoin nil :difference nil)))
 
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:selectable-region) (keyword (eql :merge)) &key)
+  (khazern:parse-accumulation client
+                              (make-instance 'key-predicate-accumulation-clause
+                                             :reference :merge)
+                              :default-type-spec 'list
+                              :parse-type-spec t
+                              :category :sequence
+                              :scope-references '(:merge nil)))
 
 (defmethod khazern:scope-functions
     ((client extension-client) (instance khazern:list-scope) (reference (eql :adjoin)) name)
@@ -587,4 +605,21 @@
                 (map nil (lambda (item)
                            (apply #',disjoin-name item args))
                      value)))
+            `((inline ,name)))))
+
+(defmethod khazern:scope-functions
+    ((client extension-client) (instance khazern:sequence-scope) (reference (eql :merge)) name)
+  (let ((var (khazern:var-spec (khazern:var instance)))
+        (type (khazern:type-spec (khazern:var instance))))
+    (values `((,name (value &key predicate key)
+                (setq ,var (merge ',type ,var value predicate :key key))))
+            `((inline ,name)))))
+
+(defmethod khazern:scope-functions
+    ((client extension-client) (instance khazern:list-scope) (reference (eql :merge)) name)
+  (let ((head (khazern:scope-reference instance :head))
+        (tail (khazern:scope-reference instance :tail)))
+    (values `((,name (value &key predicate key)
+                (rplacd ,head (merge 'list (cdr ,head) value predicate :key key))
+                (setq ,tail (last ,head))))
             `((inline ,name)))))

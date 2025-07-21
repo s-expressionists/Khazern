@@ -241,3 +241,10 @@
                        :category :summation
                        :default-type-spec 'number
                        :parse-type-spec t))
+
+(defmethod khazern:parse-clause
+    ((client extension-client) (region use-region) (keyword (eql :merge)) &key name)
+  (parse-use-subclause :count name
+                       :category :merge
+                       :default-type-spec 'list
+                       :parse-type-spec t))

@@ -17,6 +17,10 @@
    (%args :accessor args
           :initform nil)))
 
+(defmethod parse-preposition
+    ((client standard-client) (instance accumulation-clause) name)
+  (setf (args instance) (nconc (args instance) (list name (parse-token)))))
+
 (defmethod body-forms ((clause accumulation-clause))
   `((,(scope-reference (get-scope (var-spec (var clause))) (reference clause))
      ,(it-form (form clause))
