@@ -11,15 +11,18 @@
            #:*loop-name*
            #:*placeholder-result*
            #:*start*
-           #:accumulation-category
+           #:accumulation-clause
            #:add-binding
            #:add-destructuring-binding
            #:add-simple-binding
            #:afterword-forms
            #:analyze
+           #:binding-clause
            #:body-forms
            #:body-region
+           #:category
            #:check-nullable-simple-var-spec
+           #:check-subtype
            #:clause
            #:clause-group
            #:d-type-spec 
@@ -28,21 +31,25 @@
            #:define-interface
            #:destructuring-set
            #:dynamic-extent-p
+           #:end
            #:epilogue-forms
            #:expand-body
            #:features-list
            #:for-as-hash
            #:form
            #:ignorablep
-           #:preposition-names
+           #:list-scope
            #:make-iteration-path
+           #:make-scope
            #:map-variables
            #:maybe-parse-token
            #:nullable-simple-var
            #:other-var
+           #:parallel-superclause
            #:parse-accumulation
            #:parse-clause
            #:parse-compound-forms
+           #:parse-conjunctive-clauses
            #:parse-d-spec
            #:parse-into
            #:parse-preposition
@@ -51,12 +58,19 @@
            #:parse-type-spec
            #:parse-using
            #:parse-var-spec
+           #:preposition-names
            #:prologue-forms
+           #:scope-functions
+           #:scope-reference
+           #:scope-references
            #:selectable-region
+           #:sequence-scope
            #:simple-var
            #:standard-client
+           #:start
            #:step-intro-forms
            #:step-outro-forms
+           #:subclauses
            #:symbol-equal
            #:type-spec
            #:unparse-token

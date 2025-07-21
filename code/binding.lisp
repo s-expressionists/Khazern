@@ -14,11 +14,11 @@
                     :initform nil)))
 
 (defclass simple-binding (binding)
-  ((%accumulation-category :accessor accumulation-category
-                           :initarg :accumulation-category
+  ((%category :accessor category
+                           :initarg :category
                            :initform nil)
-   (%accumulation-references :accessor accumulation-references
-                             :initarg :accumulation-references
+   (%scope-references :accessor scope-references
+                             :initarg :scope-references
                              :initform nil)
    (%form :accessor form
           :initarg :form
@@ -85,8 +85,8 @@
              (cond ((null var-spec))
                    ((symbolp var-spec)
                     (funcall function var-spec (or type-spec t)
-                             (accumulation-category binding)
-                             (accumulation-references binding)))
+                             (category binding)
+                             (scope-references binding)))
                    ((symbolp type-spec)
                     (traverse (car var-spec) type-spec)
                     (traverse (cdr var-spec) type-spec))

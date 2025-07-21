@@ -16,17 +16,14 @@
 
 (defvar *extended-superclause*)
 
-(defvar *accumulation-scopes*)
+(defvar *scopes*)
 
 (defun default-accumulation-variable ()
   (or *accumulation-variable*
       (setf *accumulation-variable* (gensym "ACC"))))
 
-(defun accumulation-reference (var ref)
-  (accumulation-scope-reference *extended-superclause* ref var))
-
-(defun accumulation-scope (var)
-  (gethash var *accumulation-scopes*))
+(defun get-scope (var)
+  (gethash var *scopes*))
 
 (defvar *loop-name*)
 
@@ -59,7 +56,7 @@
          (*index* 0)
          (*tokens* *body*)
          (*toplevel* t)
-         (*accumulation-scopes* (make-hash-table))
+         (*scopes* (make-hash-table))
          (*extended-superclause* (parse-body client)))
     (analyze client *extended-superclause*)
     (let ((*loop-name* (name *extended-superclause*)))
@@ -169,10 +166,10 @@
                    clause)
     (maphash (lambda (name info)
                (when (binding-info-category info)
-                 (let ((instance (make-accumulation-scope client name (binding-info-type info)
+                 (let ((instance (make-scope client name (binding-info-type info)
                                                           (binding-info-category info)
                                                           (binding-info-references info))))
-                   (setf (gethash name *accumulation-scopes*) instance)
+                   (setf (gethash name *scopes*) instance)
                    (push instance (subclauses clause)))))
              variables)))
 

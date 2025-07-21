@@ -147,7 +147,7 @@
 (defparameter *placeholder-result* (cons nil nil))
 
 (defun parse-into (&key (default-type-spec t) ((:parse-type-spec parse-type-spec-p) nil)
-                        accumulation-category accumulation-references)
+                        category scope-references)
   (let ((var-spec (if (maybe-parse-token :keywords '(:into))
                       (parse-token :type 'symbol)
                       (default-accumulation-variable))))
@@ -157,8 +157,8 @@
                                   (parse-type-spec :default-type-spec default-type-spec
                                                    :var-spec var-spec)
                                   default-type-spec)
-                   :accumulation-category accumulation-category
-                   :accumulation-references accumulation-references)))
+                   :category category
+                   :scope-references scope-references)))
 
 (defun parse-usings (client instance using-names using)
   (trivial-with-current-source-form:with-current-source-form (using)
@@ -207,13 +207,13 @@
 
 (defun parse-accumulation (client instance
                            &key (default-type-spec t) ((:parse-type-spec parse-type-spec-p) nil)
-                                accumulation-category accumulation-references)
+                                category scope-references)
   (setf (start instance) *start*
         (form instance) (parse-token)
         (var instance) (parse-into :default-type-spec default-type-spec
                                    :parse-type-spec parse-type-spec-p
-                                   :accumulation-category accumulation-category
-                                   :accumulation-references accumulation-references))
+                                   :category category
+                                   :scope-references scope-references))
   (parse-prepositions client instance)
   (setf (end instance) *index*)
   instance)

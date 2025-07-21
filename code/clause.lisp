@@ -73,7 +73,7 @@
                :initarg :accum-var
                :initform (make-instance 'simple-binding
                                         :var-spec (default-accumulation-variable)
-                                        :accumulation-category nil))))
+                                        :category nil))))
 
 (defmethod initialize-instance :after ((instance accumulation-mixin) &rest initargs &key)
   (declare (ignore initargs))
@@ -101,7 +101,7 @@
   binding)
 
 (defun add-simple-binding (clause
-                           &key (var "FORM") (type t) accumulation-category (form nil formp)
+                           &key (var "FORM") (type t) category (form nil formp)
                                 ((:ignorable ignorablep) nil)
                                 ((:dynamic-extent dynamic-extent-p) nil)
                                 ((:fold foldp) nil) (fold-test 'constantp))
@@ -117,7 +117,7 @@ deduced based on the type."
                              (make-instance 'simple-binding
                                             :var-spec ref
                                             :type-spec type
-                                            :accumulation-category accumulation-category
+                                            :category category
                                             :form (if formp
                                                       form
                                                       (deduce-initial-value type))
@@ -144,11 +144,6 @@ deduced based on the type."
   ((%subclauses :accessor subclauses
                 :initarg :subclauses
                 :initform nil)))
-
-(defmethod accumulation-scope-reference ((clause simple-superclause) ref &optional name)
-  (some (lambda (subclause)
-          (accumulation-scope-reference subclause ref name))
-        (subclauses clause)))
 
 (defmethod analyze :before ((client standard-client) (clause simple-superclause))
   (mapc (lambda (clause)

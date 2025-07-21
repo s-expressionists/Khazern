@@ -23,21 +23,21 @@
 (defclass every-accumulation-clause (clause)
   ())
 
-(defmethod make-accumulation-scope
+(defmethod make-scope
     ((client standard-client) name type (category (eql :every)) references)
   (declare (ignore references))
   (let ((instance (make-instance 'every-accumulation-clause)))
-    (add-simple-binding instance :var name :type type :accumulation-category category :form t)
+    (add-simple-binding instance :var name :type type :category category :form t)
     instance))
 
 (defclass some-accumulation-clause (clause)
   ())
 
-(defmethod make-accumulation-scope
+(defmethod make-scope
     ((client standard-client) name type (category (eql :some)) references)
   (declare (ignore references))
   (let ((instance (make-instance 'some-accumulation-clause)))
-    (add-simple-binding instance :var name :type type :accumulation-category category :form nil)
+    (add-simple-binding instance :var name :type type :category category :form nil)
     instance))
 
 (defclass repeat-clause (termination-test-clause)
@@ -73,7 +73,7 @@
   ()
   (:default-initargs :accum-var (make-instance 'simple-binding
                                                :var-spec (default-accumulation-variable)
-                                               :accumulation-category :every)))
+                                               :category :every)))
 
 (defmethod parse-clause
     (client (region body-region) (keyword (eql :always)) &key)
@@ -98,7 +98,7 @@
   ()
   (:default-initargs :accum-var (make-instance 'simple-binding
                                                :var-spec (default-accumulation-variable)
-                                               :accumulation-category :every)))
+                                               :category :every)))
 
 (defmethod parse-clause
     (client (region body-region) (keyword (eql :never)) &key)
@@ -123,7 +123,7 @@
   ()
   (:default-initargs :accum-var (make-instance 'simple-binding
                                                :var-spec (default-accumulation-variable)
-                                               :accumulation-category :some)))
+                                               :category :some)))
 
 (defmethod parse-clause
     (client (region body-region) (keyword (eql :thereis)) &key)

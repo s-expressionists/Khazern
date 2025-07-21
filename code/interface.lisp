@@ -141,7 +141,7 @@ declared IGNORABLE."))
   (:documentation "Set the DYNAMIC-EXTENT declaration of the binding. Non-NIL if the binding is
 declared DYNAMIC-EXTENT."))
 
-(defgeneric accumulation-category (binding)
+(defgeneric category (binding)
   (:documentation "Return the accumulation category of the binding. There can be multiple
 accumulation clauses that have the same binding name as long as they all have the same
 accumulation category. The category should be a keyword. Currently used categories are :LIST,
@@ -149,10 +149,10 @@ accumulation category. The category should be a keyword. Currently used categori
   (:method (binding)
     (declare (ignore binding))))
 
-(defgeneric (setf accumulation-category) (value binding)
+(defgeneric (setf category) (value binding)
   (:documentation "Set the accumulation category of the binding."))
 
-(defgeneric accumulation-references (binding)
+(defgeneric scope-references (binding)
   (:documentation "Return the accumulation category of the binding. There can be multiple
 accumulation clauses that have the same binding name as long as they all have the same
 accumulation category. The category should be a keyword. Currently used categories are :LIST,
@@ -161,30 +161,28 @@ accumulation category. The category should be a keyword. Currently used categori
     (declare (ignore binding))
     nil))
 
-(defgeneric (setf accumulation-references) (value binding)
+(defgeneric (setf scope-references) (value binding)
   (:documentation "Set the accumulation category of the binding."))
 
 ;;; Accumulation clause interface
 
-(defgeneric make-accumulation-scope (client name type category references)
+(defgeneric make-scope (client name type category references)
   (:documentation "Create an accumulation clause based on the category. This is the clause that
 will contain the bindings or wrappers that are common to all of the accumulation clauses and
 will be inserted at the beginning of the clause list."))
 
-(defgeneric accumulation-scope-reference (instance ref &optional name)
+(defgeneric scope-reference (instance ref)
   (:documentation "Return a symbol that represents the lexical name of REF in the accumulation
 variable NAME. For example, a REF of :TAIL for list accumulation will return the tail cons of
 the accumulation variable.")
-  (:method (instance ref &optional name)
-    (declare (ignore instance ref name))
+  (:method (instance ref)
+    (declare (ignore instance ref))
     nil))
 
-(defgeneric accumulation-scope-functions (client instance reference name)
+(defgeneric scope-functions (client instance reference name)
   (:method (client instance reference name)
     (declare (ignore client instance reference name))
     nil))
-
-(defgeneric accumulation-forms (instance reference form args))
 
 ;;; Parsing interface
 
