@@ -15,6 +15,7 @@
                              (:file "elements")
                              (:file "stream")
                              (:file "for-as-hash")
+                             (:file "permutations")
                              (:file "cleanup")
                              (:file "sequence-accumulation")
                              (:file "use-clause")))))
