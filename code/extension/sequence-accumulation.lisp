@@ -83,7 +83,7 @@
                                                         :var name
                                                         :type type
                                                         :form `(make-sequence ',type 0)
-                                                        :Accumulation-category category)))
+                                                        :category category)))
            instance))
         (t
          (let ((instance (make-instance 'ansi-sequence-scope)))
@@ -93,7 +93,7 @@
                                                         :var name
                                                         :type type
                                                         :form `(make-sequence ',type 0)
-                                                        :Accumulation-category category)))
+                                                        :category category)))
            instance))))
 
 (defmethod khazern:parse-clause

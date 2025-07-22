@@ -312,5 +312,62 @@ using-name       ::= {}
 * The IN and OF prepositions are a sequence to permute. On each loop
   step a copy of this sequence is made with the elements permuted.
 
+### Value Accumulation
+
+#### COLLECT/APPEND/NCONC Sequence Extensions
+
+The value accumulation clauses COLLECT, COLLECTING, APPEND, APPENDING,
+NCONC, and NCONCING have all been extended to include type
+specifications for arbitrary sequences.
+
+```common-lisp
+(kee:loop for i below 10
+          collect i of-type (vector fixnum))
+; => #(0 1 2 3 4 5 6 7 8 9)
+(kee:loop for i below 10
+          append (list i (- i)) of-type simple-vector)
+; => #(0 0 1 -1 2 -2 3 -3 4 -4 5 -5 6 -6 7 -7 8 -8 9 -9)
+(kee:loop for i from 65 to 90
+          collect (code-char i) of-type string)
+; => "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+```
+
+#### Set Accumulation
+
+The set accumulation clauses ADJOIN, ADJOINING, DISJOIN, DISJOINING,
+UNION, UNIONING, NUNIONING, INTERSECTION, INTERSECTING, NINTERSECTION,
+NINSTERSECTING, DIFFERENCE, NDIFFERENCE, DIFFERENCING, and
+NDIFFERENCING have been added.
+
+All of these accumulation clauses allow the optional prepositions KEY
+and TEST as in the :KEY and :TEST keyword arguments to CL:ADJOIN.
+
+```common-lisp
+(kee:loop for ch across "The quick brown fox jumps over the lazy dog."
+          when (alpha-char-p ch)
+            adjoin ch test #'char-equal)
+; => (#\T #\h #\e #\q #\u #\i #\c #\k #\b #\r #\o #\w #\n #\f #\x #\j #\m #\p
+;     #\s #\v #\l #\a #\z #\y #\d #\g)
+(kee:loop for ch across "The quick brown fox jumps over the lazy dog."
+          when (alpha-char-p ch)
+            adjoin ch of-type string test #'char-equal)
+; => "Thequickbrownfxjmpsvlazydg"
+(kee:loop for i below 10
+          union (list (mod i 3) (mod i 5)))
+; => (0 1 2 3 4)
+```
+
+#### Merge Accumulation
+
+A MERGE/MERGING accumulation clause has been added that uses
+CL:MERGE. It has a required preposition of PREDICATE and an optional
+KEY preposition.
+
+```common-lisp
+(kee:loop for i below 10
+          merge (list (- i) i) of-type vector predicate #'<)
+; => #(-9 -8 -7 -6 -5 -4 -3 -2 -1 0 0 1 2 3 4 5 6 7 8 9)
+```
+
 [Quicklisp]: https://www.quicklisp.org/beta/
 [SICL]: https://github.com/robert-strandh/SICL
