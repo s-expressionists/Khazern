@@ -22,14 +22,8 @@ To load Khazern extrinsically do the following
 (1 3)
 ```
 
-## Extending Khazern
-
-Khazern supports extension via iteration paths. The documentation
-regarding the this protocol has not been written yet, but examples can
-be seen in the `khazern-extension` system. Khazern can support the
-iteration paths provided by [loop-iteration-paths][] simply by using
-either the `khazern-extension-extrinsic` or
-`khazern-extension-intrinsic` systems. For example:
+Khazern also implements an extended LOOP syntax via the
+khazern-extension-extrinsic and khazern-extension-intrinsic systems.
 
 ```common-lisp
 * (ql:quickload '(:khazern-extension-extrinsic :flexi-streams))
@@ -119,7 +113,8 @@ then SHADOWING-IMPORT-FROM in DEFPACKAGE.
         do (print i)))
 ```
 
-To use the extension system one need only replace the dependency in the ASD file.
+To use the extension system one need only replace the dependency in
+the ASD file.
 
 ```common-lisp
 ;;; quux.asd
@@ -144,6 +139,178 @@ To use the extension system one need only replace the dependency in the ASD file
         do (print i)))
 ```
 
-[loop-iteration-paths]: https://github.com/yitzchak/loop-iteration-paths/
+## Khazern Extensions
+
+The orignal Technical Memo 169 "Loop Iteration Macro" which defined
+LOOP for Lisp Machine Lisp and Maclisp also specified an extension
+mechanism known as an "iteration path." Khazern implements this via
+the syntax:
+
+```
+for-as-iteration-path ::= {FOR | AS} var [type-spec] BEING
+                          {path-exclusive | path-inclusive}
+                          {path-using | path-preposition}*
+path-exclusive        ::= {EACH | THE} path-name
+path-inclusive        ::= form AND {ITS | EACH | HIS | HER}
+                          path-name
+path-using            ::= USING ({using-name var [type-spec]}+)
+path-preposition      ::= preposition-name form
+preposition-name      ::= name
+using-name            ::= simple-var
+path-name             ::= symbol
+```
+
+Inclusive iteration paths are those in which the initial value of
+`var` was `form` itself. An example given in the Lisp Machine Manual
+is that of the CDRS iteration path:
+
+```common-lisp
+(loop for x being the cdrs of '(a b c . d) collect x)
+; => ((b c . d) (c . d) d)
+
+(loop for x being '(a b c . d) and its cdrs collect x)
+; => ((a b c . d) (b c . d) (c . d) d)
+```
+
+Then khazern-extension-extrinsic and khazern-extension-intrinsic
+systems implement many predefined iteration paths. They are described
+in the sections below.
+
+### Hash Table Iteration
+
+#### HASH-KEY Iteration Path
+
+The HASH-KEY iteration path is identical to that described in the ANSI
+CL specification with the addition of the ability to specify a
+type-spec for USING variable.
+
+```
+path-name        ::= {HASH-KEY | HASH-KEYS}
+preposition-name ::= {IN | OF}
+using-name       ::= {HASH-VALUE}
+```
+
+#### HASH-VALUE Iteration Path
+
+The HASH-VALUE iteration path is identical to that described in the
+ANSI CL specification with the addition of the ability to specify a
+type-spec for USING variable.
+
+```
+path-name        ::= {HASH-VALUE | HASH-VALUES}
+preposition-name ::= {IN | OF}
+using-name       ::= {HASH-KEY}
+```
+
+### Sequence Iteration
+
+#### ELEMENTS Iteration Path
+
+The ELEMENTS iteration path iterates over sequences. If the extensible
+sequence protocol is available it will use MAKE-SEQUENCE-ITERATOR from
+that protocol. Otherwise it will use ELT and iterate an index into the
+sequence.
+
+```
+path-name        ::= {ELEMENT | ELEMENTS}
+preposition-name ::= {IN | OF | START | END | FROM-END}
+using-name       ::= {INDEX}
+```
+
+* The IN and OF prepositions are synonyms and specify the form that
+  evaluates to the sequence. One of these prepositions is required.
+* The START preposition specifies the starting index of the
+  iteration. It is optional and if not specified it will default to 0.
+* The END preposition specifies the ending index of the iteration. It
+  is optional and if not specified it will default to the sequence
+  length.
+* The FROM-END preposition specifies the iteration direction. If it is
+  non-NIL then iteration will go from END to START. Otherwise
+  iteration will go from START to END. It is optional and if not
+  specified it will default to NIL.
+* The INDEX phrase in USING names a variable to store the current
+  iteration index. It is optional.
+
+### Stream Iteration
+
+All stream iteration paths have the following prepositions and USING
+phrases:
+
+* The IN and OF prepositions are synonyms and specify the form that
+  evaluates to the stream. If one of these prepositions is not
+  specified then \*STANDARD-INPUT\* is used.
+* The CLOSE preposition specifies whether the stream should be closed
+  when the LOOP is terminated. If it is non-NIL then the stream is
+  closed via UNWIND-PROTECT when the loop terminates. It is optional
+  and if not specified it will default to NIL
+* The STREAM phrase in USING names a variable to store the current
+  stream. It is optional.
+
+#### BYTES Iteration Path
+
+The BYTES iteration path iterates over an input stream using
+READ-BYTE. It terminates on EOF.
+
+```
+path-name        ::= {BYTE | BYTES}
+preposition-name ::= {IN | OF | CLOSE}
+using-name       ::= {STREAM}
+```
+
+#### CHARACTERS Iteration Path
+
+The CHARACTERS iteration path iterates over an input stream using
+READ-CHAR. It terminates on EOF.
+
+```
+path-name        ::= {CHARACTER | CHARATERS}
+preposition-name ::= {IN | OF | CLOSE}
+using-name       ::= {STREAM}
+```
+
+#### LINES Iteration Path
+
+The LINES iteration path iterates over an input stream using
+READ-LINE. It terminates on EOF.
+
+```
+path-name        ::= {LINE | LINES}
+preposition-name ::= {IN | OF | CLOSE}
+using-name       ::= {STREAM | MISSING-NEWLINE-P}
+```
+
+In addition to the standard stream prepositions and USING phrases it
+also has the MISSING-NEWLINE-P USING phrase. This phrase is optional
+and specifies the name of variable to store the second value returned
+from READ-LINE which is non-NIL if the line was not terminated by a
+newline.
+
+#### OBJECTS Iteration Path
+
+The OBJECTS iteration path iterates over an input stream using
+READ. It terminates on EOF.
+
+```
+path-name        ::= {OBJECT | OBJECTS}
+preposition-name ::= {IN | OF | CLOSE}
+using-name       ::= {STREAM}
+```
+
+### Permutation Iteration
+
+#### PERMUTATION Iteration Path
+
+The PERMUTATION iteration path iterates over the permutations of a
+sequence.
+
+```
+path-name        ::= {PERMUTATION | PERMUTATIONS}
+preposition-name ::= {IN | OF}
+using-name       ::= {}
+```
+
+* The IN and OF prepositions are a sequence to permute. On each loop
+  step a copy of this sequence is made with the elements permuted.
+
 [Quicklisp]: https://www.quicklisp.org/beta/
 [SICL]: https://github.com/robert-strandh/SICL
