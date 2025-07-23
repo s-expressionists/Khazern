@@ -4,6 +4,7 @@
   ((%var :accessor var
          :initarg :var)
    (%of-ref :accessor of-ref)
+   (%result-type :accessor result-type)
    (%perm-ref :accessor perm-ref)
    (%state-ref :accessor state-ref)
    (%pos-ref :accessor pos-ref)
@@ -63,8 +64,10 @@
   (parse-of-preposition instance))
 
 (defmethod khazern:analyze ((client extension-client) (instance for-as-permutations))
-  (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
-    (setf (khazern:type-spec (var instance)) 'sequence)))
+  (if (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
+      (setf (khazern:type-spec (var instance)) 'sequence
+            (result-type instance) `(type-of ,(of-ref instance)))
+      (setf (result-type instance) `',(khazern:type-spec (var instance)))))
 
 (defmethod khazern:step-intro-forms ((clause for-as-permutations) initialp)
   (with-accessors ((perm-ref perm-ref)
@@ -103,9 +106,10 @@
 (defmethod khazern:step-outro-forms ((clause for-as-permutations) initialp)
   (declare (ignore initialp))
   (with-accessors ((perm-ref perm-ref)
-                   (of-ref of-ref))
+                   (of-ref of-ref)
+                   (result-type result-type))
       clause
-    (khazern:destructuring-set (var clause) `(map (type-of ,of-ref)
+    (khazern:destructuring-set (var clause) `(map ,result-type
                                                   (lambda (pos)
                                                     (elt ,of-ref pos))
                                                   ,perm-ref))))
