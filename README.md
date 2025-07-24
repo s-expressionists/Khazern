@@ -263,7 +263,7 @@ The CHARACTERS iteration path iterates over an input stream using
 READ-CHAR. It terminates on EOF.
 
 ```
-path-name        ::= {CHARACTER | CHARATERS}
+path-name        ::= {CHARACTER | CHARACTERS}
 preposition-name ::= {IN | OF | CLOSE}
 using-name       ::= {STREAM}
 ```
@@ -311,6 +311,22 @@ using-name       ::= {}
 
 * The IN and OF prepositions are a sequence to permute. On each loop
   step a copy of this sequence is made with the elements permuted.
+
+#### COMBINATION Iteration Path
+
+The COMBINATION iteration path iterates over the combinations of a
+sequence.
+
+```
+path-name        ::= {COMBINATION | COMBINATIONS}
+preposition-name ::= {IN | OF | CHOOSE}
+using-name       ::= {}
+```
+
+* The IN and OF prepositions are a sequence to permute. On each loop
+  step a copy of this sequence is made with the elements permuted.
+* The CHOOSE prepositions is an integer that specifies the length of
+  the subsequence to select.
 
 ### Value Accumulation
 
