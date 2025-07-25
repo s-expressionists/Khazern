@@ -472,8 +472,8 @@
   (declare (ignore initargs))
   (add-binding instance (var instance))
   (setf (temp-entry-p-var instance) (add-simple-binding instance :var "ENTRYP")
-        (temp-key-var instance) (add-simple-binding instance :var "KEY")
-        (temp-value-var instance) (add-simple-binding instance :var "VALUE")))
+        (temp-key-var instance) (add-simple-binding instance :var "KEY" :ignorable t)
+        (temp-value-var instance) (add-simple-binding instance :var "VALUE" :ignorable t)))
 
 (defclass for-as-hash-key (for-as-hash)
   ())
