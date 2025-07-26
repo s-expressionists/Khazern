@@ -45,7 +45,7 @@
     ((client extension-client) (instance for-as-stream) (key (eql :stream)))
   (let ((value (khazern:parse-token :type 'khazern:simple-var)))
     (when (stream-d-spec instance)
-      (setf (var-spec (stream-d-spec instance)) value
+      (setf (khazern:var-spec (stream-d-spec instance)) value
             (stream-ref instance) value))
     (setf (stream-var instance) value)))
 

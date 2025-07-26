@@ -8,6 +8,8 @@
 
 (defvar *toplevel*)
 
+(defvar *body*)
+
 (defun find-keyword (token keyword-or-keywords)
   (cond ((listp keyword-or-keywords)
          (some (lambda (keyword)

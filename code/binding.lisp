@@ -27,7 +27,7 @@
 (defclass destructuring-binding (binding)
   ((%temps :accessor temps)))
 
-(defun set-destructuring-temps (binding &optional temp-var-p)
+(defun set-destructuring-temps (binding)
   (let ((temps (make-hash-table)))
     (labels ((traverse (d-var-spec)
                (cond ((null d-var-spec)

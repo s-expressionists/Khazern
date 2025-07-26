@@ -1,7 +1,5 @@
 (cl:in-package #:khazern)
 
-(defvar *body*)
-
 ;;; This variable is bound by the code generator for
 ;;; CONDITIONAL-CLAUSE before calling the code generators for the
 ;;; clauses in its THEN and ELSE branches.

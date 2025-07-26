@@ -167,7 +167,7 @@
   (let ((var (khazern:var-spec (khazern:var instance)))
         (type (khazern:type-spec (khazern:var instance))))
     (values `((,name (value)
-                (setq ,var (concatenate ',type ,var (list ,value)))))
+                (setq ,var (concatenate ',type ,var (list value)))))
             `((inline ,name)))))
 
 #+(or abcl clasp sbcl)    
@@ -201,8 +201,7 @@
 (defmethod khazern:scope-functions
     ((client extension-client) (instance extensible-sequence-scope) (reference (eql :append))
      name)
-  (let ((var (khazern:var-spec (khazern:var instance)))
-        (type (khazern:type-spec (khazern:var instance))))
+  (let ((var (khazern:var-spec (khazern:var instance))))
     (values `((,name (value)
                 (let ((start1 (length ,var)))
                   (setq ,var (replace (sequence:adjust-sequence ,var (+ start1 (length value)))
@@ -230,8 +229,7 @@
 (defmethod khazern:scope-functions
     ((client extension-client) (instance extensible-sequence-scope) (reference (eql :nconc))
      name)
-  (let ((var (khazern:var-spec (khazern:var instance)))
-        (type (khazern:type-spec (khazern:var instance))))
+  (let ((var (khazern:var-spec (khazern:var instance))))
     (values `((,name (value)
                 (setq ,var (sequence:adjust-sequence ,var (+ (length ,var) (length value))
                                                      :initial-contents value))))
@@ -563,13 +561,12 @@
 (defmethod khazern:scope-functions
     ((client extension-client) (instance khazern:sequence-scope) (reference (eql :intersect))
      name)
-  (let ((disjoin-name (khazern:scope-reference instance :disjoin)))
+  (let ((var (khazern:var-spec (khazern:var instance))))
     (values `((,name (value &rest args)
                 (setq ,var (delete-if (lambda (item)
                                         (null (apply #'position item value args)))
                                       var))))
             `((inline ,name)))))
-
 
 (defmethod khazern:scope-functions
     ((client extension-client) (instance khazern:list-scope) (reference (eql :disjoin)) name)

@@ -37,7 +37,7 @@
 (defmethod khazern:preposition-names ((client extension-client) (instance for-as-elements))
   (values '((:in :of) :start :end :from-end)
           '((:in :of))
-          '(:index)))
+          '(:index :indicies)))
 
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance for-as-elements) (key (eql :in)))
@@ -72,105 +72,153 @@
                                                             :var "FROM-END-"
                                                             :form (khazern:parse-token))))
 
+(defun parse-index (instance)
+  (let ((var (khazern:parse-d-spec :type-spec khazern:*placeholder-result* :ignorable t)))
+    (when (eq (khazern:type-spec var) khazern:*placeholder-result*)
+      (setf (khazern:type-spec var)
+            (if (listp (khazern:var-spec var))
+                'fixnum
+                '(or fixnum list))))
+    (setf (index-ref instance) (khazern:add-binding instance var))))
+
 (defmethod khazern:parse-using
     ((client extension-client) (instance for-as-elements) (key (eql :index)))
-  (setf (index-ref instance)
-        (khazern:add-binding instance
-                             (khazern:parse-d-spec :ignorable t))))
-
+  (parse-index instance))
+  
+(defmethod khazern:parse-using
+    ((client extension-client) (instance for-as-elements) (key (eql :indicies)))
+  (parse-index instance))
+  
 (defmethod khazern:analyze ((client extension-client) (instance for-as-elements))
   (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
     (setf (khazern:type-spec (var instance)) t))
   (unless (from-end-ref instance)
     (setf (from-end-ref instance) (khazern:add-simple-binding instance :var "FROM-END-"
-                                                                       :form nil))))
+                                                              :form nil))))
 
 (defmethod khazern:step-intro-forms ((clause for-as-elements) initialp)
-  (nconc (if initialp
-             `((multiple-value-setq (,(iterator-ref clause) ,(limit-ref clause)
-                                     ,(from-end-ref clause) ,(step-func clause)
-                                     ,(endp-func clause) ,(read-func clause)
-                                     ,(write-func clause) ,(index-func clause))
-                 (if (and (arrayp ,(in-ref clause))
-                          (not (vectorp ,(in-ref clause))))
-                     (let ((start (typecase ,(start-ref clause)
-                                    (null
-                                     0)
-                                    (list
-                                     (apply #'array-row-major-index ,(in-ref clause) ,(start-ref clause)))
-                                    (otherwise
-                                     ,(start-ref clause))))
-                           (end (typecase ,(end-ref clause)
-                                  (null
-                                   (array-total-size ,(in-ref clause)))
-                                  (list
-                                   (apply #'array-row-major-index ,(in-ref clause) ,(end-ref clause)))
-                                  (otherwise
-                                   ,(end-ref clause)))))
-                       (values (if ,(from-end-ref clause)
-                                   (1- end)
-                                   start)
-                               (if ,(from-end-ref clause)
-                                   start
-                                   end)
-                               ,(from-end-ref clause)
-                               (lambda (seq iter from-end-p)
-                                 (declare (ignore seq))
-                                 (if from-end-p
-                                     (1- iter)
-                                     (1+ iter)))
-                               (lambda (seq iter limit from-end-p)
-                                 (declare (ignore seq))
-                                 (if from-end-p
-                                     (< iter limit)
-                                     (>= iter limit)))
-                               #'row-major-aref
-                               (lambda (element seq iter)
-                                 (setf (row-major-aref seq iter) element))
-                               (lambda (array row-major-index)
-                                 (maplist (lambda (x)
-                                            (multiple-value-bind (q r)
-                                                (floor row-major-index (apply '* (cdr x)))
-                                              (setf row-major-index r)
-                                              q))
-                                          (array-dimensions array)))))
-                     #+(or abcl clasp sbcl)
-                     (sequence:make-sequence-iterator ,(in-ref clause)
-                                                      :start ,(start-ref clause)
-                                                      :end ,(end-ref clause)
-                                                      :from-end ,(from-end-ref clause))
-                     #-(or abcl clasp sbcl)
-                     (values (if ,(from-end-ref clause)
-                                 (1- (or ,(end-ref clause)
-                                         (length ,(in-ref clause))))
-                                 ,(start-ref clause))
-                             (if ,(from-end-ref clause)
-                                 ,(start-ref clause)
-                                 (or ,(end-ref clause)
-                                     (length ,(in-ref clause))))
-                             ,(from-end-ref clause)
-                             (lambda (seq iter from-end-p)
-                               (declare (ignore seq))
-                               (if from-end-p
-                                   (1- iter)
-                                   (1+ iter)))
-                             (lambda (seq iter limit from-end-p)
-                               (declare (ignore seq))
-                               (if from-end-p
-                                   (< iter limit)
-                                   (>= iter limit)))
-                             #'elt
-                             (lambda (element seq iter)
-                               (setf (elt seq iter) element))
-                             (lambda (seq iter)
-                               (declare (ignore seq))
-                               iter)))))
-             `((setq ,(iterator-ref clause)
-                     (funcall ,(step-func clause) ,(in-ref clause)
-                              ,(iterator-ref clause) ,(from-end-ref clause)))))
-         `((when (funcall ,(endp-func clause) ,(in-ref clause) ,(iterator-ref clause)
-                          ,(limit-ref clause) ,(from-end-ref clause))
-             (go ,khazern:*epilogue-tag*)))))
+  (with-accessors ((iterator-ref iterator-ref)
+                   (limit-ref limit-ref)
+                   (start-ref start-ref)
+                   (end-ref end-ref)
+                   (from-end-ref from-end-ref)
+                   (step-func step-func)
+                   (endp-func endp-func)
+                   (read-func read-func)
+                   (write-func write-func)
+                   (index-func index-func)
+                   (in-ref in-ref))
+      clause
+    (nconc (if initialp
+               `((multiple-value-setq (,iterator-ref ,limit-ref ,from-end-ref ,step-func
+                                       ,endp-func ,read-func ,write-func ,index-func)
+                   (cond ((null ,in-ref)
+                          (go ,khazern:*epilogue-tag*))
+                         ((and (arrayp ,in-ref) (not (vectorp ,in-ref)))
+                          (let ((start (typecase ,start-ref
+                                         (null
+                                          0)
+                                         (list
+                                          (apply #'array-row-major-index
+                                                 (the array ,in-ref) ,start-ref))
+                                         (otherwise
+                                          ,start-ref)))
+                                (end (typecase ,end-ref
+                                       (null
+                                        (array-total-size (the array ,in-ref)))
+                                       (list
+                                        (apply #'array-row-major-index
+                                               (the array ,in-ref) ,end-ref))
+                                       (otherwise
+                                        ,end-ref))))
+                            (values (if ,from-end-ref
+                                        (1- end)
+                                        start)
+                                    (if ,from-end-ref
+                                        start
+                                        end)
+                                    ,from-end-ref
+                                    (lambda (seq iter from-end-p)
+                                      (declare (ignore seq))
+                                      (if from-end-p
+                                          (1- iter)
+                                          (1+ iter)))
+                                    (lambda (seq iter limit from-end-p)
+                                      (declare (ignore seq))
+                                      (if from-end-p
+                                          (< iter limit)
+                                          (>= iter limit)))
+                                    #'row-major-aref
+                                    (lambda (element seq iter)
+                                      (setf (row-major-aref (the array seq) iter) element))
+                                    (lambda (array row-major-index)
+                                      (maplist (lambda (x)
+                                                 (multiple-value-bind (q r)
+                                                     (floor row-major-index (apply '* (cdr x)))
+                                                   (setf row-major-index r)
+                                                   q))
+                                               (array-dimensions array))))))
+                         #-(or abcl clasp sbcl)
+                         ((and (consp ,in-ref) (not ,from-end-ref))
+                          (let ((index (or ,start-ref 0)))
+                            (values (nthcdr index (the cons ,in-ref))
+                                    (when ,end-ref
+                                      (nthcdr ,end-ref (the cons ,in-ref)))
+                                    nil
+                                    (lambda (seq iter from-end-p)
+                                      (declare (ignore seq from-end-p))
+                                      (incf index)
+                                      (cdr iter))
+                                    (lambda (seq iter limit from-end-p)
+                                      (declare (ignore seq from-end-p))
+                                      (eq iter limit))
+                                    (lambda (seq iter)
+                                      (declare (ignore seq))
+                                      (car iter))
+                                    (lambda (element seq iter)
+                                      (declare (ignore seq))
+                                      (rplaca iter element))
+                                    (lambda (seq iter)
+                                      (declare (ignore seq iter))
+                                      index))))
+                         (t
+                          #+(or abcl clasp sbcl)
+                          (sequence:make-sequence-iterator ,in-ref
+                                                           :start ,start-ref
+                                                           :end ,end-ref
+                                                           :from-end ,from-end-ref)
+                          #-(or abcl clasp sbcl)
+                          (values (if ,from-end-ref
+                                      (1- (or ,end-ref
+                                              (length ,in-ref)))
+                                      ,start-ref)
+                                  (if ,from-end-ref
+                                      ,start-ref
+                                      (or ,end-ref
+                                          (length ,in-ref)))
+                                  ,from-end-ref
+                                  (lambda (seq iter from-end-p)
+                                    (declare (ignore seq))
+                                    (if from-end-p
+                                        (1- iter)
+                                        (1+ iter)))
+                                  (lambda (seq iter limit from-end-p)
+                                    (declare (ignore seq))
+                                    (if from-end-p
+                                        (< iter limit)
+                                        (>= iter limit)))
+                                  #'elt
+                                  (lambda (element seq iter)
+                                    (setf (elt seq iter) element))
+                                  (lambda (seq iter)
+                                    (declare (ignore seq))
+                                    iter))))))
+               `((setq ,iterator-ref
+                       (funcall ,step-func ,in-ref
+                                ,iterator-ref ,from-end-ref))))
+           `((when (funcall ,endp-func ,in-ref ,iterator-ref
+                            ,limit-ref ,from-end-ref)
+               (go ,khazern:*epilogue-tag*))))))
 
 (defmethod khazern:step-outro-forms ((clause for-as-elements) initialp)
   (declare (ignore initialp))
