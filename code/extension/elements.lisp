@@ -140,7 +140,7 @@
                          ((typep ,in-ref 'sequence)
                           #+(or abcl clasp sbcl)
                           (sequence:make-sequence-iterator ,in-ref
-                                                           :start ,start-ref
+                                                           :start (or ,start-ref 0)
                                                            :end ,end-ref
                                                            :from-end ,from-end-ref)
                           #-(or abcl clasp sbcl)
