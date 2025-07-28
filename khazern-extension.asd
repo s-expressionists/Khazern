@@ -17,6 +17,7 @@
                              (:file "for-as-hash")
                              (:file "permutations")
                              (:file "combinations")
+                             (:file "tuples")
                              (:file "cleanup")
                              (:file "sequence-accumulation")
                              (:file "use-clause")))))
