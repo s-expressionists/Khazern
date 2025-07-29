@@ -206,15 +206,16 @@ using-name       ::= {HASH-KEY}
 
 #### ELEMENTS Iteration Path
 
-The ELEMENTS iteration path iterates over sequences. If the extensible
-sequence protocol is available it will use MAKE-SEQUENCE-ITERATOR from
-that protocol. Otherwise it will use ELT and iterate an index into the
-sequence.
+The ELEMENTS iteration path iterates over sequences or
+multidimensional arrays. If the extensible sequence protocol is
+available it will use MAKE-SEQUENCE-ITERATOR from that protocol for
+sequences. Otherwise it will attempt to use an efficient sequence
+specific iterator with ELT as the fallback iterator.
 
 ```
 path-name        ::= {ELEMENT | ELEMENTS}
 preposition-name ::= {IN | OF | START | END | FROM-END}
-using-name       ::= {INDEX}
+using-name       ::= {INDEX | INDICES}
 ```
 
 * The IN and OF prepositions are synonyms and specify the form that
@@ -228,8 +229,9 @@ using-name       ::= {INDEX}
   non-NIL then iteration will go from END to START. Otherwise
   iteration will go from START to END. It is optional and if not
   specified it will default to NIL.
-* The INDEX phrase in USING names a variable to store the current
-  iteration index. It is optional.
+* The INDEX or INDICES phrases in USING names a variable or a list of
+  variables, in the case of multidimensional arrays, to store the
+  current iteration index. It is optional.
 
 ### Stream Iteration
 
@@ -327,6 +329,21 @@ using-name       ::= {}
   step a copy of this sequence is made with the elements permuted.
 * The CHOOSE prepositions is an integer that specifies the length of
   the subsequence to select.
+
+#### TUPLE Iteration Path
+
+The TUPLE iteration path iterates over the all possible tuples of a
+collection of sequences. It is essentially the Cartesian Product.
+
+```
+path-name        ::= {TUPLE | TUPLES}
+preposition-name ::= {IN | OF}
+using-name       ::= {}
+```
+
+* The IN and OF prepositions are a sequence of sequences. Instead of
+  individual sequences non-negative integers are also permitted which
+  imply a sequence of that length with integers less than the length.
 
 ### Value Accumulation
 
