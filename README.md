@@ -402,5 +402,68 @@ KEY preposition.
 ; => #(-9 -8 -7 -6 -5 -4 -3 -2 -1 0 0 1 2 3 4 5 6 7 8 9)
 ```
 
+### Subform Accumulation
+
+The USE binding clause enables the use of value accumulation in subforms
+nested inside of LOOP. The syntax is:
+
+```
+use-clause       ::= USE function-name = accumulation-name
+                     [INTO simple-var] [type-spec]
+function-name     ::= symbol
+accumulation-name ::= {ADJOIN | ADJOINING | APPEND | COLLECT |
+                       DIFFERENCE | DIFFERENCING | DISJOIN | 
+                       DISJOINING | INTERSECTING | INTERSECTION | 
+                       MERGE | NCONC | NDIFFERENCE | NDIFFERENCING |
+                       NINTERSECTING | NINTERSECTION | NUIONION | 
+                       UNION | UNIONING}
+```
+
+A local function will then be created with "function-name" that takes
+a single argument that will be accumulated, along with key arguments for
+any prepositions.
+
+```common-lisp
+(kee:loop use my-collect = collect
+          for i below 10
+          do (my-collect i))
+; => (0 1 2 3 4 5 6 7 8 9)
+(kee:loop use my-adjoin = adjoin
+          for ch across "The quick brown fox jumps over the lazy dog."
+          when (alpha-char-p ch)
+            do (my-adjoin ch :test #'char-equal))
+; => (#\T #\h #\e #\q #\u #\i #\c #\k #\b #\r #\o #\w #\n #\f #\x #\j #\m
+;     #\p #\s #\v #\l #\a #\z #\y #\d #\g)
+(kee:loop use my-max = maximize into q
+          for i from 1 upto 10
+          finally (return q)
+          do (my-max (random i)))
+; => 7
+```
+
+### CLEANUP Clause
+
+The FINALLY clause of CL:LOOP is not guaranteed to be executed and
+therefore is not good place to put cleanup forms from bindings
+introduced from WITH clauses. khazern-extension has the CLEANUP clause
+for this. It has identical syntax as the FINALLY clause, but it places
+its forms inside an UNWIND-PROTECT.
+
+```common-lisp
+(macroexpand-1 '(kee:loop with x = (make-fubar)
+                          cleanup (release-fubar x)))
+; => (BLOCK NIL
+;      (LET ((X NIL) (#:FORM3400 (MAKE-FUBAR)))
+;        (DECLARE (IGNORABLE X))
+;        (SETQ X #:FORM3400)
+;        (UNWIND-PROTECT
+;            (TAGBODY
+;             #:BODY3401
+;              (GO #:BODY3401)
+;             KHAZERN-EXTENSION-EXTRINSIC::EPILOGUE
+;              (RETURN-FROM NIL NIL))
+;          (RELEASE-FUBAR X))))
+```
+
 [Quicklisp]: https://www.quicklisp.org/beta/
 [SICL]: https://github.com/robert-strandh/SICL
