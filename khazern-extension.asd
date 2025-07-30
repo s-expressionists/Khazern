@@ -13,6 +13,7 @@
                 :components ((:file "packages")
                              (:file "interface")
                              (:file "elements")
+                             (:file "entries")
                              (:file "stream")
                              (:file "for-as-hash")
                              (:file "permutations")
