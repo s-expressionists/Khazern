@@ -4,9 +4,9 @@
 
 (defmethod khazern:features-list nconc ((client extension-client))
   (list :loop/khazern-extension
-        :loop/iteration-path/bytes 
-        :loop/iteration-path/characters 
-        :loop/iteration-path/elements 
-        :loop/iteration-path/lines 
-        :loop/iteration-path/objects 
+        :loop/being/bytes 
+        :loop/being/characters 
+        :loop/being/elements 
+        :loop/being/lines 
+        :loop/being/objects 
         :loop/cleanup))

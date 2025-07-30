@@ -29,11 +29,12 @@
                                                        :var "LEN" :type 'fixnum)))
   
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :permutation)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :permutation)) &key var)
   (make-instance 'for-as-permutations :var var))
 
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :permutations)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :permutations))
+     &key var)
   (make-instance 'for-as-permutations :var var))
 
 (defmethod khazern:preposition-names ((client extension-client) (instance for-as-permutations))

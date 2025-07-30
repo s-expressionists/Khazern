@@ -23,11 +23,11 @@
                                                        :type 'list)))
   
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :tuple)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :tuple)) &key var)
   (make-instance 'for-as-tuple :var var))
 
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :tuples)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :tuples)) &key var)
   (make-instance 'for-as-tuple :var var))
 
 (defmethod khazern:preposition-names

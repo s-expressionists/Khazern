@@ -13,7 +13,7 @@
 ;;;
 ;;;   for-as-clause    ::= {FOR | AS} for-as-subclause {and for-as-subclause}* 
 ;;;   for-as-subclause ::= for-as-arithmetic | for-as-in-list | for-as-on-list |
-;;;                        for-as-equals-then | for-as-across | for-as-iteration-path
+;;;                        for-as-equals-then | for-as-across | for-as-being
 
 (defclass for-as-clause (binding-clause parallel-superclause for-as-region)
   ())
@@ -48,30 +48,18 @@
     (setf (type-spec (var clause)) t))
   (check-type-spec (var clause)))
 
-;;; FOR-AS-ITERATION-PATH subclause
+;;; FOR-AS-BEING subclause
 ;;;
 ;;; Grammar:
 ;;;
-;;;   for-as-iteration-path ::= BEING {path-exclusive | path-inclusive}
-;;;                             {path-using | path-preposition}*
-;;;   path-exclusive        ::= {EACH | THE} path
-;;;   path-inclusive        ::= form AND {ITS | EACH | HIS | HER} path
-;;;   path-using            ::= USING ({simple-var simple-var}+)
-;;;   path-preposition      ::= name form
+;;;   for-as-being ::= BEING {EACH | THE}? name {using | preposition}*
+;;;   using        ::= USING ({simple-var simple-var}+)
+;;;   preposition  ::= name form
 
 (defmethod parse-clause
     ((client standard-client) (instance for-as-clause) (keyword (eql :being)) &key var)
-  (let ((region (make-instance 'iteration-path-region)))
-    (if (maybe-parse-token :keywords '(:each :the))
-        (parse-clause client region
-                      (make-parser-name client region (parse-token))
-                      :var var)
-        (let ((form (parse-token)))
-          (parse-token :keywords '(:and))
-          (parse-token :keywords '(:its :each :his :her))
-          (parse-clause client region
-                        (make-parser-name client region (parse-token))
-                        :var var :inclusive-form form)))))
+  (maybe-parse-token :keywords '(:each :the))
+  (do-parse-clause client (make-instance 'being-region) *start* t :var var))
 
 ;;; 6.1.2.1.1 FOR-AS-ARITHMETIC subclause
 ;;;
@@ -480,25 +468,25 @@
   ())
 
 (defmethod parse-clause
-    ((client standard-client) (region iteration-path-region) (name (eql :hash-key)) &key var)
+    ((client standard-client) (region being-region) (name (eql :hash-key)) &key var)
   (make-instance 'for-as-hash-key
                  :var var
                  :start *start*))
 
 (defmethod parse-clause
-    ((client standard-client) (region iteration-path-region) (name (eql :hash-keys)) &key var)
+    ((client standard-client) (region being-region) (name (eql :hash-keys)) &key var)
   (make-instance 'for-as-hash-key
                  :var var
                  :start *start*))
 
 (defmethod parse-clause
-    ((client standard-client) (region iteration-path-region) (name (eql :hash-value)) &key var)
+    ((client standard-client) (region being-region) (name (eql :hash-value)) &key var)
   (make-instance 'for-as-hash-value
                  :var var
                  :start *start*))
 
 (defmethod parse-clause
-    ((client standard-client) (region iteration-path-region) (name (eql :hash-values)) &key var)
+    ((client standard-client) (region being-region) (name (eql :hash-values)) &key var)
   (make-instance 'for-as-hash-value
                  :var var
                  :start *start*))
@@ -515,7 +503,7 @@
 
 (defmethod parse-preposition ((client standard-client) (instance for-as-hash) key)
   (when (var-spec (other-var instance))
-    (warn 'invalid-iteration-path-preposition-order
+    (warn 'preposition-order
           :first-preposition :using
           :second-preposition :in
           :name (if (typep instance 'for-as-hash-key)
@@ -591,21 +579,21 @@
         (temp-symbol-var instance) (add-simple-binding instance :var "SYMBOL")))
 
 (defmethod parse-clause
-    ((client standard-client) (region iteration-path-region) (name (eql :symbol)) &key var)
+    ((client standard-client) (region being-region) (name (eql :symbol)) &key var)
   (make-instance 'for-as-package
                  :start *start*
                  :var var
                  :iterator-keywords '(:internal :external :inherited)))
 
 (defmethod parse-clause
-    ((client standard-client) (region iteration-path-region) (name (eql :symbols)) &key var)
+    ((client standard-client) (region being-region) (name (eql :symbols)) &key var)
   (make-instance 'for-as-package
                  :start *start*
                  :var var
                  :iterator-keywords '(:internal :external :inherited)))
 
 (defmethod parse-clause
-    ((client standard-client) (region iteration-path-region) (name (eql :present-symbol))
+    ((client standard-client) (region being-region) (name (eql :present-symbol))
      &key var)
   (make-instance 'for-as-package
                  :start *start*
@@ -613,7 +601,7 @@
                  :iterator-keywords '(:internal :external)))
 
 (defmethod parse-clause
-    ((client standard-client) (region iteration-path-region) (name (eql :present-symbols))
+    ((client standard-client) (region being-region) (name (eql :present-symbols))
      &key var)
   (make-instance 'for-as-package
                  :start *start*
@@ -621,7 +609,7 @@
                  :iterator-keywords '(:internal :external)))
 
 (defmethod parse-clause
-    ((client standard-client) (region iteration-path-region) (name (eql :external-symbol))
+    ((client standard-client) (region being-region) (name (eql :external-symbol))
      &key var)
   (make-instance 'for-as-package
                  :start *start*
@@ -629,7 +617,7 @@
                  :iterator-keywords '(:external)))
 
 (defmethod parse-clause
-    ((client standard-client) (region iteration-path-region) (name (eql :external-symbols))
+    ((client standard-client) (region being-region) (name (eql :external-symbols))
      &key var)
   (make-instance 'for-as-package
                  :start *start*

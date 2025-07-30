@@ -24,11 +24,12 @@
                                                        :var "POS" :type 'fixnum)))
   
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :combination)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :combination)) &key var)
   (make-instance 'for-as-combinations :var var))
 
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :combinations)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :combinations))
+     &key var)
   (make-instance 'for-as-combinations :var var))
 
 (defmethod khazern:preposition-names ((client extension-client) (instance for-as-combinations))

@@ -12,16 +12,7 @@
           (class-name (class-of (region condition)))))
 
 (defmethod acclimation:report-condition
-    ((condition unknown-iteration-path) stream (language acclimation:english))
-  (format stream
-          "~@<Unknown ~:[~;inclusive ~]iteration path ~a with client ~
-           ~a~@[ in clause `~{~s~^ ~}`~].~:@>"
-          (inclusivep condition) (name condition)
-          (class-name (class-of (client condition)))
-          (clause condition)))
-
-(defmethod acclimation:report-condition
-    ((condition invalid-iteration-path-preposition-order) stream (language acclimation:english))
+    ((condition invalid-preposition-order) stream (language acclimation:english))
   (format stream
           "~@<Preposition order of ~a followed by ~a is invalid for ~:[~;inclusive ~]iteration ~
 path ~a~@[ in clause `~{~s~^ ~}`~].~:@>"

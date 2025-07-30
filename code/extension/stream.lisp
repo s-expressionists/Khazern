@@ -85,11 +85,11 @@
 (defclass for-as-bytes (for-as-stream) ())
 
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :byte)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :byte)) &key var)
   (make-instance 'for-as-bytes :var var))
 
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :bytes)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :bytes)) &key var)
   (make-instance 'for-as-bytes :var var))
 
 (defmethod khazern:analyze ((client extension-client) (instance for-as-bytes))
@@ -117,11 +117,11 @@
            (call-next-method))))
 
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :character)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :character)) &key var)
   (make-instance 'for-as-characters :var var))
 
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :characters)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :characters)) &key var)
   (make-instance 'for-as-characters :var var))
 
 (defclass for-as-objects (for-as-stream) ())
@@ -138,12 +138,12 @@
            (call-next-method))))
 
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :object)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :object)) &key var)
   (declare (ignore inclusive-form))
   (make-instance 'for-as-objects :var var))
 
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :objects)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :objects)) &key var)
   (make-instance 'for-as-objects :var var))
 
 (defclass for-as-lines (for-as-stream)
@@ -151,11 +151,11 @@
                            :initform (gensym "MISS"))))
 
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :line)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :line)) &key var)
   (make-instance 'for-as-lines :var var))
 
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :lines)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :lines)) &key var)
   (make-instance 'for-as-lines :var var))
 
 (defmethod khazern:preposition-names ((client extension-client) (instance for-as-stream))

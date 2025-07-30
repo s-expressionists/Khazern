@@ -24,16 +24,7 @@
    (%name :reader name
           :initarg :name)))
 
-(define-condition unknown-iteration-path (loop-parse-error)
-  ((%client :reader client
-            :initarg :client)
-   (%name :reader name
-          :initarg :name)
-   (%inclusive :reader inclusivep
-               :initarg :inclusive
-               :initform nil)))
-
-(define-condition invalid-iteration-path-preposition-order (style-warning acclimation:condition)
+(define-condition invalid-preposition-order (style-warning acclimation:condition)
   ((%name :reader name
           :initarg :name)
    (%inclusive :reader inclusivep

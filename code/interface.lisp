@@ -14,7 +14,7 @@ macro stubs LOOP and LOOP-FINISH."))
 
 (defclass for-as-region () ())
 
-(defclass iteration-path-region () ())
+(defclass being-region () ())
 
 (defclass with-region () ())
 

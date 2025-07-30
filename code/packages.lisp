@@ -36,9 +36,10 @@
            #:expand-body
            #:features-list
            #:for-as-hash
+           #:for-as-region
            #:form
            #:ignorablep
-           #:iteration-path-region
+           #:being-region
            #:list-scope
            #:make-scope
            #:map-variables

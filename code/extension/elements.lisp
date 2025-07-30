@@ -292,9 +292,14 @@
 		                                ,(iterator-ref clause))))))
 
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :element)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :element)) &key var)
   (make-instance 'for-as-elements :var var))
 
 (defmethod khazern:parse-clause
-    ((client extension-client) (region khazern:iteration-path-region) (name (eql :elements)) &key var)
+    ((client extension-client) (region khazern:being-region) (name (eql :elements)) &key var)
+  (make-instance 'for-as-elements :var var))
+
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:for-as-region) (name (eql :over)) &key var)
+  (khazern:unparse-token :in)
   (make-instance 'for-as-elements :var var))
