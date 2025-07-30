@@ -9,10 +9,10 @@
     ((client extension-client) (region khazern:body-region) (keyword (eql :use)) &key)
   (let ((instance (make-instance 'use-clause :start khazern:*start*)))
     (setf (khazern:subclauses instance)
-          (khazern:parse-conjunctive-clauses client instance
-                                              :name (prog1
-                                                        (khazern:parse-token :type'khazern:simple-var)
-                                                      (khazern:parse-token :keywords '(:=))))
+          (khazern:parse-conjunctive-clauses client instance t
+                                             :name (prog1
+                                                       (khazern:parse-token :type'khazern:simple-var)
+                                                     (khazern:parse-token :keywords '(:=))))
           (khazern:end instance) khazern:*index*)
     instance))
 

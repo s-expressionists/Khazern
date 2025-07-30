@@ -14,6 +14,10 @@ macro stubs LOOP and LOOP-FINISH."))
 
 (defclass for-as-region () ())
 
+(defclass iteration-path-region () ())
+
+(defclass with-region () ())
+
 ;;; Variable mapping
 
 (defgeneric map-variables (function instance)
@@ -188,10 +192,6 @@ the accumulation variable.")
 
 (defgeneric parse-clause (client region name &key)
   (:documentation "Parse a clause based on its keyword name."))
-
-(defgeneric make-iteration-path (client name var &optional inclusive-form)
-  (:documentation "Make an iteration path based on client and name. The name will be a
-keyword. INCLUSIVE-FORM will be included if the iteration path was inclusive."))
 
 (defgeneric preposition-names (client instance)
   (:documentation "Return (VALUES PREPOSITION-NAMES REQUIRED-PREPOSITION-NAMES USING-NAMES).

@@ -22,21 +22,13 @@
                                                        :var "LEN"
                                                        :type 'list)))
   
-(defmethod khazern:make-iteration-path
-    ((client extension-client) (name (eql :tuple)) var
-     &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore inclusive-form))
-  (if inclusive-form-p
-      (call-next-method)
-      (make-instance 'for-as-tuple :var var)))
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:iteration-path-region) (name (eql :tuple)) &key var)
+  (make-instance 'for-as-tuple :var var))
 
-(defmethod khazern:make-iteration-path
-    ((client extension-client) (name (eql :tuples)) var
-     &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore inclusive-form))
-  (if inclusive-form-p
-      (call-next-method)
-      (make-instance 'for-as-tuple :var var)))
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:iteration-path-region) (name (eql :tuples)) &key var)
+  (make-instance 'for-as-tuple :var var))
 
 (defmethod khazern:preposition-names
     ((client extension-client) (instance for-as-tuple))

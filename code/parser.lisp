@@ -83,8 +83,12 @@
          :region region
          :name token))
 
-(defun do-parse-clause (client region *start* &rest args)
-  (apply #'parse-clause client region (make-parser-name client region (parse-token)) args))
+(defun do-parse-clause (client region *start* read-name-p &rest args)
+  (apply #'parse-clause
+         client region
+         (when read-name-p
+           (make-parser-name client region (parse-token)))
+         args))
 
 (defun parse-type-spec (&key (default-type-spec t) ((:var-spec *var-spec*) nil))
   (if (maybe-parse-token :keywords '(:of-type))
@@ -125,12 +129,12 @@
          (go next)))
      (return (nreverse forms))))
 
-(defmacro parse-conjunctive-clauses (client region &rest args)
+(defmacro parse-conjunctive-clauses (client region read-name-p &rest args)
   (let ((clauses-var (gensym "CLAUSES"))
         (next-tag (gensym "NEXT")))
     `(prog (,clauses-var)
       ,next-tag
-        (push (do-parse-clause ,client ,region *index* ,@args)
+        (push (do-parse-clause ,client ,region *index* ,read-name-p ,@args)
               ,clauses-var)
         (when (maybe-parse-token :keywords '(:and))
           (go ,next-tag))
@@ -140,7 +144,7 @@
   (prog ((region (make-instance 'extended-superclause))
          clauses)
    next
-     (push (do-parse-clause client region *index*) clauses)
+     (push (do-parse-clause client region *index* t) clauses)
      (when *tokens*
        (go next))
      (setf (subclauses region) (nreverse clauses))
@@ -198,14 +202,15 @@
                (t
                 (multiple-value-setq (foundp token keyword)
                   (maybe-parse-token :keywords preposition-names))))
-         (unless foundp
-           (return instance))
-         (setf preposition-names (delete-name keyword preposition-names)
-               required-preposition-names (delete-name keyword required-preposition-names))
-         (if (eq keyword :using)
-             (parse-usings client instance using-names (parse-token :type 'cons))
-             (parse-preposition client instance keyword))
-         (go next-preposition)))))
+         (when foundp
+           (setf preposition-names (delete-name keyword preposition-names)
+                 required-preposition-names (delete-name keyword required-preposition-names))
+           (if (eq keyword :using)
+               (parse-usings client instance using-names (parse-token :type 'cons))
+               (parse-preposition client instance keyword))
+           (go next-preposition)))))
+  (setf (end instance) *index*)
+  instance)
 
 (defun parse-accumulation (client instance
                            &key (default-type-spec t) ((:parse-type-spec parse-type-spec-p) nil)
@@ -217,6 +222,5 @@
                                    :category category
                                    :scope-references scope-references))
   (parse-prepositions client instance)
-  (setf (end instance) *index*)
   instance)
 

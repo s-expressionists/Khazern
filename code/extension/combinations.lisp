@@ -23,21 +23,13 @@
         (pos-ref instance) (khazern:add-simple-binding instance
                                                        :var "POS" :type 'fixnum)))
   
-(defmethod khazern:make-iteration-path
-    ((client extension-client) (name (eql :combination)) var
-     &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore inclusive-form))
-  (if inclusive-form-p
-      (call-next-method)
-      (make-instance 'for-as-combinations :var var)))
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:iteration-path-region) (name (eql :combination)) &key var)
+  (make-instance 'for-as-combinations :var var))
 
-(defmethod khazern:make-iteration-path
-    ((client extension-client) (name (eql :combinations)) var
-     &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore inclusive-form))
-  (if inclusive-form-p
-      (call-next-method)
-      (make-instance 'for-as-combinations :var var)))
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:iteration-path-region) (name (eql :combinations)) &key var)
+  (make-instance 'for-as-combinations :var var))
 
 (defmethod khazern:preposition-names ((client extension-client) (instance for-as-combinations))
   (values '((:in :of) :choose)

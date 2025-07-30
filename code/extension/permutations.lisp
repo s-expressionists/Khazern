@@ -28,21 +28,13 @@
         (len-ref instance) (khazern:add-simple-binding instance
                                                        :var "LEN" :type 'fixnum)))
   
-(defmethod khazern:make-iteration-path
-    ((client extension-client) (name (eql :permutation)) var
-     &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore inclusive-form))
-  (if inclusive-form-p
-      (call-next-method)
-      (make-instance 'for-as-permutations :var var)))
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:iteration-path-region) (name (eql :permutation)) &key var)
+  (make-instance 'for-as-permutations :var var))
 
-(defmethod khazern:make-iteration-path
-    ((client extension-client) (name (eql :permutations)) var
-     &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore inclusive-form))
-  (if inclusive-form-p
-      (call-next-method)
-      (make-instance 'for-as-permutations :var var)))
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:iteration-path-region) (name (eql :permutations)) &key var)
+  (make-instance 'for-as-permutations :var var))
 
 (defmethod khazern:preposition-names ((client extension-client) (instance for-as-permutations))
   (values '((:in :of))

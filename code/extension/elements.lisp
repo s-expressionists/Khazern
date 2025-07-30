@@ -291,18 +291,10 @@
                                       `(funcall ,(index-func clause) ,(in-ref clause)
 		                                ,(iterator-ref clause))))))
 
-(defmethod khazern:make-iteration-path
-    ((client extension-client) (name (eql :element)) var
-     &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore inclusive-form))
-  (if inclusive-form-p
-      (call-next-method)
-      (make-instance 'for-as-elements :var var)))
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:iteration-path-region) (name (eql :element)) &key var)
+  (make-instance 'for-as-elements :var var))
 
-(defmethod khazern:make-iteration-path
-    ((client extension-client) (name (eql :elements)) var
-     &optional (inclusive-form nil inclusive-form-p))
-  (declare (ignore inclusive-form))
-  (if inclusive-form-p
-      (call-next-method)
-      (make-instance 'for-as-elements :var var)))
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:iteration-path-region) (name (eql :elements)) &key var)
+  (make-instance 'for-as-elements :var var))

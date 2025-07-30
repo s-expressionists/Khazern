@@ -23,27 +23,30 @@
 
 (defun parse-conditional-clause-tail (client instance)
   (setf (then-clauses instance)
-        (parse-conjunctive-clauses client instance))
+        (parse-conjunctive-clauses client instance t))
   (when (maybe-parse-token :keywords '(:else))
     (setf (else-clauses instance)
-          (parse-conjunctive-clauses client instance)))
+          (parse-conjunctive-clauses client instance t)))
   (maybe-parse-token :keywords '(:end))
   (setf (end instance) *index*)
   instance)
 
-(defmethod parse-clause (client (region selectable-region) (keyword (eql :if)) &key)
+(defmethod parse-clause
+    ((client standard-client) (region selectable-region) (keyword (eql :if)) &key)
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
                                                 :start *start*
                                                 :condition (parse-token))))
 
-(defmethod parse-clause (client (region selectable-region) (keyword (eql :when)) &key)
+(defmethod parse-clause
+    ((client standard-client) (region selectable-region) (keyword (eql :when)) &key)
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
                                                 :start *start*
                                                 :condition (parse-token))))
 
-(defmethod parse-clause (client (region selectable-region) (keyword (eql :unless)) &key)
+(defmethod parse-clause
+    ((client standard-client) (region selectable-region) (keyword (eql :unless)) &key)
   (parse-conditional-clause-tail client
                                  (make-instance 'conditional-clause
                                                 :start *start*

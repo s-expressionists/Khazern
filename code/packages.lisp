@@ -38,8 +38,8 @@
            #:for-as-hash
            #:form
            #:ignorablep
+           #:iteration-path-region
            #:list-scope
-           #:make-iteration-path
            #:make-scope
            #:map-variables
            #:maybe-parse-token
@@ -77,4 +77,5 @@
            #:var
            #:var-spec
            #:variable-list
+           #:with-region
            #:wrap-forms))
