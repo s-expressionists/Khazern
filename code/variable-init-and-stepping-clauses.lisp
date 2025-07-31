@@ -8,8 +8,8 @@
 ;;;   for-as-subclause ::= for-as-arithmetic | for-as-in-list | for-as-on-list |
 ;;;                        for-as-equals-then | for-as-across | for-as-hash | for-as-package 
 ;;;
-;;; Since Khazern supports for-as-hash and for-as-package via iteration path extensions the
-;;; grammar is modified:
+;;; Since Khazern supports for-as-hash and for-as-package via for-as-being the grammar is
+;;; modified:
 ;;;
 ;;;   for-as-clause    ::= {FOR | AS} for-as-subclause {and for-as-subclause}* 
 ;;;   for-as-subclause ::= for-as-arithmetic | for-as-in-list | for-as-on-list |
@@ -112,9 +112,7 @@
 ;;; FOR-AS-ARITHMETIC parsers
 
 (defmethod preposition-names ((client standard-client) (instance for-as-arithmetic))
-  (values '((:from :upfrom :downfrom)
-            (:to :upto :downto :above :below)
-            :by)
+  (values '((:from :upfrom :downfrom) (:to :upto :downto :above :below) :by)
           '()
           '()))
 
@@ -156,9 +154,7 @@
 (defun parse-for-as-arithmetic (client keyword var)
   (check-nullable-simple-var-spec var)
   (unparse-token keyword)
-  (make-instance 'for-as-arithmetic
-                 :start *start*
-                 :var var))
+  (make-instance 'for-as-arithmetic :start *start* :var var))
 
 (defmethod parse-clause
     ((client standard-client) (region for-as-region) (keyword (eql :from)) &key var)
@@ -275,12 +271,18 @@
   (add-binding instance (var instance)))
 
 (defmethod preposition-names ((client standard-client) (instance for-as-list))
-  (values '(:in :by)
-          '(:in)
+  (values '((:in :of) :by)
+          '((:in :of))
           '()))
 
-(defmethod parse-preposition ((client standard-client) (instance for-as-list) (name (eql :in)))
+(defun parse-for-as-list-of (instance)
   (setf (rest-var instance) (add-simple-binding instance :var "REST" :form (parse-token))))
+
+(defmethod parse-preposition ((client standard-client) (instance for-as-list) (name (eql :in)))
+  (parse-for-as-list-of instance))
+
+(defmethod parse-preposition ((client standard-client) (instance for-as-list) (name (eql :of)))
+  (parse-for-as-list-of instance))
 
 (defmethod parse-preposition ((client standard-client) (instance for-as-list) (name (eql :by)))
   (setf (by-ref instance)
@@ -295,12 +297,12 @@
 
 (defmethod parse-clause
     ((client standard-client) (region for-as-region) (keyword (eql :in)) &key var)
-  (unparse-token :in)
+  (unparse-token :of)
   (make-instance 'for-as-in-list :start *start* :var var))
 
 (defmethod parse-clause
     ((client standard-client) (region for-as-region) (keyword (eql :on)) &key var)
-  (unparse-token :in)
+  (unparse-token :of)
   (make-instance 'for-as-on-list :start *start* :var var))
 
 (defmethod step-intro-forms ((clause for-as-list) initialp)
@@ -365,9 +367,7 @@
 (defmethod parse-clause
     ((client standard-client) (region for-as-region) (keyword (eql :=)) &key var)
   (unparse-token keyword)
-  (make-instance 'for-as-equals-then
-                 :start *start*
-                 :var var))
+  (make-instance 'for-as-equals-then :start *start* :var var))
 
 (defmethod analyze ((client standard-client) (clause for-as-equals-then))
   (when (eq (type-spec (var clause)) *placeholder-result*)
@@ -401,22 +401,27 @@
                                                           :type 'fixnum)))
 
 (defmethod preposition-names ((client standard-client) (instance for-as-across))
-  (values '(:in)
-          '(:in)
+  (values '((:in :of))
+          '((:in :of))
           '()))
 
-(defmethod parse-preposition
-    ((client standard-client) (instance for-as-across) (name (eql :in)))
+(defun parse-for-as-across-of (instance)
   (setf (form-ref instance) (add-simple-binding instance :var "VECTOR"
                                                          :form (parse-token)
                                                          :type 'vector)))
 
+(defmethod parse-preposition
+    ((client standard-client) (instance for-as-across) (name (eql :in)))
+  (parse-for-as-across-of instance))
+
+(defmethod parse-preposition
+    ((client standard-client) (instance for-as-across) (name (eql :of)))
+  (parse-for-as-across-of instance))
+
 (defmethod parse-clause
     ((client standard-client) (region for-as-region) (keyword (eql :across)) &key var)
-  (unparse-token :in)
-  (make-instance 'for-as-across
-                 :start *start*
-                 :var var))
+  (unparse-token :of)
+  (make-instance 'for-as-across :start *start* :var var))
 
 (defmethod step-intro-forms ((clause for-as-across) initialp)
   `(,(if initialp
@@ -445,7 +450,7 @@
 ;;; before IN/OF. In this case a STYLE-WARNING is signalled since the ANSI specification does
 ;;; not permit such an ordering.
 
-(defclass for-as-hash (for-as-subclause form-ref-mixin other-var-mixin)
+(defclass being-hash-entries (for-as-subclause form-ref-mixin other-var-mixin)
   ((%temp-entry-p-var :accessor temp-entry-p-var)
    (%temp-key-var :accessor temp-key-var)
    (%temp-value-var :accessor temp-value-var)
@@ -454,59 +459,51 @@
   (:default-initargs :other-var (make-instance 'destructuring-binding
                                                :var-spec nil)))
 
-(defmethod initialize-instance :after ((instance for-as-hash) &rest initargs &key)
+(defmethod initialize-instance :after ((instance being-hash-entries) &rest initargs &key)
   (declare (ignore initargs))
   (add-binding instance (var instance))
   (setf (temp-entry-p-var instance) (add-simple-binding instance :var "ENTRYP")
         (temp-key-var instance) (add-simple-binding instance :var "KEY" :ignorable t)
         (temp-value-var instance) (add-simple-binding instance :var "VALUE" :ignorable t)))
 
-(defclass for-as-hash-key (for-as-hash)
+(defclass being-hash-keys (being-hash-entries)
   ())
 
-(defclass for-as-hash-value (for-as-hash)
+(defclass being-hash-values (being-hash-entries)
   ())
 
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :hash-key)) &key var)
-  (make-instance 'for-as-hash-key
-                 :var var
-                 :start *start*))
+  (make-instance 'being-hash-keys :var var :start *start*))
 
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :hash-keys)) &key var)
-  (make-instance 'for-as-hash-key
-                 :var var
-                 :start *start*))
+  (make-instance 'being-hash-keys :var var :start *start*))
 
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :hash-value)) &key var)
-  (make-instance 'for-as-hash-value
-                 :var var
-                 :start *start*))
+  (make-instance 'being-hash-values :var var :start *start*))
 
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :hash-values)) &key var)
-  (make-instance 'for-as-hash-value
-                 :var var
-                 :start *start*))
+  (make-instance 'being-hash-values :var var :start *start*))
 
-(defmethod preposition-names ((client standard-client) (instance for-as-hash-key))
+(defmethod preposition-names ((client standard-client) (instance being-hash-keys))
   (values '((:in :of))
           '((:in :of))
           '(:hash-value)))
                      
-(defmethod preposition-names ((client standard-client) (instance for-as-hash-value))
+(defmethod preposition-names ((client standard-client) (instance being-hash-values))
   (values '((:in :of))
           '((:in :of))
           '(:hash-key)))
 
-(defmethod parse-preposition ((client standard-client) (instance for-as-hash) key)
+(defmethod parse-preposition ((client standard-client) (instance being-hash-entries) key)
   (when (var-spec (other-var instance))
     (warn 'preposition-order
           :first-preposition :using
           :second-preposition :in
-          :name (if (typep instance 'for-as-hash-key)
+          :name (if (typep instance 'being-hash-keys)
                     :hash-key
                     :hash-value)
           :clause (when (numberp *start*)
@@ -514,22 +511,29 @@
   (setf (form-ref instance) (add-simple-binding instance :var "HT" :form (parse-token)
                                                          :type 'hash-table)))
 
-(defmethod parse-using ((client standard-client) (instance for-as-hash) key)
-  (declare (ignore key))
+(defun parse-being-hash-entries-other (instance)
   (setf (other-var instance) (add-binding instance
                                           (parse-var-spec :ignorable t))))
 
-(defmethod analyze ((client standard-client) (clause for-as-hash))
+(defmethod parse-using
+    ((client standard-client) (instance being-hash-keys) (key (eql :hash-value)))
+  (parse-being-hash-entries-other instance))
+
+(defmethod parse-using
+    ((client standard-client) (instance being-hash-values) (key (eql :hash-key)))
+  (parse-being-hash-entries-other instance))
+
+(defmethod analyze ((client standard-client) (clause being-hash-entries))
   (when (eq (type-spec (var clause)) *placeholder-result*)
     (setf (type-spec (var clause)) t))
   (check-type-spec (var clause)))
 
-(defmethod wrap-forms ((subclause for-as-hash) forms)
+(defmethod wrap-forms ((subclause being-hash-entries) forms)
   `((with-hash-table-iterator
         (,(iterator-var subclause) ,(form-ref subclause))
       ,@forms)))
 
-(defmethod step-intro-forms ((clause for-as-hash) initialp)
+(defmethod step-intro-forms ((clause being-hash-entries) initialp)
   (declare (ignore initialp))
   `((multiple-value-setq (,(temp-entry-p-var clause)
                           ,(temp-key-var clause)
@@ -538,14 +542,14 @@
     (unless ,(temp-entry-p-var clause)
       (go ,*epilogue-tag*))))
 
-(defmethod step-outro-forms ((clause for-as-hash-key) initialp)
+(defmethod step-outro-forms ((clause being-hash-keys) initialp)
   (declare (ignore initialp))
   (nconc (destructuring-set (var clause)
                             (temp-key-var clause))
          (destructuring-set (other-var clause)
                             (temp-value-var clause))))
 
-(defmethod step-outro-forms ((clause for-as-hash-value) initialp)
+(defmethod step-outro-forms ((clause being-hash-values) initialp)
   (declare (ignore initialp))
   (nconc (destructuring-set (var clause)
                             (temp-value-var clause))
@@ -563,31 +567,46 @@
 ;;; FOR-AS-PACKAGE is implmented as the SYMBOL(S)/PRESENT-SYMBOL(S)/EXTERNAL-SYMBOL(S) iteration
 ;;; path extension.
 
-(defclass for-as-package (for-as-subclause form-ref-mixin)
-  ((%temp-entry-p-var :accessor temp-entry-p-var)
-   (%temp-symbol-var :accessor temp-symbol-var)
+(defclass being-package-symbols (for-as-subclause form-ref-mixin)
+  ((%entryp-var :accessor entryp-var)
+   (%sym-var :accessor sym-var)
+   (%acc-type-var :accessor acc-type-var)
+   (%pkg-var :accessor pkg-var)
+   (%acc-type-ref :accessor acc-type-ref
+                  :initform nil)
+   (%pkg-ref :accessor pkg-ref
+             :initform nil)
    (%iterator-var :reader iterator-var
                   :initform (gensym "ITER"))
    (%iterator-keywords :reader iterator-keywords
                        :initarg :iterator-keywords))
   (:default-initargs :form-ref '*package*))
 
-(defmethod initialize-instance :after ((instance for-as-package) &rest initargs &key)
+(defmethod initialize-instance :after ((instance being-package-symbols) &rest initargs &key)
   (declare (ignore initargs))
   (add-binding instance (var instance))
-  (setf (temp-entry-p-var instance) (add-simple-binding instance :var "ENTRYP")
-        (temp-symbol-var instance) (add-simple-binding instance :var "SYMBOL")))
+  (setf (entryp-var instance) (add-simple-binding instance :var "ENTRYP")
+        (sym-var instance) (add-simple-binding instance :var "SYM"
+                                                        :type 'symbol
+                                                        :ignorable t)
+        (acc-type-var instance) (add-simple-binding instance :var "ACC"
+                                                             :type 'symbol
+                                                             :ignorable t)
+        (pkg-var instance) (add-simple-binding instance :var "PKG"
+                                                        :type '(or character string symbol
+                                                                   package)
+                                                        :ignorable t)))
 
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :symbol)) &key var)
-  (make-instance 'for-as-package
+  (make-instance 'being-package-symbols
                  :start *start*
                  :var var
                  :iterator-keywords '(:internal :external :inherited)))
 
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :symbols)) &key var)
-  (make-instance 'for-as-package
+  (make-instance 'being-package-symbols
                  :start *start*
                  :var var
                  :iterator-keywords '(:internal :external :inherited)))
@@ -595,7 +614,7 @@
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :present-symbol))
      &key var)
-  (make-instance 'for-as-package
+  (make-instance 'being-package-symbols
                  :start *start*
                  :var var
                  :iterator-keywords '(:internal :external)))
@@ -603,7 +622,7 @@
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :present-symbols))
      &key var)
-  (make-instance 'for-as-package
+  (make-instance 'being-package-symbols
                  :start *start*
                  :var var
                  :iterator-keywords '(:internal :external)))
@@ -611,7 +630,7 @@
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :external-symbol))
      &key var)
-  (make-instance 'for-as-package
+  (make-instance 'being-package-symbols
                  :start *start*
                  :var var
                  :iterator-keywords '(:external)))
@@ -619,46 +638,80 @@
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :external-symbols))
      &key var)
-  (make-instance 'for-as-package
+  (make-instance 'being-package-symbols
                  :start *start*
                  :var var
                  :iterator-keywords '(:external)))
 
-(defmethod preposition-names ((client standard-client) (instance for-as-package))
+(defmethod preposition-names ((client standard-client) (instance being-package-symbols))
   (values '((:in :of))
           '()
           '()))
 
-(defmethod parse-preposition ((client standard-client) (instance for-as-package) key)
+(defun parse-being-package-symbols-of (instance)
   (setf (form-ref instance) (add-simple-binding instance :var "PKG" :form (parse-token)
                                                          :type '(or character string symbol
-                                                                 package))))
+                                                                    package list))))
 
-(defmethod analyze ((client standard-client) (clause for-as-package))
+(defmethod parse-preposition
+    ((client standard-client) (instance being-package-symbols) (key (eql :in)))
+  (parse-being-package-symbols-of instance))
+
+(defmethod parse-preposition
+    ((client standard-client) (instance being-package-symbols) (key (eql :of)))
+  (parse-being-package-symbols-of instance))
+
+(defmethod parse-using
+    ((client standard-client) (instance being-package-symbols) (key (eql :accessibility-type)))
+  (setf (acc-type-ref instance) (add-simple-binding instance :var (parse-token :type 'simple-var)
+                                                             :form nil
+                                                             :type 'symbol)))
+
+(defmethod parse-using
+    ((client standard-client) (instance being-package-symbols) (key (eql :package)))
+  (setf (pkg-ref instance) (add-simple-binding instance :var (parse-token :type 'simple-var)
+                                                        :form nil
+                                                        :type '(or character string symbol
+                                                                   package))))
+
+(defmethod analyze ((client standard-client) (clause being-package-symbols))
   (check-nullable-simple-var-spec (var clause))
   (when (eq (type-spec (var clause)) *placeholder-result*)
     (setf (type-spec (var clause)) t))
   (check-type-spec (var clause)))
 
-(defmethod wrap-forms ((subclause for-as-package) forms)
+(defmethod wrap-forms ((subclause being-package-symbols) forms)
   `((with-package-iterator
         (,(iterator-var subclause)
          ,(form-ref subclause)
          ,@(iterator-keywords subclause))
       ,@forms)))
 
-(defmethod step-intro-forms ((clause for-as-package) initialp)
+(defmethod step-intro-forms ((clause being-package-symbols) initialp)
   (declare (ignore initialp))
-  `((multiple-value-setq (,(temp-entry-p-var clause)
-                          ,(temp-symbol-var clause))
-      (,(iterator-var clause)))
-    (unless ,(temp-entry-p-var clause)
-      (go ,*epilogue-tag*))))
+  (with-accessors ((entryp-var entryp-var)
+                   (sym-var sym-var)
+                   (acc-type-var acc-type-var)
+                   (pkg-var pkg-var)
+                   (iterator-var iterator-var))
+      clause
+    `((multiple-value-setq (,entryp-var ,sym-var ,acc-type-var ,pkg-var)
+        (,iterator-var))
+      (unless ,entryp-var
+        (go ,*epilogue-tag*)))))
 
-(defmethod step-outro-forms ((clause for-as-package) initialp)
+(defmethod step-outro-forms ((clause being-package-symbols) initialp)
   (declare (ignore initialp))
-  (destructuring-set (var clause)
-                     (temp-symbol-var clause)))
+  (with-accessors ((sym-var sym-var)
+                   (acc-type-var acc-type-var)
+                   (acc-type-ref acc-type-ref)
+                   (pkg-var pkg-var)
+                   (pkg-ref pkg-ref)
+                   (var var))
+      clause
+    (nconc (destructuring-set var sym-var)
+           (simple-set acc-type-ref acc-type-var
+                       pkg-ref pkg-var))))
 
 ;;; 6.1.2.2 WITH clause
 ;;;

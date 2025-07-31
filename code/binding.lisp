@@ -175,3 +175,16 @@
       binding
     (when var-spec
       `((,var-spec ,form)))))
+
+(defun simple-set (&rest pairs)
+  (prog ((head pairs)
+         result)
+   next
+     (cond ((null head)
+            (return (when result
+                      `((setq ,@(nreverse result))))))
+           ((car head)
+            (push (first head) result)
+            (push (second head) result)))
+     (setq head (cddr head))
+     (go next)))

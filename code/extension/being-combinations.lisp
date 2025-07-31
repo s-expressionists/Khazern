@@ -1,6 +1,6 @@
 (cl:in-package #:khazern-extension)
 
-(defclass for-as-combinations (khazern:clause)
+(defclass being-combinations (khazern:clause)
   ((%var :accessor var
          :initarg :var)
    (%result-type :accessor result-type)
@@ -10,7 +10,7 @@
    (%len-ref :accessor len-ref)
    (%pos-ref :accessor pos-ref)))
 
-(defmethod initialize-instance :after ((instance for-as-combinations) &rest initargs &key)
+(defmethod initialize-instance :after ((instance being-combinations) &rest initargs &key)
   (declare (ignore initargs))
   (khazern:add-binding instance (var instance))
   (setf (comb-ref instance) (khazern:add-simple-binding instance
@@ -25,14 +25,14 @@
   
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :combination)) &key var)
-  (make-instance 'for-as-combinations :var var))
+  (make-instance 'being-combinations :var var))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :combinations))
      &key var)
-  (make-instance 'for-as-combinations :var var))
+  (make-instance 'being-combinations :var var))
 
-(defmethod khazern:preposition-names ((client extension-client) (instance for-as-combinations))
+(defmethod khazern:preposition-names ((client extension-client) (instance being-combinations))
   (values '((:in :of) :choose)
           '((:in :of) :choose)
           '()))
@@ -44,27 +44,27 @@
                                                       :type 'sequence)))
 
 (defmethod khazern:parse-preposition
-    ((client extension-client) (instance for-as-combinations) (key (eql :in)))
+    ((client extension-client) (instance being-combinations) (key (eql :in)))
   (parse-of-preposition instance))
 
 (defmethod khazern:parse-preposition
-    ((client extension-client) (instance for-as-combinations) (key (eql :of)))
+    ((client extension-client) (instance being-combinations) (key (eql :of)))
   (parse-of-preposition instance))
 
 (defmethod khazern:parse-preposition
-    ((client extension-client) (instance for-as-combinations) (key (eql :choose)))
+    ((client extension-client) (instance being-combinations) (key (eql :choose)))
   (setf (choose-ref instance) (khazern:add-simple-binding instance
                                                           :var "CHOOSE"
                                                           :form (khazern:parse-token)
                                                           :type 'fixnum)))
 
-(defmethod khazern:analyze ((client extension-client) (instance for-as-combinations))
+(defmethod khazern:analyze ((client extension-client) (instance being-combinations))
   (if (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
       (setf (khazern:type-spec (var instance)) 'sequence
             (result-type instance) `(class-of ,(of-ref instance)))
       (setf (result-type instance) `',(khazern:type-spec (var instance)))))
 
-(defmethod khazern:step-intro-forms ((clause for-as-combinations) initialp)
+(defmethod khazern:step-intro-forms ((clause being-combinations) initialp)
   (with-accessors ((comb-ref comb-ref)
                    (choose-ref choose-ref)
                    (len-ref len-ref)
@@ -101,7 +101,7 @@
                 (incf ,pos-ref)
                 (go ,next2-tag)))))))
 
-(defmethod khazern:step-outro-forms ((clause for-as-combinations) initialp)
+(defmethod khazern:step-outro-forms ((clause being-combinations) initialp)
   (declare (ignore initialp))
   (with-accessors ((comb-ref comb-ref)
                    (of-ref of-ref)

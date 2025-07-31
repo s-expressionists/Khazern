@@ -172,15 +172,38 @@ is that of the CDRS iteration path:
 ; => ((a b c . d) (b c . d) (c . d) d)
 ```
 
+Usage of inclusive iteration path seems to have been rare even in the
+Lisp Machine Lisp. The mechanism is still exists in many CL
+implementations but is completely unused in modern code. Only the
+residual syntax of exclusive iteration paths survived in the ANSI CL
+specification. For this reason, Khazern only supports exclusive
+iteration path extensions.
+
+Khazern supports many extensions mechanisms in addition to iteration
+paths. The primary interface to adding extensions is PARSE-CLAUSE
+which takes as one of its arguments a REGION that specifies where in
+LOOP the clause is permitted. Currently there are the following
+regions:
+
+* body-region - top-level clauses in LOOP.
+* selectable-region - clauses that can occur in conditionals or as
+  top-level clauses.
+* for-as-region - subclauses of FOR or AS.
+* being-region - subclauses of FOR-BEING or AS-BEING.
+* with-region - subclauses of WITH.
+
+This makes iteration paths valid in the being-region as so Khazern
+refers to these as being clauses.
+
 Then khazern-extension-extrinsic and khazern-extension-intrinsic
-systems implement many predefined iteration paths. They are described
+systems implement many predefined extensions. They are described
 in the sections below.
 
 ### Hash Table Iteration
 
-#### HASH-KEY Iteration Path
+#### HASH-KEY Being Clause
 
-The HASH-KEY iteration path is identical to that described in the ANSI
+The HASH-KEY being clause is identical to that described in the ANSI
 CL specification with the addition of the ability to specify a
 type-spec for USING variable.
 
@@ -190,9 +213,9 @@ preposition-name ::= {IN | OF}
 using-name       ::= {HASH-VALUE}
 ```
 
-#### HASH-VALUE Iteration Path
+#### HASH-VALUE Being Clause
 
-The HASH-VALUE iteration path is identical to that described in the
+The HASH-VALUE being clause is identical to that described in the
 ANSI CL specification with the addition of the ability to specify a
 type-spec for USING variable.
 
@@ -204,9 +227,9 @@ using-name       ::= {HASH-KEY}
 
 ### Sequence Iteration
 
-#### ELEMENTS Iteration Path
+#### ELEMENTS Being Clause
 
-The ELEMENTS iteration path iterates over sequences or
+The ELEMENTS being clause iterates over sequences or
 multidimensional arrays. If the extensible sequence protocol is
 available it will use MAKE-SEQUENCE-ITERATOR from that protocol for
 sequences. Otherwise it will attempt to use an efficient sequence
@@ -235,7 +258,7 @@ using-name       ::= {INDEX | INDICES}
 
 ### Stream Iteration
 
-All stream iteration paths have the following prepositions and USING
+All stream being clauses have the following prepositions and USING
 phrases:
 
 * The IN and OF prepositions are synonyms and specify the form that
@@ -248,9 +271,9 @@ phrases:
 * The STREAM phrase in USING names a variable to store the current
   stream. It is optional.
 
-#### BYTES Iteration Path
+#### BYTES Being Clause
 
-The BYTES iteration path iterates over an input stream using
+The BYTES being clause iterates over an input stream using
 READ-BYTE. It terminates on EOF.
 
 ```
@@ -259,9 +282,9 @@ preposition-name ::= {IN | OF | CLOSE}
 using-name       ::= {STREAM}
 ```
 
-#### CHARACTERS Iteration Path
+#### CHARACTERS Being Clause
 
-The CHARACTERS iteration path iterates over an input stream using
+The CHARACTERS being clause iterates over an input stream using
 READ-CHAR. It terminates on EOF.
 
 ```
@@ -270,9 +293,9 @@ preposition-name ::= {IN | OF | CLOSE}
 using-name       ::= {STREAM}
 ```
 
-#### LINES Iteration Path
+#### LINES Being Clause
 
-The LINES iteration path iterates over an input stream using
+The LINES being clause iterates over an input stream using
 READ-LINE. It terminates on EOF.
 
 ```
@@ -287,9 +310,9 @@ and specifies the name of variable to store the second value returned
 from READ-LINE which is non-NIL if the line was not terminated by a
 newline.
 
-#### OBJECTS Iteration Path
+#### OBJECTS Being Clause
 
-The OBJECTS iteration path iterates over an input stream using
+The OBJECTS being clause iterates over an input stream using
 READ. It terminates on EOF.
 
 ```
@@ -300,9 +323,9 @@ using-name       ::= {STREAM}
 
 ### Permutation Iteration
 
-#### PERMUTATION Iteration Path
+#### PERMUTATION Being Clause
 
-The PERMUTATION iteration path iterates over the permutations of a
+The PERMUTATION being clause iterates over the permutations of a
 sequence.
 
 ```
@@ -314,9 +337,9 @@ using-name       ::= {}
 * The IN and OF prepositions are a sequence to permute. On each loop
   step a copy of this sequence is made with the elements permuted.
 
-#### COMBINATION Iteration Path
+#### COMBINATION Being Clause
 
-The COMBINATION iteration path iterates over the combinations of a
+The COMBINATION being clause iterates over the combinations of a
 sequence.
 
 ```
@@ -330,9 +353,9 @@ using-name       ::= {}
 * The CHOOSE prepositions is an integer that specifies the length of
   the subsequence to select.
 
-#### TUPLE Iteration Path
+#### TUPLE Being Clause
 
-The TUPLE iteration path iterates over the all possible tuples of a
+The TUPLE being clause iterates over the all possible tuples of a
 collection of sequences. It is essentially the Cartesian Product.
 
 ```

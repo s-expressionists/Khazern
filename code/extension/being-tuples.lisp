@@ -1,6 +1,6 @@
 (cl:in-package #:khazern-extension)
 
-(defclass for-as-tuple (khazern:clause)
+(defclass being-tuples (khazern:clause)
   ((%var :accessor var
          :initarg :var)
    (%of-ref :accessor of-ref)
@@ -9,7 +9,7 @@
    (%limit-ref :accessor limit-ref)
    (%len-ref :accessor len-ref)))
 
-(defmethod initialize-instance :after ((instance for-as-tuple) &rest initargs &key)
+(defmethod initialize-instance :after ((instance being-tuples) &rest initargs &key)
   (declare (ignore initargs))
   (khazern:add-binding instance (var instance))
   (setf (iter-ref instance) (khazern:add-simple-binding instance
@@ -24,14 +24,14 @@
   
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :tuple)) &key var)
-  (make-instance 'for-as-tuple :var var))
+  (make-instance 'being-tuples :var var))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :tuples)) &key var)
-  (make-instance 'for-as-tuple :var var))
+  (make-instance 'being-tuples :var var))
 
 (defmethod khazern:preposition-names
-    ((client extension-client) (instance for-as-tuple))
+    ((client extension-client) (instance being-tuples))
   (values '((:in :of))
           '((:in :of))
           '()))
@@ -43,20 +43,20 @@
                                                       :type 'sequence)))
 
 (defmethod khazern:parse-preposition
-    ((client extension-client) (instance for-as-tuple) (key (eql :in)))
+    ((client extension-client) (instance being-tuples) (key (eql :in)))
   (parse-of-preposition instance))
 
 (defmethod khazern:parse-preposition
-    ((client extension-client) (instance for-as-tuple) (key (eql :of)))
+    ((client extension-client) (instance being-tuples) (key (eql :of)))
   (parse-of-preposition instance))
 
-(defmethod khazern:analyze ((client extension-client) (instance for-as-tuple))
+(defmethod khazern:analyze ((client extension-client) (instance being-tuples))
   (if (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
       (setf (khazern:type-spec (var instance)) 'sequence
             (result-type instance) `(type-of ,(of-ref instance)))
       (setf (result-type instance) `',(khazern:type-spec (var instance)))))
 
-(defmethod khazern:step-intro-forms ((clause for-as-tuple) initialp)
+(defmethod khazern:step-intro-forms ((clause being-tuples) initialp)
   (with-accessors ((iter-ref iter-ref)
                    (len-ref len-ref)
                    (of-ref of-ref)
@@ -77,7 +77,7 @@
           `((unless (< ,iter-ref ,limit-ref)
               (go ,khazern:*epilogue-tag*))))))
 
-(defmethod khazern:step-outro-forms ((clause for-as-tuple) initialp)
+(defmethod khazern:step-outro-forms ((clause being-tuples) initialp)
   (declare (ignore initialp))
   (with-accessors ((iter-ref iter-ref)
                    (of-ref of-ref)

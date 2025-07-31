@@ -17,6 +17,11 @@
            #:add-simple-binding
            #:afterword-forms
            #:analyze
+           #:being-hash-entries
+           #:being-hash-keys
+           #:being-hash-values
+           #:being-package-symbols
+           #:being-region
            #:binding-clause
            #:body-forms
            #:body-region
@@ -35,11 +40,9 @@
            #:epilogue-forms
            #:expand-body
            #:features-list
-           #:for-as-hash
            #:for-as-region
            #:form
            #:ignorablep
-           #:being-region
            #:list-scope
            #:make-scope
            #:map-variables

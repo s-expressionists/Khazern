@@ -1,6 +1,6 @@
 (cl:in-package #:khazern-extension)
 
-(defclass for-as-permutations (khazern:clause)
+(defclass being-permutations (khazern:clause)
   ((%var :accessor var
          :initarg :var)
    (%of-ref :accessor of-ref)
@@ -10,7 +10,7 @@
    (%pos-ref :accessor pos-ref)
    (%len-ref :accessor len-ref)))
 
-(defmethod initialize-instance :after ((instance for-as-permutations) &rest initargs &key)
+(defmethod initialize-instance :after ((instance being-permutations) &rest initargs &key)
   (declare (ignore initargs))
   (khazern:add-binding instance (var instance))
   (setf (perm-ref instance) (khazern:add-simple-binding instance
@@ -30,14 +30,14 @@
   
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :permutation)) &key var)
-  (make-instance 'for-as-permutations :var var))
+  (make-instance 'being-permutations :var var))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :permutations))
      &key var)
-  (make-instance 'for-as-permutations :var var))
+  (make-instance 'being-permutations :var var))
 
-(defmethod khazern:preposition-names ((client extension-client) (instance for-as-permutations))
+(defmethod khazern:preposition-names ((client extension-client) (instance being-permutations))
   (values '((:in :of))
           '((:in :of))
           '()))
@@ -49,20 +49,20 @@
                                                       :type 'sequence)))
 
 (defmethod khazern:parse-preposition
-    ((client extension-client) (instance for-as-permutations) (key (eql :in)))
+    ((client extension-client) (instance being-permutations) (key (eql :in)))
   (parse-of-preposition instance))
 
 (defmethod khazern:parse-preposition
-    ((client extension-client) (instance for-as-permutations) (key (eql :of)))
+    ((client extension-client) (instance being-permutations) (key (eql :of)))
   (parse-of-preposition instance))
 
-(defmethod khazern:analyze ((client extension-client) (instance for-as-permutations))
+(defmethod khazern:analyze ((client extension-client) (instance being-permutations))
   (if (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
       (setf (khazern:type-spec (var instance)) 'sequence
             (result-type instance) `(type-of ,(of-ref instance)))
       (setf (result-type instance) `',(khazern:type-spec (var instance)))))
 
-(defmethod khazern:step-intro-forms ((clause for-as-permutations) initialp)
+(defmethod khazern:step-intro-forms ((clause being-permutations) initialp)
   (with-accessors ((perm-ref perm-ref)
                    (state-ref state-ref)
                    (len-ref len-ref)
@@ -96,7 +96,7 @@
               (incf (aref ,state-ref ,pos-ref))
               (setq ,pos-ref 1))))))
 
-(defmethod khazern:step-outro-forms ((clause for-as-permutations) initialp)
+(defmethod khazern:step-outro-forms ((clause being-permutations) initialp)
   (declare (ignore initialp))
   (with-accessors ((perm-ref perm-ref)
                    (of-ref of-ref)
