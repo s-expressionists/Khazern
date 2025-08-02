@@ -24,11 +24,11 @@
   
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :tuple)) &key var)
-  (make-instance 'being-tuples :var var))
+  (make-instance 'being-tuples :var var :start khazern:*start*))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :tuples)) &key var)
-  (make-instance 'being-tuples :var var))
+  (make-instance 'being-tuples :var var :start khazern:*start*))
 
 (defmethod khazern:preposition-names
     ((client extension-client) (instance being-tuples))
@@ -84,14 +84,14 @@
                    (len-ref len-ref)
                    (result-type result-type))
       clause
-    (khazern:destructuring-set (var clause)
-                               `(let ((iter-tmp ,iter-ref))
-                                  (map ,result-type
-                                       (lambda (arr-or-len div)
-                                         (multiple-value-bind (q r)
-                                             (floor iter-tmp div)
-                                           (setq iter-tmp r)
-                                           (if (numberp arr-or-len)
-                                               q
-                                               (elt arr-or-len q))))
-                                       ,of-ref ,len-ref)))))
+    (khazern:expand-assignments (var clause)
+                                `(let ((iter-tmp ,iter-ref))
+                                   (map ,result-type
+                                        (lambda (arr-or-len div)
+                                          (multiple-value-bind (q r)
+                                              (floor iter-tmp div)
+                                            (setq iter-tmp r)
+                                            (if (numberp arr-or-len)
+                                                q
+                                                (elt arr-or-len q))))
+                                        ,of-ref ,len-ref)))))

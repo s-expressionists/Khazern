@@ -283,23 +283,22 @@
 
 (defmethod khazern:step-outro-forms ((clause being-elements) initialp)
   (declare (ignore initialp))
-  (nconc (khazern:destructuring-set (var clause)
-                                    `(funcall ,(read-func clause) ,(in-ref clause)
-                                              ,(iterator-ref clause)))
-         (when (index-ref clause)
-           (khazern:destructuring-set (index-ref clause)
-                                      `(funcall ,(index-func clause) ,(in-ref clause)
-		                                ,(iterator-ref clause))))))
+  (khazern:expand-assignments (var clause)
+                              `(funcall ,(read-func clause) ,(in-ref clause)
+                                        ,(iterator-ref clause))
+                              (index-ref clause)
+                              `(funcall ,(index-func clause) ,(in-ref clause)
+		                        ,(iterator-ref clause))))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :element)) &key var)
-  (make-instance 'being-elements :var var))
+  (make-instance 'being-elements :var var :start khazern:*start*))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :elements)) &key var)
-  (make-instance 'being-elements :var var))
+  (make-instance 'being-elements :var var :start khazern:*start*))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:for-as-region) (name (eql :over)) &key var)
   (khazern:unparse-token :in)
-  (make-instance 'being-elements :var var))
+  (make-instance 'being-elements :var var :start khazern:*start*))

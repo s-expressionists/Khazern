@@ -143,8 +143,7 @@ the ASD file.
 
 The orignal Technical Memo 169 "Loop Iteration Macro" which defined
 LOOP for Lisp Machine Lisp and Maclisp also specified an extension
-mechanism known as an "iteration path." Khazern implements this via
-the syntax:
+mechanism known as an "iteration path." The syntax was roughly:
 
 ```
 for-as-iteration-path ::= {FOR | AS} var [type-spec] BEING
@@ -177,7 +176,22 @@ Lisp Machine Lisp. The mechanism is still exists in many CL
 implementations but is completely unused in modern code. Only the
 residual syntax of exclusive iteration paths survived in the ANSI CL
 specification. For this reason, Khazern only supports exclusive
-iteration path extensions.
+iteration path extensions. Khazern's syntax is:
+
+```
+for-as-being     ::= {FOR | AS} var [type-spec] BEING {EACH | THE}? name
+path-using       ::= USING ({using-name var [type-spec]}+)
+path-preposition ::= preposition-name form
+preposition-name ::= name
+using-name       ::= simple-var
+name             ::= symbol
+```
+
+In the original path iteration syntax EACH or THE is needed to
+distinguish between inclusive and exclusive paths. Since Khazern
+doesn't have inclusive paths, the EACH and THE tokens are made
+optional. Also, path-using permits optional type-specs which was not
+allowed in the original iteration path implementations.
 
 Khazern supports many extensions mechanisms in addition to iteration
 paths. The primary interface to adding extensions is PARSE-CLAUSE

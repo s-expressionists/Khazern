@@ -57,8 +57,7 @@
                  :ignorable ignorablep
                  :dynamic-extent dynamic-extent-p))
 
-(defun destructuring-set (binding form)
-  "Return the SETQ for a destructuring binding and a form."
+(defmethod assignment-pairs ((binding destructuring-binding) form)
   (let ((assignments '())
         (temps (temps binding)))
     (labels ((traverse (d-var-spec form)
@@ -77,9 +76,12 @@
                                (traverse (car d-var-spec) `(car ,form))
                                (traverse (cdr d-var-spec) `(cdr ,form)))))))))
       (traverse (var-spec binding) form)
-      (when assignments
-        `((setq ,.(nreverse assignments)))))))
+      (nreverse assignments))))
 
+(defmethod assignment-pairs ((binding simple-binding) form)
+  (when (var-spec binding)
+    (list (var-spec binding) form)))
+  
 (defmethod map-variables progn (function (binding binding))
   (labels ((traverse (var-spec type-spec)
              (cond ((null var-spec))
@@ -188,3 +190,16 @@
             (push (second head) result)))
      (setq head (cddr head))
      (go next)))
+
+(defun expand-assignments (&rest pairs)
+  (prog* ((head (cons nil nil))
+          (tail head))
+     (declare (dynamic-extent head))
+   next
+     (when pairs
+       (rplacd tail
+               (assignment-pairs (pop pairs) (pop pairs)))
+       (setf tail (last tail))
+       (go next))
+     (return (when (cdr head)
+               `((setq ,.(cdr head)))))))

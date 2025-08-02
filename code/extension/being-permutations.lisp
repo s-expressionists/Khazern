@@ -30,12 +30,12 @@
   
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :permutation)) &key var)
-  (make-instance 'being-permutations :var var))
+  (make-instance 'being-permutations :var var :start khazern:*start*))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :permutations))
      &key var)
-  (make-instance 'being-permutations :var var))
+  (make-instance 'being-permutations :var var :start khazern:*start*))
 
 (defmethod khazern:preposition-names ((client extension-client) (instance being-permutations))
   (values '((:in :of))
@@ -102,7 +102,7 @@
                    (of-ref of-ref)
                    (result-type result-type))
       clause
-    (khazern:destructuring-set (var clause) `(map ,result-type
-                                                  (lambda (pos)
-                                                    (elt ,of-ref pos))
-                                                  ,perm-ref))))
+    (khazern:expand-assignments (var clause) `(map ,result-type
+                                                   (lambda (pos)
+                                                     (elt ,of-ref pos))
+                                                   ,perm-ref))))

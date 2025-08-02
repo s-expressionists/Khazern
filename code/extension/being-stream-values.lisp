@@ -79,18 +79,17 @@
 
 (defmethod khazern:step-outro-forms ((clause being-stream-values) initialp)
   (declare (ignore initialp))
-  (khazern:destructuring-set (var clause)
-                             (temp-ref clause)))
+  (khazern:expand-assignments (var clause) (temp-ref clause)))
 
 (defclass being-bytes (being-stream-values) ())
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :byte)) &key var)
-  (make-instance 'being-bytes :var var))
+  (make-instance 'being-bytes :var var :start khazern:*start*))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :bytes)) &key var)
-  (make-instance 'being-bytes :var var))
+  (make-instance 'being-bytes :var var :start khazern:*start*))
 
 (defmethod khazern:analyze ((client extension-client) (instance being-bytes))
   (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
@@ -118,11 +117,11 @@
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :character)) &key var)
-  (make-instance 'being-characters :var var))
+  (make-instance 'being-characters :var var :start khazern:*start*))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :characters)) &key var)
-  (make-instance 'being-characters :var var))
+  (make-instance 'being-characters :var var :start khazern:*start*))
 
 (defclass being-objects (being-stream-values) ())
 
@@ -140,11 +139,11 @@
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :object)) &key var)
   (declare (ignore inclusive-form))
-  (make-instance 'being-objects :var var))
+  (make-instance 'being-objects :var var :start khazern:*start*))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :objects)) &key var)
-  (make-instance 'being-objects :var var))
+  (make-instance 'being-objects :var var :start khazern:*start*))
 
 (defclass being-lines (being-stream-values)
   ((%missing-newline-p-var :accessor missing-newline-p-var
@@ -152,11 +151,11 @@
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :line)) &key var)
-  (make-instance 'being-lines :var var))
+  (make-instance 'being-lines :var var :start khazern:*start*))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :lines)) &key var)
-  (make-instance 'being-lines :var var))
+  (make-instance 'being-lines :var var :start khazern:*start*))
 
 (defmethod khazern:preposition-names ((client extension-client) (instance being-stream-values))
   (values '((:in :of) :close)

@@ -65,13 +65,12 @@
 
 (defmethod khazern:step-outro-forms ((clause being-entries) initialp)
   (declare (ignore initialp))
-  (khazern:destructuring-set (var clause)
-                             (key-value-var clause)))
+  (khazern:expand-assignments (var clause) (key-value-var clause)))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :entry)) &key var)
-  (make-instance 'being-entries :var var))
+  (make-instance 'being-entries :var var :start khazern:*start*))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :entries)) &key var)
-  (make-instance 'being-entries :var var))
+  (make-instance 'being-entries :var var :start khazern:*start*))

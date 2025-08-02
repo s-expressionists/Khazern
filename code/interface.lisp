@@ -35,6 +35,14 @@ the FUNCTION with the arguments var, type and category.")
 
 ;;; Expansion interface
 
+(defgeneric assignment-pairs (binding form)
+  (:method (binding form)
+    (declare (ignore binding form))
+    nil)
+  (:method ((binding symbol) form)
+      (when binding
+        (list binding form))))
+
 (defgeneric variable-list (clause)
   (:documentation "This generic function returns a list of variable and initial forms for use in
 LET or LET*.")

@@ -12,6 +12,7 @@
                 :serial t
                 :components ((:file "packages")
                              (:file "interface")
+                             (:file "being-cons")
                              (:file "being-elements")
                              (:file "being-stream-values")
                              (:file "being-entries")

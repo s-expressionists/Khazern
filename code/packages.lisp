@@ -17,11 +17,15 @@
            #:add-simple-binding
            #:afterword-forms
            #:analyze
+           #:being-cars
+           #:being-cons
            #:being-hash-entries
            #:being-hash-keys
            #:being-hash-values
+           #:being-lists
            #:being-package-symbols
            #:being-region
+           #:being-vector-elements
            #:binding-clause
            #:body-forms
            #:body-region
@@ -34,10 +38,10 @@
            #:d-var-spec 
            #:declarations
            #:define-interface
-           #:destructuring-set
            #:dynamic-extent-p
            #:end
            #:epilogue-forms
+           #:expand-assignments
            #:expand-body
            #:features-list
            #:for-as-region

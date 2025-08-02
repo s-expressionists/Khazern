@@ -261,76 +261,76 @@
 ;;; for-as-in-list ::= var [type-spec] IN form [BY step-fun]
 ;;; for-as-on-list ::= var [type-spec] ON form [BY step-fun] 
 
-(defclass for-as-list (for-as-subclause)
+(defclass being-cons (for-as-subclause)
   ((%by-ref :accessor by-ref
             :initform '#'cdr)
    (%rest-var :accessor rest-var)))
 
-(defmethod initialize-instance :after ((instance for-as-list) &rest initargs &key)
+(defmethod initialize-instance :after ((instance being-cons) &rest initargs &key)
   (declare (ignore initargs))
   (add-binding instance (var instance)))
 
-(defmethod preposition-names ((client standard-client) (instance for-as-list))
+(defmethod preposition-names ((client standard-client) (instance being-cons))
   (values '((:in :of) :by)
           '((:in :of))
           '()))
 
-(defun parse-for-as-list-of (instance)
+(defun parse-being-cons-of (instance)
   (setf (rest-var instance) (add-simple-binding instance :var "REST" :form (parse-token))))
 
-(defmethod parse-preposition ((client standard-client) (instance for-as-list) (name (eql :in)))
-  (parse-for-as-list-of instance))
+(defmethod parse-preposition ((client standard-client) (instance being-cons) (name (eql :in)))
+  (parse-being-cons-of instance))
 
-(defmethod parse-preposition ((client standard-client) (instance for-as-list) (name (eql :of)))
-  (parse-for-as-list-of instance))
+(defmethod parse-preposition ((client standard-client) (instance being-cons) (name (eql :of)))
+  (parse-being-cons-of instance))
 
-(defmethod parse-preposition ((client standard-client) (instance for-as-list) (name (eql :by)))
+(defmethod parse-preposition ((client standard-client) (instance being-cons) (name (eql :by)))
   (setf (by-ref instance)
         (add-simple-binding instance :var "BY" :form (parse-token) :fold t
                                      :fold-test 'function-operator-p)))
 
-(defclass for-as-in-list (for-as-list)
+(defclass being-cars (being-cons)
   ())
 
-(defclass for-as-on-list (for-as-list)
+(defclass being-lists (being-cons)
   ())
 
 (defmethod parse-clause
     ((client standard-client) (region for-as-region) (keyword (eql :in)) &key var)
   (unparse-token :of)
-  (make-instance 'for-as-in-list :start *start* :var var))
+  (make-instance 'being-cars :start *start* :var var))
 
 (defmethod parse-clause
     ((client standard-client) (region for-as-region) (keyword (eql :on)) &key var)
   (unparse-token :of)
-  (make-instance 'for-as-on-list :start *start* :var var))
+  (make-instance 'being-lists :start *start* :var var))
 
-(defmethod step-intro-forms ((clause for-as-list) initialp)
+(defmethod step-intro-forms ((clause being-cons) initialp)
   (unless initialp
     `((setq ,(rest-var clause)
             ,(if (function-operator-p (by-ref clause))
                  `(,(second (by-ref clause)) ,(rest-var clause))
                  `(funcall ,(by-ref clause) ,(rest-var clause)))))))
 
-(defmethod step-intro-forms :around ((clause for-as-in-list) initialp)
+(defmethod step-intro-forms :around ((clause being-cars) initialp)
   (declare (ignore initialp))
   (nconc (call-next-method)
          `((when (endp ,(rest-var clause))
              (go ,*epilogue-tag*)))))
 
-(defmethod step-outro-forms ((clause for-as-in-list) initialp)
+(defmethod step-outro-forms ((clause being-cars) initialp)
   (declare (ignore initialp))
-  (destructuring-set (var clause) `(car ,(rest-var clause))))
+  (expand-assignments (var clause) `(car ,(rest-var clause))))
 
-(defmethod step-intro-forms :around ((clause for-as-on-list) initialp)
+(defmethod step-intro-forms :around ((clause being-lists) initialp)
   (declare (ignore initialp))
   (nconc (call-next-method)
          `((when (atom ,(rest-var clause))
              (go ,*epilogue-tag*)))))
 
-(defmethod step-outro-forms ((clause for-as-on-list) initialp)
+(defmethod step-outro-forms ((clause being-lists) initialp)
   (declare (ignore initialp))
-  (destructuring-set (var clause) (rest-var clause)))
+  (expand-assignments (var clause) (rest-var clause)))
 
 ;;; 6.1.2.1.4 FOR-AS-EQUALS-THEN subclause
 ;;;
@@ -380,7 +380,7 @@
                                   (subsequent-form clause)))))
 
 (defmethod step-outro-forms ((clause for-as-equals-then) initialp)
-  (destructuring-set (var clause) (temp-ref clause)))
+  (expand-assignments (var clause) (temp-ref clause)))
 
 ;;; 6.1.2.1.5 FOR-AS-ACROSS subclause
 ;;;
@@ -388,11 +388,11 @@
 ;;;
 ;;;  for-as-across ::= var [type-spec] ACROSS vector
 
-(defclass for-as-across (for-as-subclause form-ref-mixin)
+(defclass being-vector-elements (for-as-subclause form-ref-mixin)
   ((%length-ref :accessor length-ref)
    (%index-ref :accessor index-ref)))
 
-(defmethod initialize-instance :after ((instance for-as-across) &rest initargs &key)
+(defmethod initialize-instance :after ((instance being-vector-elements) &rest initargs &key)
   (declare (ignore initargs))
   (add-binding instance (var instance))
   (setf (length-ref instance) (add-simple-binding instance :var "LENGTH" :form 0
@@ -400,39 +400,39 @@
         (index-ref instance) (add-simple-binding instance :var "INDEX" :form 0
                                                           :type 'fixnum)))
 
-(defmethod preposition-names ((client standard-client) (instance for-as-across))
+(defmethod preposition-names ((client standard-client) (instance being-vector-elements))
   (values '((:in :of))
           '((:in :of))
           '()))
 
-(defun parse-for-as-across-of (instance)
+(defun parse-being-vector-elements-of (instance)
   (setf (form-ref instance) (add-simple-binding instance :var "VECTOR"
                                                          :form (parse-token)
                                                          :type 'vector)))
 
 (defmethod parse-preposition
-    ((client standard-client) (instance for-as-across) (name (eql :in)))
-  (parse-for-as-across-of instance))
+    ((client standard-client) (instance being-vector-elements) (name (eql :in)))
+  (parse-being-vector-elements-of instance))
 
 (defmethod parse-preposition
-    ((client standard-client) (instance for-as-across) (name (eql :of)))
-  (parse-for-as-across-of instance))
+    ((client standard-client) (instance being-vector-elements) (name (eql :of)))
+  (parse-being-vector-elements-of instance))
 
 (defmethod parse-clause
     ((client standard-client) (region for-as-region) (keyword (eql :across)) &key var)
   (unparse-token :of)
-  (make-instance 'for-as-across :start *start* :var var))
+  (make-instance 'being-vector-elements :start *start* :var var))
 
-(defmethod step-intro-forms ((clause for-as-across) initialp)
+(defmethod step-intro-forms ((clause being-vector-elements) initialp)
   `(,(if initialp
          `(setq ,(length-ref clause) (length ,(form-ref clause)))
          `(incf ,(index-ref clause)))
     (when (>= ,(index-ref clause) ,(length-ref clause))
       (go ,*epilogue-tag*))))
 
-(defmethod step-outro-forms ((clause for-as-across) initialp)
+(defmethod step-outro-forms ((clause being-vector-elements) initialp)
   (declare (ignore initialp))
-  (destructuring-set (var clause) `(aref ,(form-ref clause) ,(index-ref clause))))
+  (expand-assignments (var clause) `(aref ,(form-ref clause) ,(index-ref clause))))
 
 ;;; 6.1.2.1.6 FOR-AS-HASH Subclause
 ;;;
@@ -544,17 +544,13 @@
 
 (defmethod step-outro-forms ((clause being-hash-keys) initialp)
   (declare (ignore initialp))
-  (nconc (destructuring-set (var clause)
-                            (temp-key-var clause))
-         (destructuring-set (other-var clause)
-                            (temp-value-var clause))))
+  (expand-assignments (var clause) (temp-key-var clause)
+                      (other-var clause) (temp-value-var clause)))
 
 (defmethod step-outro-forms ((clause being-hash-values) initialp)
   (declare (ignore initialp))
-  (nconc (destructuring-set (var clause)
-                            (temp-value-var clause))
-         (destructuring-set (other-var clause)
-                            (temp-key-var clause))))
+  (expand-assignments (var clause) (temp-value-var clause)
+                      (other-var clause) (temp-key-var clause)))
 
 ;;; 6.1.2.1.7 FOR-AS-PACKAGE Subclause
 ;;;
@@ -709,9 +705,9 @@
                    (pkg-ref pkg-ref)
                    (var var))
       clause
-    (nconc (destructuring-set var sym-var)
-           (simple-set acc-type-ref acc-type-var
-                       pkg-ref pkg-var))))
+    (expand-assignments var sym-var
+                        acc-type-ref acc-type-var
+                        pkg-ref pkg-var)))
 
 ;;; 6.1.2.2 WITH clause
 ;;;
@@ -790,5 +786,5 @@
   (check-type-spec (var instance)))
 
 (defmethod wrap-forms ((subclause with-subclause-with-form) forms)
-  (nconc (destructuring-set (var subclause) (form-ref subclause))
+  (nconc (expand-assignments (var subclause) (form-ref subclause))
          forms))
