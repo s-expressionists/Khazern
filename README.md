@@ -351,13 +351,29 @@ using-name       ::= {}
 * The IN and OF prepositions are a sequence to permute. On each loop
   step a copy of this sequence is made with the elements permuted.
 
-#### COMBINATION Being Clause
+#### COMBINATIONS Being Clause
 
-The COMBINATION being clause iterates over the combinations of a
+The COMBINATIONS being clause iterates over the combinations of a
 sequence.
 
 ```
 path-name        ::= {COMBINATION | COMBINATIONS}
+preposition-name ::= {IN | OF | CHOOSE}
+using-name       ::= {}
+```
+
+* The IN and OF prepositions are a sequence to permute. On each loop
+  step a copy of this sequence is made with the elements permuted.
+* The CHOOSE prepositions is an integer that specifies the length of
+  the subsequence to select.
+
+#### MULTICOMBINATIONS Being Clause
+
+The MULTICOMBINATIONS being clause iterates over the combinations of a
+sequence with repetition allowed.
+
+```
+path-name        ::= {MULTICOMBINATION | MULTICOMBINATIONS}
 preposition-name ::= {IN | OF | CHOOSE}
 using-name       ::= {}
 ```

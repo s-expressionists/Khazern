@@ -8,7 +8,10 @@
    (%comb-ref :accessor comb-ref)
    (%choose-ref :accessor choose-ref)
    (%len-ref :accessor len-ref)
-   (%pos-ref :accessor pos-ref)))
+   (%pos-ref :accessor pos-ref)
+   (%multi :accessor multip
+           :initarg :multi
+           :initform nil)))
 
 (defmethod initialize-instance :after ((instance being-combinations) &rest initargs &key)
   (declare (ignore initargs))
@@ -31,6 +34,16 @@
     ((client extension-client) (region khazern:being-region) (name (eql :combinations))
      &key var)
   (make-instance 'being-combinations :var var :start khazern:*start*))
+
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:being-region) (name (eql :multicombination))
+     &key var)
+  (make-instance 'being-combinations :var var :start khazern:*start* :multi t))
+
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:being-region) (name (eql :multicombinations))
+     &key var)
+  (make-instance 'being-combinations :var var :start khazern:*start* :multi t))
 
 (defmethod khazern:preposition-names ((client extension-client) (instance being-combinations))
   (values '((:in :of) :choose)
@@ -69,17 +82,19 @@
                    (choose-ref choose-ref)
                    (len-ref len-ref)
                    (pos-ref pos-ref)
-                   (of-ref of-ref))
+                   (of-ref of-ref)
+                   (multip multip))
       clause
     (if initialp
         `((setq ,len-ref (length ,of-ref)
                 ,comb-ref (make-array ,choose-ref :element-type 'fixnum))
-          (prog ((pos ,choose-ref))
-           next
-             (when (plusp pos)
-               (decf pos)
-               (setf (aref ,comb-ref pos) pos)
-               (go next))))
+          ,@(unless multip
+              `((prog ((pos ,choose-ref))
+                 next
+                   (when (plusp pos)
+                     (decf pos)
+                     (setf (aref ,comb-ref pos) pos)
+                     (go next))))))
         (let ((next1-tag (gensym (symbol-name :next)))
               (next2-tag (gensym (symbol-name :next))))
           `(  (setq ,pos-ref (1- ,choose-ref))
@@ -97,7 +112,10 @@
               (incf ,pos-ref)
             ,next2-tag
               (when (< ,pos-ref ,choose-ref)
-                (setf (aref ,comb-ref ,pos-ref) (1+ (aref ,comb-ref (1- ,pos-ref))))
+                (setf (aref ,comb-ref ,pos-ref)
+                      ,(if multip
+                           `(aref ,comb-ref (1- ,pos-ref))
+                           `(1+ (aref ,comb-ref (1- ,pos-ref)))))
                 (incf ,pos-ref)
                 (go ,next2-tag)))))))
 
