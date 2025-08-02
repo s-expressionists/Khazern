@@ -179,7 +179,8 @@ specification. For this reason, Khazern only supports exclusive
 iteration path extensions. Khazern's syntax is:
 
 ```
-for-as-being     ::= {FOR | AS} var [type-spec] BEING {EACH | THE}? name
+for-as-being     ::= {FOR | AS} var [type-spec] BEING {EACH | THE}?
+                     name {path-using | path-preposition}*
 path-using       ::= USING ({using-name var [type-spec]}+)
 path-preposition ::= preposition-name form
 preposition-name ::= name
@@ -215,9 +216,9 @@ in the sections below.
 
 ### Hash Table Iteration
 
-#### HASH-KEY Being Clause
+#### HASH-KEYS Being Clause
 
-The HASH-KEY being clause is identical to that described in the ANSI
+The HASH-KEYS being clause is identical to that described in the ANSI
 CL specification with the addition of the ability to specify a
 type-spec for USING variable.
 
@@ -227,9 +228,9 @@ preposition-name ::= {IN | OF}
 using-name       ::= {HASH-VALUE}
 ```
 
-#### HASH-VALUE Being Clause
+#### HASH-VALUES Being Clause
 
-The HASH-VALUE being clause is identical to that described in the
+The HASH-VALUES being clause is identical to that described in the
 ANSI CL specification with the addition of the ability to specify a
 type-spec for USING variable.
 
@@ -237,6 +238,25 @@ type-spec for USING variable.
 path-name        ::= {HASH-VALUE | HASH-VALUES}
 preposition-name ::= {IN | OF}
 using-name       ::= {HASH-KEY}
+```
+
+### Package Symbol Iteration
+
+#### SYMBOLS, PRESENT-SYMBOLS, and EXTERNAL-SYMBOLS Being Clauses
+
+SYMBOLS, PRESENT-SYMBOLS, and EXTERNAL-SYMBOLS being clauses are
+identical to that described in the ANSI CL specification except they
+permit the IN/OF preposition form to be a list of package designators
+as WITH-PACKAGE-ITERATOR does. They also add the ASSESSIBILITY-TYPE
+and PACKAGE USING variables to access those values returned by the
+package iterator.
+
+```
+path-name        ::= {SYMBOL | SYMBOLS | PRESENT-SYMBOL |
+                      PRESENT-SYMBOLS | EXTERNAL-SYMBOL |
+                      EXTERNAL-SYMBOLS}
+preposition-name ::= {IN | OF}
+using-name       ::= {ACCESSIBILITY-TYPE | PACKAGE}
 ```
 
 ### Sequence Iteration
@@ -269,6 +289,18 @@ using-name       ::= {INDEX | INDICES}
 * The INDEX or INDICES phrases in USING names a variable or a list of
   variables, in the case of multidimensional arrays, to store the
   current iteration index. It is optional.
+
+The ELEMENTS being clause also has an abbreviated form via the OVER
+token.
+
+```
+for-as-elements  ::= {FOR | AS} var [type-spec] OVER form
+                     {path-using | path-preposition}*
+path-using       ::= USING ({using-name var [type-spec]}+)
+path-preposition ::= preposition-name form
+preposition-name ::= {START | END | FROM-END}
+using-name       ::= {INDEX | INDICES}
+```
 
 ### Stream Iteration
 
@@ -335,11 +367,35 @@ preposition-name ::= {IN | OF | CLOSE}
 using-name       ::= {STREAM}
 ```
 
+### Cons Iteration
+
+#### CARS Being Clause
+
+The CARS being clause behaves the same as FOR-AS-IN-LIST, but is
+included to mirror the naming of MAPCAR and MAPLIST.
+
+```
+path-name        ::= {CAR | CARS}
+preposition-name ::= {IN | OF}
+using-name       ::= {}
+```
+
+#### LISTS Being Clause
+
+The LISTS being clause behaves the same as FOR-AS-ON-LIST, but is
+included to mirror the naming of MAPCAR and MAPLIST.
+
+```
+path-name        ::= {LIST | LISTS}
+preposition-name ::= {IN | OF}
+using-name       ::= {}
+```
+
 ### Permutation Iteration
 
-#### PERMUTATION Being Clause
+#### PERMUTATIONS Being Clause
 
-The PERMUTATION being clause iterates over the permutations of a
+The PERMUTATIONS being clause iterates over the permutations of a
 sequence.
 
 ```
@@ -383,9 +439,9 @@ using-name       ::= {}
 * The CHOOSE prepositions is an integer that specifies the length of
   the subsequence to select.
 
-#### TUPLE Being Clause
+#### TUPLES Being Clause
 
-The TUPLE being clause iterates over the all possible tuples of a
+The TUPLES being clause iterates over the all possible tuples of a
 collection of sequences. It is essentially the Cartesian Product.
 
 ```
