@@ -1,7 +1,5 @@
 (cl:in-package #:khazern-extension)
 
-#+abcl (require :extensible-sequences)
-
 (defclass being-entries (khazern:clause)
   ((%var :accessor var
          :initarg :var)
