@@ -74,3 +74,8 @@
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :entries)) &key var)
   (make-instance 'being-entries :var var :start khazern:*start*))
+
+(defmethod khazern:parse-clause
+    ((client extension-client) (region khazern:for-as-region) (name (eql :of)) &key var)
+  (khazern:unparse-token :of)
+  (make-instance 'being-entries :var var :start khazern:*start*))

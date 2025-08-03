@@ -262,8 +262,21 @@ preposition-name ::= {IN | OF}
 using-name       ::= {}
 ```
 
+The ENTRIES being clause also has an abbreviated form via the OF
+token.
+
+```
+for-as-elements  ::= {FOR | AS} var [type-spec] OF form
+```
+
+##### Examples
+
 ```common-lisp
 (kee:loop for (k . v) being entries of ht collect k collect v)
+; => (:FU :BAR :BAZ :QUUX)
+(kee:loop for (k . v) of ht collect k collect v)
+; => (:FU :BAR :BAZ :QUUX)
+(kee:loop for (k . v) of-type (symbol . symbol) being entries of ht collect k collect v)
 ; => (:FU :BAR :BAZ :QUUX)
 ```
 
