@@ -16,15 +16,15 @@
   (setf (entry-p-var instance) (khazern:add-simple-binding instance :var "ENTRYP")
         (key-value-var instance) (khazern:add-simple-binding instance
                                                              :var "KV"
-                                                             :form '(cons nil nil)
-                                                             :ignorable t
-                                                             :dynamic-extent t)))
+                                                             :form '(list nil nil)
+                                                             :ignorable t)))
                                                              
 (defmethod khazern:preposition-names ((client extension-client) (instance being-entries))
   (values '((:in :of))
-          '((:in :of))))
+          '((:in :of))
+          '()))
 
-(defun parse-hash-table-in (instance)
+(defun parse-hash-table-of (instance)
   (setf (in-ref instance) (khazern:add-simple-binding instance
                                                       :var "IN"
                                                       :form (khazern:parse-token)
@@ -32,11 +32,11 @@
 
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-entries) (key (eql :in)))
-  (parse-hash-table-in instance))
+  (parse-hash-table-of instance))
 
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-entries) (key (eql :of)))
-  (parse-hash-table-in instance))
+  (parse-hash-table-of instance))
   
 (defmethod khazern:analyze ((client extension-client) (instance being-entries))
   (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
@@ -52,11 +52,14 @@
   (declare (ignore initialp))
   (with-accessors ((entry-p-var entry-p-var)
                    (key-value-var key-value-var)
-                   (iterator-var iterator-var))
+                   (iterator-var iterator-var)
+                   (var var))
       clause
-    `((setf (values ,entry-p-var
-                    (car ,key-value-var)
-                    (cdr ,key-value-var))
+    `((setf ,@(unless (consp (khazern:var-spec var))
+                `(,key-value-var (list nil nil)))
+            (values ,entry-p-var
+                    (first ,key-value-var)
+                    (second ,key-value-var))
             (,iterator-var))
       (unless ,entry-p-var
         (go ,khazern:*epilogue-tag*)))))

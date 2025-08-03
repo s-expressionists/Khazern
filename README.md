@@ -252,9 +252,10 @@ variables. The hash keys or values are not really auxilary values.
 
 To emphasize the "entry" concept for hash tables and simply the loop
 syntax for hash tables, Khazern supplies the ENTRIES being clause. The
-stepping variable has the value of a cons with the car set to the hash
-table key and the cdr set to the hash table value. This enables LOOP's
-built in destructuring to handle the extraction.
+stepping variable has the value of a list with the first element set
+to the hash table key and the second element set to the hash table
+value. This enables LOOP's built in destructuring to handle the
+extraction.
 
 ```
 path-name        ::= {ENTRY | ENTRIES}
@@ -272,11 +273,11 @@ for-as-elements  ::= {FOR | AS} var [type-spec] OF form
 ##### Examples
 
 ```common-lisp
-(kee:loop for (k . v) being entries of ht collect k collect v)
+(kee:loop for (k v) being entries of ht collect k collect v)
 ; => (:FU :BAR :BAZ :QUUX)
-(kee:loop for (k . v) of ht collect k collect v)
+(kee:loop for (k v) of ht collect k collect v)
 ; => (:FU :BAR :BAZ :QUUX)
-(kee:loop for (k . v) of-type (symbol . symbol) being entries of ht collect k collect v)
+(kee:loop for (k v) of-type (symbol symbol) being entries of ht collect k collect v)
 ; => (:FU :BAR :BAZ :QUUX)
 ```
 
