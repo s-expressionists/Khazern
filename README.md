@@ -240,6 +240,33 @@ preposition-name ::= {IN | OF}
 using-name       ::= {HASH-KEY}
 ```
 
+#### ENTRIES Being Clause
+
+The dictionary entry for MAPHASH has the statement that it "Iterates
+over all entries in the hash-table." In other words the key value
+pairs are considered an iterable quantity known as an "entry." This
+makes the HASH-KEYS and HASH-VALUES being clauses seem a bit awkward
+with their USING syntax. The original iteration path mechanism treated
+USING as a way to access internal loop variables or at best auxilary
+variables. The hash keys or values are not really auxilary values.
+
+To emphasize the "entry" concept for hash tables and simply the loop
+syntax for hash tables, Khazern supplies the ENTRIES being clause. The
+stepping variable has the value of a cons with the car set to the hash
+table key and the cdr set to the hash table value. This enables LOOP's
+built in destructuring to handle the extraction.
+
+```
+path-name        ::= {ENTRY | ENTRIES}
+preposition-name ::= {IN | OF}
+using-name       ::= {}
+```
+
+```common-lisp
+(kee:loop for (k . v) being entries of ht collect k collect v)
+; => (:FU :BAR :BAZ :QUUX)
+```
+
 ### Package Symbol Iteration
 
 #### SYMBOLS, PRESENT-SYMBOLS, and EXTERNAL-SYMBOLS Being Clauses
@@ -553,8 +580,8 @@ any prepositions.
 ### CLEANUP Clause
 
 The FINALLY clause of CL:LOOP is not guaranteed to be executed and
-therefore is not good place to put cleanup forms from bindings
-introduced from WITH clauses. khazern-extension has the CLEANUP clause
+therefore is not a good place to put cleanup forms from bindings
+introduced by WITH clauses. khazern-extension has the CLEANUP clause
 for this. It has identical syntax as the FINALLY clause, but it places
 its forms inside an UNWIND-PROTECT.
 
