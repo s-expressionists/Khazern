@@ -39,19 +39,19 @@
           '((:in :of))
           '(:index :indices)))
 
-(defmethod khazern:parse-preposition
-    ((client extension-client) (instance being-elements) (key (eql :in)))
+(defun parse-being-elements-of (instance)
   (setf (in-ref instance) (khazern:add-simple-binding instance
                                                       :var "IN"
                                                       :form (khazern:parse-token)
                                                       :type '(or array sequence))))
 
 (defmethod khazern:parse-preposition
+    ((client extension-client) (instance being-elements) (key (eql :in)))
+  (parse-being-elements-of instance))
+
+(defmethod khazern:parse-preposition
     ((client extension-client) (instance being-elements) (key (eql :of)))
-  (setf (in-ref instance) (khazern:add-simple-binding instance
-                                                      :var "IN"
-                                                      :form (khazern:parse-token)
-                                                      :type '(or array sequence))))
+  (parse-being-elements-of instance))
 
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-elements) (key (eql :start)))

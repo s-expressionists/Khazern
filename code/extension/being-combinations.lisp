@@ -50,7 +50,7 @@
           '((:in :of) :choose)
           '()))
 
-(defun parse-of-preposition (instance)
+(defun parse-being-combinations-of (instance)
   (setf (of-ref instance) (khazern:add-simple-binding instance
                                                       :var "OF"
                                                       :form (khazern:parse-token)
@@ -58,11 +58,11 @@
 
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-combinations) (key (eql :in)))
-  (parse-of-preposition instance))
+  (parse-being-combinations-of instance))
 
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-combinations) (key (eql :of)))
-  (parse-of-preposition instance))
+  (parse-being-combinations-of instance))
 
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-combinations) (key (eql :choose)))

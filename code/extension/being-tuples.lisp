@@ -36,7 +36,7 @@
           '((:in :of))
           '()))
 
-(defun parse-of-preposition (instance)
+(defun parse-being-tuples-of (instance)
   (setf (of-ref instance) (khazern:add-simple-binding instance
                                                       :var "OF"
                                                       :form (khazern:parse-token)
@@ -44,11 +44,11 @@
 
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-tuples) (key (eql :in)))
-  (parse-of-preposition instance))
+  (parse-being-tuples-of instance))
 
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-tuples) (key (eql :of)))
-  (parse-of-preposition instance))
+  (parse-being-tuples-of instance))
 
 (defmethod khazern:analyze ((client extension-client) (instance being-tuples))
   (if (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)

@@ -4,12 +4,13 @@ Khazern is a portable and extensible Common Lisp LOOP
 implementation. It was originally written by Robert Strandh as part of
 [SICL][]. It can be loaded intrinsically in order to replace LOOP in
 an existing Lisp implementation or extrinsically to coexist with the
-implementation's own LOOP.
+implementation's own LOOP. Khazern is available via [Quicklisp][],
+[ocicl][] or [Ultralisp][].
 
-To load Khazern intrinsically with [Quicklisp][] do the following:
+To load Khazern intrinsically do the following:
 
 ```common-lisp
-* (ql:quickload :khazern-intrinsic)
+* (asdf:load-system "khazern-intrinsic")
 * (loop for i in '(1 2 3 4) when (oddp i) collect i)    
 (1 3)
 ```
@@ -17,7 +18,7 @@ To load Khazern intrinsically with [Quicklisp][] do the following:
 To load Khazern extrinsically do the following
 
 ```common-lisp
-* (ql:quickload :khazern-extrinsic)
+* (asdf:load-system "khazern-extrinsic")
 * (khazern-extrinsic:loop for i in '(1 2 3 4) when (oddp i) collect i)    
 (1 3)
 ```
@@ -26,7 +27,7 @@ Khazern also implements an extended LOOP syntax via the
 khazern-extension-extrinsic and khazern-extension-intrinsic systems.
 
 ```common-lisp
-* (ql:quickload '(:khazern-extension-extrinsic :flexi-streams))
+* (asdf:load-systems "khazern-extension-extrinsic" "flexi-streams")
 * (kee:loop for i being the elements in #(1 2 3 4 5)
               start 1 from-end t
             do (print i))
@@ -623,3 +624,5 @@ its forms inside an UNWIND-PROTECT.
 
 [Quicklisp]: https://www.quicklisp.org/beta/
 [SICL]: https://github.com/robert-strandh/SICL
+[Ultralisp]: https://ultralisp.org/
+[ocicl]: https://github.com/ocicl/ocicl

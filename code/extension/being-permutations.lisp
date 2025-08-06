@@ -42,7 +42,7 @@
           '((:in :of))
           '()))
 
-(defun parse-of-preposition (instance)
+(defun parse-being-permutations-of (instance)
   (setf (of-ref instance) (khazern:add-simple-binding instance
                                                       :var "OF"
                                                       :form (khazern:parse-token)
@@ -50,11 +50,11 @@
 
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-permutations) (key (eql :in)))
-  (parse-of-preposition instance))
+  (parse-being-permutations-of instance))
 
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-permutations) (key (eql :of)))
-  (parse-of-preposition instance))
+  (parse-being-permutations-of instance))
 
 (defmethod khazern:analyze ((client extension-client) (instance being-permutations))
   (if (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)

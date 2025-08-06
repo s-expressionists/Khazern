@@ -23,17 +23,18 @@
           '()
           '(:stream)))
 
-(defmethod khazern:parse-preposition
-    ((client extension-client) (instance being-stream-values) (key (eql :in)))
+(defun parse-stream-of (instance)
   (setf (values (stream-ref instance) (stream-d-spec instance))
         (khazern:add-simple-binding instance :var (or (stream-var instance) "STREAM")
                                              :form (khazern:parse-token) :type 'stream)))
 
 (defmethod khazern:parse-preposition
+    ((client extension-client) (instance being-stream-values) (key (eql :in)))
+  (parse-stream-of instance))
+
+(defmethod khazern:parse-preposition
     ((client extension-client) (instance being-stream-values) (key (eql :of)))
-  (setf (values (stream-ref instance) (stream-d-spec instance))
-        (khazern:add-simple-binding instance :var (or (stream-var instance) "STREAM")
-                                             :form (khazern:parse-token) :type 'stream)))
+  (parse-stream-of instance))
 
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-stream-values) (key (eql :close)))
@@ -138,7 +139,6 @@
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :object)) &key var)
-  (declare (ignore inclusive-form))
   (make-instance 'being-objects :var var :start khazern:*start*))
 
 (defmethod khazern:parse-clause
