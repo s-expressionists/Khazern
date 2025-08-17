@@ -8,15 +8,25 @@ macro stubs LOOP and LOOP-FINISH."))
 
 ;;; Scopes
 
-(defclass selectable-region () ())
+(defclass selectable-region ()
+  ()
+  (:documentation "The clause region for subclauses of conditionals"))
 
-(defclass body-region (selectable-region) ())
+(defclass body-region (selectable-region)
+  ()
+  (:documentation "The top-level clause region which includes selectable clauses."))
 
-(defclass for-as-region () ())
+(defclass for-as-region ()
+  ()
+  (:documentation "The clause region for subclauses of FOR and AS."))
 
-(defclass being-region () ())
+(defclass being-region ()
+  ()
+  (:documentation "The clause region for subclauses of FOR-AS-BEING."))
 
-(defclass with-region () ())
+(defclass with-region ()
+  ()
+  (:documentation "The clause region for subclauses of WITH."))
 
 ;;; Variable mapping
 
@@ -36,6 +46,7 @@ the FUNCTION with the arguments var, type and category.")
 ;;; Expansion interface
 
 (defgeneric assignment-pairs (binding form)
+  (:documentation "THis generic function returns a list of locations and forms to be used in SETQ.")
   (:method (binding form)
     (declare (ignore binding form))
     nil)
@@ -96,6 +107,7 @@ epilogue. The FINALLY clause is an obvious candidate for such code.")
     nil))
 
 (defgeneric afterword-forms (clause)
+  (:documentation "THis generic function returns cleanup forms for CLAUSE that should be placed in UNWIND-PROTECT.")
   (:method (clause)
     (declare (ignore clause))
     nil))
@@ -111,6 +123,7 @@ some iterator form.  The generic function WRAP-CLAUSE defines how each clause ty
     forms))
 
 (defgeneric name (clause)
+  (:documentation "This generic function returns the block name of the LOOP.")
   (:method (clause)
     (declare (ignore clause))
     nil))
@@ -192,6 +205,7 @@ the accumulation variable.")
     nil))
 
 (defgeneric scope-functions (client instance reference name)
+  (:documentation "Return a list of function definitions suitable for LABELS.")
   (:method (client instance reference name)
     (declare (ignore client instance reference name))
     nil))
@@ -227,6 +241,7 @@ Each is a list of names or name groups.")
   (intern (string name) package))
 
 (defgeneric features-list (client)
+  (:documentation "Return a list of feature keywords.")
   (:method-combination nconc)
   (:method nconc (client)
     (declare (ignore client))
