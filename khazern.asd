@@ -8,6 +8,7 @@
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
   :depends-on ("acclimation"
+               "trinsic"
                "trivial-with-current-source-form")
   :components ((:module code
                 :serial t

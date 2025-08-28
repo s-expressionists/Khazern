@@ -5,4 +5,4 @@
 
 (defvar *client* (make-instance 'extrinsic-client))
 
-(khazern:define-interface *client* extrinsic-client)
+(khazern:define-interface :client-form *client* :client-class extrinsic-client)

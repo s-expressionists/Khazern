@@ -237,30 +237,15 @@ Each is a list of names or name groups.")
 
 ;;; Interface declaration
 
-(defun ensure-symbol (name &optional (package *package*))
-  (intern (string name) package))
+(defmethod trinsic:features-list nconc ((client standard-client))
+  (list :loop/khazern))
 
-(defgeneric features-list (client)
-  (:documentation "Return a list of feature keywords.")
-  (:method-combination nconc)
-  (:method nconc (client)
-    (declare (ignore client))
-    nil)
-  (:method nconc ((client standard-client))
-    (list :loop/khazern)))
+(trinsic:make-define-interface (:client-form client-form)
+    ((loop-sym cl:loop)
+     (loop-finish-sym cl:loop-finish)
+     (epilogue-tag #:epilogue))
+  `((defmacro ,loop-finish-sym ()
+      '(go ,epilogue-tag))
 
-(defmacro define-interface (client-var client-class &optional intrinsic)
-  (declare (ignore client-class))
-  "Create the macro stubs LOOP and LOOP-FINISH based on the client-var and client-class."
-  (let* ((pkg (if intrinsic (find-package '#:common-lisp) *package*))
-         (epilogue-tag (ensure-symbol '#:epilogue)))
-    `(progn
-       (defmacro ,(ensure-symbol '#:loop-finish pkg) ()
-         '(go ,epilogue-tag))
-
-       (defmacro ,(ensure-symbol '#:loop pkg) (&rest forms)
-         (khazern:expand-body ,client-var forms ',epilogue-tag))
-
-       ,@(when intrinsic
-           `((eval-when (:compile-toplevel :load-toplevel :execute)
-               (setf *features* (nunion (features-list ,client-var) *features*))))))))
+    (defmacro ,loop-sym (&rest forms)
+      (khazern:expand-body ,client-form forms ',epilogue-tag))))
