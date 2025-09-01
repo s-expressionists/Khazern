@@ -5,5 +5,4 @@
 
 (defvar *client* (make-instance 'intrinsic-client))
 
-(trivial-package-locks:with-unlocked-system-packages
-  (khazern:define-interface :client-form *client* :client-class intrinsic-client :intrinsic t))
+(khazern:define-interface :client-form *client* :client-class intrinsic-client :intrinsic t)

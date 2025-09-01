@@ -52,7 +52,9 @@
 
 (defmethod khazern:analyze ((client extension-client) (instance being-tuples))
   (if (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
-      (setf (khazern:type-spec (var instance)) 'sequence
+      (setf (khazern:type-spec (var instance)) (if (consp (khazern:var-spec (var instance)))
+                                                   t
+                                                   'sequence)
             (result-type instance) `(type-of ,(of-ref instance)))
       (setf (result-type instance) `',(khazern:type-spec (var instance)))))
 
