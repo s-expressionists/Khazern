@@ -27,9 +27,11 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v5
-    - name: Setup Lisp Environment
+    - name: Create RC files
       run: |
         make-rc
+    - name: Setup ASDF
+      run: |
         asdf-add
     - name: Run ANSI and Regression Tests
       run: |
