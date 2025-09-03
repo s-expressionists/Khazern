@@ -33,7 +33,7 @@ jobs:
         asdf-add
     - name: Run ANSI and Regression Tests
       run: |
-        lisp -i ${{ matrix.lisp }} -e "(ql:quickload :khazern-extrinsic/test)" -e "(asdf:test-system :khazern-extrinsic)"
+        lisp -i ${{ matrix.lisp }} -e "(asdf:test-system :khazern-extrinsic)"
     - name: Run Extension Tests
       run: |
-        lisp -i ${{ matrix.lisp }} -e "(ql:quickload :khazern-extension-extrinsic/test)" -e "(asdf:test-system :khazern-extension-extrinsic)"
+        lisp -i ${{ matrix.lisp }} -e "(asdf:test-system :khazern-extension-extrinsic)"
