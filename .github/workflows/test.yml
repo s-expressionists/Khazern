@@ -27,15 +27,13 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v5
-    - name: Create RC files
+    - name: Setup Lisp
       run: |
         make-rc
-    - name: Setup ASDF
-      run: |
         asdf-add
     - name: Run ANSI and Regression Tests
       run: |
-        lisp -i ${{ matrix.lisp }} -e "(asdf:test-system :khazern-extrinsic)"
+        _JAVA_OPTIONS=-Duser.home=$HOME lisp -i ${{ matrix.lisp }} -e "(asdf:test-system :khazern-extrinsic)"
     - name: Run Extension Tests
       run: |
-        lisp -i ${{ matrix.lisp }} -e "(asdf:test-system :khazern-extension-extrinsic)"
+        _JAVA_OPTIONS=-Duser.home=$HOME lisp -i ${{ matrix.lisp }} -e "(asdf:test-system :khazern-extension-extrinsic)"
