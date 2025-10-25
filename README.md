@@ -461,13 +461,16 @@ using-name       ::= {}
 ##### Examples
 
 ```common-lisp
-(kee:loop for p being the permutations of '(1 2 3) collect p)
+(kee:loop for p being the permutations of '(1 2 3)
+          collect p)
 ; => ((1 2 3) (2 1 3) (3 1 2) (1 3 2) (2 3 1) (3 2 1))
 
-(kee:loop for p being each permutation of "abc" collect p)
+(kee:loop for p being each permutation of "abc"
+          collect p)
 ; => ("abc" "bac" "cab" "acb" "bca" "cba")
 
-(kee:loop for p of-type list being each permutation of "abc" collect p)
+(kee:loop for p of-type list being each permutation of "abc"
+          collect p)
 ; => ((#\a #\b #\c) (#\b #\a #\c) (#\c #\a #\b) (#\a #\c #\b) (#\b #\c #\a)
 ;     (#\c #\b #\a))
 ```
@@ -491,14 +494,16 @@ using-name       ::= {}
 ##### Examples
 
 ```common-lisp
-(kee:loop for c being each combination of '(1 2 3) choose 2 collect c)
+(kee:loop for c being each combination of '(1 2 3) choose 2
+          collect c)
 ; => ((1 2) (1 3) (2 3))
 
-(kee:loop for c being the combinations of "abc" choose 2 collect c)
+(kee:loop for c being the combinations of "abc" choose 2
+          collect c)
 ; => ("ab" "ac" "bc")
 
 (kee:loop for c of-type list being each combination of "abc" choose 2
-            collect c)
+          collect c)
 ; => ((#\a #\b) (#\a #\c) (#\b #\c))
 ```
 
@@ -518,6 +523,23 @@ using-name       ::= {}
 * The CHOOSE prepositions is an integer that specifies the length of
   the subsequence to select.
 
+##### Examples
+
+```common-lisp
+(kee:loop for c being each multicombination of '(1 2 3) choose 2
+          collect c)
+; => ((1 1) (1 2) (1 3) (2 2) (2 3))
+
+(kee:loop for c being the multicombinations of "abc" choose 2
+          collect c)
+; => ("aa" "ab" "ac" "bb" "bc")
+
+(kee:loop for c of-type list being each multicombination of "abc"
+            choose 2
+          collect c)
+; => ((#\a #\a) (#\a #\b) (#\a #\c) (#\b #\b) (#\b #\c))
+```
+
 #### TUPLES Being Clause
 
 The TUPLES being clause iterates over the all possible tuples of a
@@ -533,6 +555,23 @@ using-name       ::= {}
   individual sequences non-negative integers are also permitted which
   imply a sequence of that length with integers less than the length.
 
+##### Examples
+
+```common-lisp
+(kee:loop for c being each tuple of '("abc" (d e) 2)
+          collect c)
+; => ((#\a D 0) (#\a D 1) (#\a E 0) (#\a E 1) (#\b D 0) (#\b D 1) (#\b E 0)
+;     (#\b E 1) (#\c D 0) (#\c D 1) (#\c E 0) (#\c E 1))
+
+(kee:loop for c being the tuples of '("abc" "de")
+          collect c)
+; => ((#\a #\d) (#\a #\e) (#\b #\d) (#\b #\e) (#\c #\d) (#\c #\e))
+
+(kee:loop for c of-type string being the tuples of '("abc" "de")
+          collect c)
+; => ("ad" "ae" "bd" "be" "cd" "ce")
+```
+
 ### Value Accumulation
 
 #### COLLECT/APPEND/NCONC Sequence Extensions
@@ -545,9 +584,11 @@ specifications for arbitrary sequences.
 (kee:loop for i below 10
           collect i of-type (vector fixnum))
 ; => #(0 1 2 3 4 5 6 7 8 9)
+
 (kee:loop for i below 10
           append (list i (- i)) of-type simple-vector)
 ; => #(0 0 1 -1 2 -2 3 -3 4 -4 5 -5 6 -6 7 -7 8 -8 9 -9)
+
 (kee:loop for i from 65 to 90
           collect (code-char i) of-type string)
 ; => "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -569,10 +610,12 @@ and TEST as in the :KEY and :TEST keyword arguments to CL:ADJOIN.
             adjoin ch test #'char-equal)
 ; => (#\T #\h #\e #\q #\u #\i #\c #\k #\b #\r #\o #\w #\n #\f #\x #\j #\m #\p
 ;     #\s #\v #\l #\a #\z #\y #\d #\g)
+
 (kee:loop for ch across "The quick brown fox jumps over the lazy dog."
           when (alpha-char-p ch)
             adjoin ch of-type string test #'char-equal)
 ; => "Thequickbrownfxjmpsvlazydg"
+
 (kee:loop for i below 10
           union (list (mod i 3) (mod i 5)))
 ; => (0 1 2 3 4)
@@ -616,12 +659,14 @@ any prepositions.
           for i below 10
           do (my-collect i))
 ; => (0 1 2 3 4 5 6 7 8 9)
+
 (kee:loop use my-adjoin = adjoin
           for ch across "The quick brown fox jumps over the lazy dog."
           when (alpha-char-p ch)
             do (my-adjoin ch :test #'char-equal))
 ; => (#\T #\h #\e #\q #\u #\i #\c #\k #\b #\r #\o #\w #\n #\f #\x #\j #\m
 ;     #\p #\s #\v #\l #\a #\z #\y #\d #\g)
+
 (kee:loop use my-max = maximize into q
           for i from 1 upto 10
           finally (return q)
@@ -641,16 +686,17 @@ its forms inside an UNWIND-PROTECT.
 (macroexpand-1 '(kee:loop with x = (make-fubar)
                           cleanup (release-fubar x)))
 ; => (BLOCK NIL
-;      (LET ((X NIL) (#:FORM3400 (MAKE-FUBAR)))
+;      (LET ((X NIL) (#:FORM229 (MAKE-FUBAR)))
 ;        (DECLARE (IGNORABLE X))
-;        (SETQ X #:FORM3400)
+;        (SETQ X #:FORM229)
 ;        (UNWIND-PROTECT
 ;            (TAGBODY
-;             #:BODY3401
-;              (GO #:BODY3401)
+;             #:BODY230
+;              (GO #:BODY230)
 ;             KHAZERN-EXTENSION-EXTRINSIC::EPILOGUE
 ;              (RETURN-FROM NIL NIL))
-;          (RELEASE-FUBAR X))))
+;          (RELEASE-FUBAR X)))),
+;    T
 ```
 
 [Quicklisp]: https://www.quicklisp.org/beta/
