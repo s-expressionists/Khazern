@@ -280,12 +280,15 @@ for-as-entries  ::= {FOR | AS} var [type-spec] OF form
 (kee:loop for (k v) being entries of ht
           collect k collect v)
 ; => (:FU :BAR :BAZ :QUUX)
+
 (kee:loop for (k v) of ht
           collect k collect v)
 ; => (:FU :BAR :BAZ :QUUX)
+
 (kee:loop for (k v) of-type (symbol symbol) being entries of ht
           collect k collect v)
 ; => (:FU :BAR :BAZ :QUUX)
+
 (kee:loop for kv being entries of ht
           nconc kv)
 ; => (:FU :BAR :BAZ :QUUX)
@@ -427,8 +430,26 @@ included to mirror the naming of MAPCAR and MAPLIST.
 
 ```
 path-name        ::= {CAR | CARS}
-preposition-name ::= {IN | OF}
+preposition-name ::= {IN | OF | BY}
 using-name       ::= {}
+```
+
+##### Examples
+
+```common-lisp
+(kee:loop for i being the cars of '(1 2 3 4)
+          do (format t "~w~%" i))
+; 1
+; 2
+; 3
+; 4
+; => NIL
+
+(kee:loop for i being each car in '(1 2 3 4) by #'cddr
+          do (format t "~w~%" i))
+; 1
+; 3
+; => NIL
 ```
 
 #### LISTS Being Clause
@@ -438,8 +459,26 @@ included to mirror the naming of MAPCAR and MAPLIST.
 
 ```
 path-name        ::= {LIST | LISTS}
-preposition-name ::= {IN | OF}
+preposition-name ::= {IN | OF | BY}
 using-name       ::= {}
+```
+
+##### Examples
+
+```common-lisp
+(kee:loop for i being the lists of '(1 2 3 4)
+          do (format t "~w~%" i))
+; (1 2 3 4)
+; (2 3 4)
+; (3 4)
+; (4)
+; => NIL
+
+(kee:loop for i being each list in '(1 2 3 4) by #'cddr
+          do (format t "~w~%" i))
+; (1 2 3 4)
+; (3 4)
+; => NIL
 ```
 
 ### Permutation Iteration
