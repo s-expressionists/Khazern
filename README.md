@@ -10,74 +10,77 @@ implementation's own LOOP. Khazern is available via [Quicklisp][],
 To load Khazern intrinsically do the following:
 
 ```common-lisp
-* (asdf:load-system "khazern-intrinsic")
-* (loop for i in '(1 2 3 4) when (oddp i) collect i)    
-(1 3)
+(asdf:load-system "khazern-intrinsic")
+; WARNING: redefining COMMON-LISP:LOOP-FINISH in DEFMACRO
+; WARNING: redefining COMMON-LISP:LOOP in DEFMACRO
+; => T
+
+(loop for i in '(1 2 3 4) when (oddp i) collect i)
+; => (1 3)
 ```
 
 To load Khazern extrinsically do the following
 
 ```common-lisp
-* (asdf:load-system "khazern-extrinsic")
-* (khazern-extrinsic:loop for i in '(1 2 3 4) when (oddp i) collect i)    
-(1 3)
+(asdf:load-system "khazern-extrinsic")
+; => T
+
+(khazern-extrinsic:loop for i in '(1 2 3 4) when (oddp i) collect i)
+; => (1 3)
 ```
 
 Khazern also implements an extended LOOP syntax via the
 khazern-extension-extrinsic and khazern-extension-intrinsic systems.
 
 ```common-lisp
-* (asdf:load-systems "khazern-extension-extrinsic" "flexi-streams")
-* (kee:loop for i being the elements in #(1 2 3 4 5)
-              start 1 from-end t
-            do (print i))
+(asdf:load-systems "khazern-extension-extrinsic" "flexi-streams")
+; => NIL
 
-5 
-4 
-3 
-2 
-NIL
-* (with-input-from-string (stream "a 233d0 #C(1 2) (wibble)")
-    (kee:loop for i being the objects in stream
-              do (print i)))
+(kee:loop for i being the elements in #(1 2 3 4 5)
+            start 1 from-end t
+          do (format t "~w~%" i))
+; 5
+; 4
+; 3
+; 2
+; => NIL
 
-A 
-233.0d0 
-#C(1 2) 
-(WIBBLE) 
-NIL
-* (with-input-from-string (stream "abcd")
-    (kee:loop for i being the characters in stream
-              do (print i)))
+(with-input-from-string (stream "a 233d0 #C(1 2) (wibble)")
+  (kee:loop for i being the objects in stream
+            do (format t "~w~%" i)))
+; A
+; 233.0d0
+; #C(1 2)
+; (WIBBLE)
+; => NIL
 
-#\a 
-#\b 
-#\c 
-#\d 
-NIL
-* (with-input-from-string (stream "ab
+(with-input-from-string (stream "abcd")
+  (kee:loop for i being the characters in stream
+            do (format t "~w~%" i)))
+; #\a
+; #\b
+; #\c
+; #\d
+; => NIL
+
+(with-input-from-string (stream "ab
 c
 d")
-    (kee:loop for i being the lines in stream
-                using (missing-newline-p j)
-              do (print i)
-                 (print j)))
+  (kee:loop for i being the lines in stream
+              using (missing-newline-p j)
+            do (format t "~w ~w~%" i j)))
+; "ab" NIL
+; "c" NIL
+; "d" T
+; => NIL
 
-"ab" 
-NIL 
-"c" 
-NIL 
-"d" 
-T 
-NIL
-* (flexi-streams:with-input-from-sequence (stream #(1 2 3))
-    (kee:loop for i being the bytes in stream
-              do (print i)))
-
-1 
-2 
-3 
-NIL
+(flexi-streams:with-input-from-sequence (stream #(1 2 3))
+  (kee:loop for i being the bytes in stream
+            do (format t "~w~%" i)))
+; 1
+; 2
+; 3
+; => NIL
 ```
 
 ## Replacing Builtin LOOP with Khazern
@@ -455,6 +458,20 @@ using-name       ::= {}
 * The IN and OF prepositions are a sequence to permute. On each loop
   step a copy of this sequence is made with the elements permuted.
 
+##### Examples
+
+```common-lisp
+(kee:loop for p being the permutations of '(1 2 3) collect p)
+; => ((1 2 3) (2 1 3) (3 1 2) (1 3 2) (2 3 1) (3 2 1))
+
+(kee:loop for p being each permutation of "abc" collect p)
+; => ("abc" "bac" "cab" "acb" "bca" "cba")
+
+(kee:loop for p of-type list being each permutation of "abc" collect p)
+; => ((#\a #\b #\c) (#\b #\a #\c) (#\c #\a #\b) (#\a #\c #\b) (#\b #\c #\a)
+;     (#\c #\b #\a))
+```
+
 #### COMBINATIONS Being Clause
 
 The COMBINATIONS being clause iterates over the combinations of a
@@ -470,6 +487,20 @@ using-name       ::= {}
   step a copy of this sequence is made with the elements permuted.
 * The CHOOSE prepositions is an integer that specifies the length of
   the subsequence to select.
+
+##### Examples
+
+```common-lisp
+(kee:loop for c being each combination of '(1 2 3) choose 2 collect c)
+; => ((1 2) (1 3) (2 3))
+
+(kee:loop for c being the combinations of "abc" choose 2 collect c)
+; => ("ab" "ac" "bc")
+
+(kee:loop for c of-type list being each combination of "abc" choose 2
+            collect c)
+; => ((#\a #\b) (#\a #\c) (#\b #\c))
+```
 
 #### MULTICOMBINATIONS Being Clause
 
