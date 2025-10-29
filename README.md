@@ -232,6 +232,15 @@ preposition-name ::= {IN | OF}
 using-name       ::= {HASH-VALUE}
 ```
 
+##### Examples
+
+```common-lisp
+(kee:loop for v being each hash-value of (alexandria:plist-hash-table '("a" 1 "b" 2 "c" 3))
+            using (hash-key k of-type string)
+          collect (cons k v))
+; => (("a" . 1) ("b" . 2) ("c" . 3))
+```
+
 #### HASH-VALUES Being Clause
 
 The HASH-VALUES being clause is identical to that described in the
@@ -242,6 +251,15 @@ type-spec for USING variable.
 path-name        ::= {HASH-VALUE | HASH-VALUES}
 preposition-name ::= {IN | OF}
 using-name       ::= {HASH-KEY}
+```
+
+##### Examples
+
+```common-lisp
+(kee:loop for k being each hash-key of (alexandria:plist-hash-table '("a" 1 "b" 2 "c" 3))
+            using (hash-value v of-type integer)
+          collect (cons k v))
+; => (("a" . 1) ("b" . 2) ("c" . 3))
 ```
 
 #### ENTRIES Being Clause
@@ -313,6 +331,26 @@ preposition-name ::= {IN | OF}
 using-name       ::= {ACCESSIBILITY-TYPE | PACKAGE}
 ```
 
+##### Examples
+
+```common-lisp
+(kee:loop for sym being each symbol in '(:common-lisp :keyword)
+            using (accessibility-type acc package pkg)
+          repeat 10                                 
+          do (format t "~w ~w ~w~%" sym acc pkg))
+; PAIRLIS :EXTERNAL #<PACKAGE "COMMON-LISP">
+; ACOSH :EXTERNAL #<PACKAGE "COMMON-LISP">
+; FILE-WRITE-DATE :EXTERNAL #<PACKAGE "COMMON-LISP">
+; BUILT-IN-CLASS :EXTERNAL #<PACKAGE "COMMON-LISP">
+; *READTABLE* :EXTERNAL #<PACKAGE "COMMON-LISP">
+; MACROEXPAND-1 :EXTERNAL #<PACKAGE "COMMON-LISP">
+; TERPRI :EXTERNAL #<PACKAGE "COMMON-LISP">
+; LOOP-FINISH :EXTERNAL #<PACKAGE "COMMON-LISP">
+; PSETF :EXTERNAL #<PACKAGE "COMMON-LISP">
+; METHOD-COMBINATION :EXTERNAL #<PACKAGE "COMMON-LISP">
+; => NIL
+```
+
 ### Sequence Iteration
 
 #### ELEMENTS Being Clause
@@ -356,6 +394,43 @@ preposition-name ::= {START | END | FROM-END}
 using-name       ::= {INDEX | INDICES}
 ```
 
+#### Examples
+
+```common-lisp
+(kee:loop for i being the elements in #(1 2 3 4 5)
+          collect i)  
+; => (1 2 3 4 5)
+
+(kee:loop for i being the elements in #(1 2 3 4 5)
+            from-end t
+          collect i)
+; => (5 4 3 2 1)
+
+(kee:loop for i being the elements in #(1 2 3 4 5)
+            start 1
+          collect i)
+; => (2 3 4 5)
+
+(kee:loop for i being the elements in #(1 2 3 4 5)
+            start 1 from-end t end 3 
+          collect i)
+; => (3 2)
+
+(kee:loop for i being the elements in "abcde"
+            from-end t using (index j)
+          collect (cons j i))
+; => ((4 . #\e) (3 . #\d) (2 . #\c) (1 . #\b) (0 . #\a))
+
+(kee:loop for i being each element of #2A((1 2) (3 4) (5 6))
+            using (indices (j k))
+          collect (list i j k))
+; => ((1 0 0) (2 0 1) (3 1 0) (4 1 1) (5 2 0) (6 2 1))
+
+(kee:loop for i over "abcde" using (index j)
+          collect (cons j i))
+; => ((0 . #\a) (1 . #\b) (2 . #\c) (3 . #\d) (4 . #\e))
+```
+
 ### Stream Iteration
 
 All stream being clauses have the following prepositions and USING
@@ -382,6 +457,21 @@ preposition-name ::= {IN | OF | CLOSE}
 using-name       ::= {STREAM}
 ```
 
+##### Examples
+
+```common-lisp
+(asdf:load-system "flexi-streams")
+; => NIL
+
+(flexi-streams:with-input-from-sequence (stream #(1 2 3))
+  (kee:loop for i being the bytes in stream
+            do (format t "~w~%" i)))
+; 1
+; 2
+; 3
+; => NIL
+```
+
 #### CHARACTERS Being Clause
 
 The CHARACTERS being clause iterates over an input stream using
@@ -391,6 +481,19 @@ READ-CHAR. It terminates on EOF.
 path-name        ::= {CHARACTER | CHARACTERS}
 preposition-name ::= {IN | OF | CLOSE}
 using-name       ::= {STREAM}
+```
+
+##### Examples
+
+```common-lisp
+(with-input-from-string (stream "abcd")
+  (kee:loop for i being the characters in stream
+            do (format t "~w~%" i)))
+; #\a
+; #\b
+; #\c
+; #\d
+; => NIL
 ```
 
 #### LINES Being Clause
@@ -410,6 +513,21 @@ and specifies the name of variable to store the second value returned
 from READ-LINE which is non-NIL if the line was not terminated by a
 newline.
 
+##### Examples
+
+```common-lisp
+(with-input-from-string (stream "ab
+c
+d")
+  (kee:loop for i being the lines in stream
+              using (missing-newline-p j)
+            do (format t "~w ~w~%" i j)))
+; "ab" NIL
+; "c" NIL
+; "d" T
+; => NIL
+```
+
 #### OBJECTS Being Clause
 
 The OBJECTS being clause iterates over an input stream using
@@ -419,6 +537,19 @@ READ. It terminates on EOF.
 path-name        ::= {OBJECT | OBJECTS}
 preposition-name ::= {IN | OF | CLOSE}
 using-name       ::= {STREAM}
+```
+
+##### Examples
+
+```common-lisp
+(with-input-from-string (stream "a 233d0 #C(1 2) (wibble)")
+  (kee:loop for i being the objects in stream
+            do (format t "~w~%" i)))
+; A
+; 233.0d0
+; #C(1 2)
+; (WIBBLE)
+; => NIL
 ```
 
 ### Cons Iteration
