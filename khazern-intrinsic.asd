@@ -7,8 +7,7 @@
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
-  :depends-on ("khazern"
-               "trivial-package-locks")
+  :depends-on ("khazern")
   :in-order-to ((asdf:test-op (asdf:test-op "khazern-intrinsic/test")))
   :components ((:module code
                 :pathname "code/intrinsic/"

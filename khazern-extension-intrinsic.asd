@@ -6,8 +6,7 @@
   :version (:read-file-form "version.sexp")
   :homepage "https://github.com/s-expressionists/Khazern"
   :bug-tracker "https://github.com/s-expressionists/Khazern/issues"
-  :depends-on ("khazern-extension"
-               "trivial-package-locks")
+  :depends-on ("khazern-extension")
   :components ((:module code
                 :pathname "code/extension-intrinsic/"
                 :serial t
