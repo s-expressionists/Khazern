@@ -255,7 +255,7 @@
       (values (list* `(,name (,value-var)
                         (cond ((consp ,value-var)
                                (,list-name ,value-var))
-                              (value
+                              (,value-var
                                (map nil #',collect-name ,value-var))))
                      definitions)
               (list* `(inline ,name)
