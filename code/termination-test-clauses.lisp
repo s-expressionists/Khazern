@@ -44,7 +44,7 @@
   ((%count-ref :accessor count-ref)))
 
 (defmethod parse-clause
-    (client (region body-region) (keyword (eql :repeat)) &key)
+    ((client standard-client) (region body-region) (keyword (eql :repeat)) &key)
   (let ((form (parse-token))
         (instance (make-instance 'repeat-clause
                                  :start *start*
@@ -76,7 +76,7 @@
                                                :category :every)))
 
 (defmethod parse-clause
-    (client (region body-region) (keyword (eql :always)) &key)
+    ((client standard-client) (region body-region) (keyword (eql :always)) &key)
   (make-instance 'always-clause
                  :start *start*
                  :form (parse-token)
@@ -101,7 +101,7 @@
                                                :category :every)))
 
 (defmethod parse-clause
-    (client (region body-region) (keyword (eql :never)) &key)
+    ((client standard-client) (region body-region) (keyword (eql :never)) &key)
   (make-instance 'never-clause 
                  :start *start*
                  :form (parse-token)
@@ -126,7 +126,7 @@
                                                :category :some)))
 
 (defmethod parse-clause
-    (client (region body-region) (keyword (eql :thereis)) &key)
+    ((client standard-client) (region body-region) (keyword (eql :thereis)) &key)
   (make-instance 'thereis-clause
                  :start *start*
                  :form (parse-token)
@@ -149,14 +149,14 @@
   ())
 
 (defmethod parse-clause
-    (client (region body-region) (keyword (eql :while)) &key)
+    ((client standard-client) (region body-region) (keyword (eql :while)) &key)
   (make-instance 'while-clause
                  :start *start*
                  :form (parse-token)
                  :end *index*))
 
 (defmethod parse-clause
-    (client (region body-region) (keyword (eql :until)) &key)
+    ((client standard-client) (region body-region) (keyword (eql :until)) &key)
   (make-instance 'while-clause
                  :start *start*
                  :form `(not ,(parse-token))
