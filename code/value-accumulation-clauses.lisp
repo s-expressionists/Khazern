@@ -304,7 +304,7 @@
   (let ((var (var-spec (var instance)))
         (value-var (gensym "VALUE")))
     (values `((,name (,value-var)
-                (when value
+                (when ,value-var
                   (incf ,var))))
             `((inline ,name)))))
 
