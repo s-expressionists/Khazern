@@ -549,7 +549,7 @@
                         (cond ((consp ,value-var)
                                (tagbody
                                 next
-                                  (when value
+                                  (when ,value-var
                                     (cond ((apply #'member (car ,value-var) (cdr ,head) ,args-var)
                                            (setq ,value-var (cdr ,value-var)))
                                           (t
