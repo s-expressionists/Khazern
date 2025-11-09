@@ -36,7 +36,7 @@
 
 (defmethod make-scope :around
     ((client standard-client) name type category references)
-  (declare (ignore type))
+  (declare (ignore name type category))
   (let ((instance (call-next-method)))
     (when (typep instance 'scope)
       (prog ((symbol nil))

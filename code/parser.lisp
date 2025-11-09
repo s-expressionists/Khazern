@@ -193,6 +193,7 @@
     (prog ((foundp nil)
            (token nil)
            (keyword nil))
+       (declare (ignore token))
      next-preposition
        (when preposition-names
          (cond (required-preposition-names

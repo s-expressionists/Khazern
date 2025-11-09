@@ -152,6 +152,7 @@
   nil)
 
 (defun parse-for-as-arithmetic (client keyword var)
+  (declare (ignore client))
   (check-nullable-simple-var-spec var)
   (unparse-token keyword)
   (make-instance 'for-as-arithmetic :start *start* :var var))
@@ -380,6 +381,7 @@
                                   (subsequent-form clause)))))
 
 (defmethod step-outro-forms ((clause for-as-equals-then) initialp)
+  (declare (ignore initialp))
   (expand-assignments (var clause) (temp-ref clause)))
 
 ;;; 6.1.2.1.5 FOR-AS-ACROSS subclause
@@ -499,6 +501,7 @@
           '(:hash-key)))
 
 (defmethod parse-preposition ((client standard-client) (instance being-hash-entries) key)
+  (declare (ignore key))
   (when (var-spec (other-var instance))
     (warn 'preposition-order
           :first-preposition :using
@@ -775,6 +778,7 @@
 
 (defmethod parse-clause :around
     ((client standard-client) (region with-region) keyword &key)
+  (declare (ignore keyword))
   (parse-prepositions client (call-next-method)))
 
 (defmethod parse-clause ((client standard-client) (region with-region) (keyword null) &key var)
