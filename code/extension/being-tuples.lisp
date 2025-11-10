@@ -65,16 +65,17 @@
                    (limit-ref limit-ref))
       clause
     (nconc (if initialp
-               `((setq ,len-ref (map 'list
-                                     (lambda (seq-or-len)
-                                       (if (numberp seq-or-len)
-                                           seq-or-len
-                                           (length seq-or-len)))
-                                     ,of-ref)
-                      ,limit-ref (apply #'* ,len-ref))
-                (mapl (lambda (len)
-                        (rplaca len (apply #'* (cdr len))))
-                      ,len-ref))
+               (khazern:with-gensyms (seq len)
+                 `((setq ,len-ref (map 'list
+                                       (lambda (,seq)
+                                         (if (numberp ,seq)
+                                             ,seq
+                                             (length ,seq)))
+                                       ,of-ref)
+                         ,limit-ref (apply #'* ,len-ref))
+                   (mapl (lambda (,len)
+                           (rplaca ,len (apply #'* (cdr ,len))))
+                         ,len-ref)))
               `((incf ,iter-ref)))
           `((unless (< ,iter-ref ,limit-ref)
               (go ,khazern:*epilogue-tag*))))))
@@ -86,14 +87,15 @@
                    (len-ref len-ref)
                    (result-type result-type))
       clause
-    (khazern:expand-assignments (var clause)
-                                `(let ((iter-tmp ,iter-ref))
-                                   (map ,result-type
-                                        (lambda (arr-or-len div)
-                                          (multiple-value-bind (q r)
-                                              (floor iter-tmp div)
-                                            (setq iter-tmp r)
-                                            (if (numberp arr-or-len)
-                                                q
-                                                (elt arr-or-len q))))
-                                        ,of-ref ,len-ref)))))
+    (khazern:with-gensyms (arr div q r iter)
+      (khazern:expand-assignments (var clause)
+                                  `(let ((,iter ,iter-ref))
+                                     (map ,result-type
+                                          (lambda (,arr ,div)
+                                            (multiple-value-bind (,q ,r)
+                                                (floor ,iter ,div)
+                                              (setq ,iter ,r)
+                                              (if (numberp ,arr)
+                                                  ,q
+                                                  (elt ,arr ,q))))
+                                          ,of-ref ,len-ref))))))

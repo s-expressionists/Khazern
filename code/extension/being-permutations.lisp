@@ -69,30 +69,30 @@
                    (of-ref of-ref)
                    (pos-ref pos-ref))
       clause
-    (if initialp
-        `((setq ,len-ref (length ,of-ref)
-                ,perm-ref (make-array ,len-ref :element-type 'fixnum)
-                ,state-ref (make-array ,len-ref :element-type 'fixnum))
-          (prog ((pos ,len-ref))
-           next
-             (when (plusp pos)
-               (decf pos)
-               (setf (aref ,perm-ref pos) pos)
-               (go next))))
-        (let ((next-tag (gensym "NEXT")))
-          `(,next-tag
+    (khazern:with-gensyms (pos next temp)
+      (if initialp
+          `((setq ,len-ref (length ,of-ref)
+                  ,perm-ref (make-array ,len-ref :element-type 'fixnum)
+                  ,state-ref (make-array ,len-ref :element-type 'fixnum))
+            (prog ((,pos ,len-ref))
+               ,next
+               (when (plusp ,pos)
+                 (decf ,pos)
+                 (setf (aref ,perm-ref ,pos) ,pos)
+                 (go ,next))))
+          `(,next
               (unless (< ,pos-ref ,len-ref)
                 (go ,khazern:*epilogue-tag*))
               (unless (< (aref ,state-ref ,pos-ref) ,pos-ref)
                 (setf (aref ,state-ref ,pos-ref) 0)
                 (incf ,pos-ref)
-                (go ,next-tag))
-              (let ((temp (aref ,perm-ref ,pos-ref))
-                    (pos (if (zerop (mod ,pos-ref 2))
-                             0
-                             (aref ,state-ref ,pos-ref))))
-                (setf (aref ,perm-ref ,pos-ref) (aref ,perm-ref pos)
-                      (aref ,perm-ref pos) temp))
+                (go ,next))
+              (let ((,temp (aref ,perm-ref ,pos-ref))
+                    (,pos (if (zerop (mod ,pos-ref 2))
+                              0
+                              (aref ,state-ref ,pos-ref))))
+                (setf (aref ,perm-ref ,pos-ref) (aref ,perm-ref ,pos)
+                      (aref ,perm-ref ,pos) ,temp))
               (incf (aref ,state-ref ,pos-ref))
               (setq ,pos-ref 1))))))
 
@@ -102,7 +102,8 @@
                    (of-ref of-ref)
                    (result-type result-type))
       clause
-    (khazern:expand-assignments (var clause) `(map ,result-type
-                                                   (lambda (pos)
-                                                     (elt ,of-ref pos))
-                                                   ,perm-ref))))
+    (khazern:with-gensyms (pos)
+      (khazern:expand-assignments (var clause) `(map ,result-type
+                                                     (lambda (,pos)
+                                                       (elt ,of-ref ,pos))
+                                                     ,perm-ref)))))

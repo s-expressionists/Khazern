@@ -94,41 +94,39 @@
 
 (defmethod scope-functions
     ((client standard-client) (instance list-scope) (reference (eql :collect)) name)
-  (let ((tail (scope-reference instance :tail))
-        (value-var (gensym "VALUE")))
-    (values `((,name (,value-var)
-                (rplacd ,tail
-                        (setq ,tail (cons ,value-var nil)))))
-            `((inline ,name)))))
+  (let ((tail (scope-reference instance :tail)))
+    (with-gensyms (value)
+      (values `((,name (,value)
+                  (rplacd ,tail
+                          (setq ,tail (cons ,value nil)))))
+              `((inline ,name))))))
 
 (defmethod scope-functions
     ((client standard-client) (instance list-scope) (reference (eql :append)) name)
-  (let ((tail (scope-reference instance :tail))
-        (value-var (gensym "VALUE"))
-        (repeat-tag (gensym "REPEAT")))
-    `((,name (,value-var)
-        (tagbody
-         ,repeat-tag
-           (cond ((consp ,value-var)
-                  (rplacd ,tail
-                          (setq ,tail (cons (car ,value-var) nil)))
-                  (setq ,value-var (cdr ,value-var))
-                  (go ,repeat-tag))
-                 (t
-                  (rplacd ,tail ,value-var))))))))
+  (let ((tail (scope-reference instance :tail)))
+    (with-gensyms (value repeat)
+      `((,name (,value)
+          (tagbody
+           ,repeat
+             (cond ((consp ,value)
+                    (rplacd ,tail
+                            (setq ,tail (cons (car ,value) nil)))
+                    (setq ,value (cdr ,value))
+                    (go ,repeat))
+                   (t
+                    (rplacd ,tail ,value)))))))))
 
 (defmethod scope-functions
     ((client standard-client) (instance list-scope) (reference (eql :nconc)) name)
-  (let ((tail (scope-reference instance :tail))
-        (value-var (gensym "VALUE"))
-        (repeat-tag (gensym "REPEAT")))
-    `((,name (,value-var)
-        (tagbody
-           (rplacd ,tail ,value-var)
-         ,repeat-tag
-           (when (consp (cdr ,tail))
-             (setq ,tail (cdr ,tail))
-             (go ,repeat-tag)))))))
+  (let ((tail (scope-reference instance :tail)))
+    (with-gensyms (value repeat)
+      `((,name (,value)
+          (tagbody
+             (rplacd ,tail ,value)
+           ,repeat
+             (when (consp (cdr ,tail))
+               (setq ,tail (cdr ,tail))
+               (go ,repeat))))))))
 
 (defmethod wrap-forms :around ((instance list-scope) forms)
   (declare (ignore forms))
@@ -301,21 +299,21 @@
 (defmethod scope-functions
     ((client standard-client) (instance summation-scope) (reference (eql :count))
      name)
-  (let ((var (var-spec (var instance)))
-        (value-var (gensym "VALUE")))
-    (values `((,name (,value-var)
-                (when ,value-var
-                  (incf ,var))))
-            `((inline ,name)))))
+  (let ((var (var-spec (var instance))))
+    (with-gensyms (value)
+      (values `((,name (,value)
+                       (when ,value
+                         (incf ,var))))
+              `((inline ,name))))))
 
 (defmethod scope-functions
     ((client standard-client) (instance summation-scope) (reference (eql :sum))
      name)
-  (let ((var (var-spec (var instance)))
-        (value-var (gensym "VALUE")))
-    (values `((,name (,value-var)
-                (incf ,var ,value-var)))
-            `((inline ,name)))))
+  (let ((var (var-spec (var instance))))
+    (with-gensyms (value)
+      (values `((,name (,value)
+                       (incf ,var ,value)))
+              `((inline ,name))))))
 
 ;;; MINIMIZE/MAXIMIZE clause
 
@@ -347,31 +345,29 @@
      name)
   (let ((var (var-spec (var instance)))
         (type (type-spec (var instance)))
-        (firstp (scope-reference instance :firstp))
-        (value-var (gensym "VALUE"))
-        (coerced-var (gensym "COERCED")))
-    `((,name (,value-var)
-        (let ((,coerced-var (coerce ,value-var ',type)))
-          (declare (type ,type ,coerced-var))
-          (when (or ,firstp
-                    (> ,coerced-var ,var))
-            (setq ,var ,coerced-var
-                  ,firstp nil)))))))
+        (firstp (scope-reference instance :firstp)))
+    (with-gensyms (value coerced-value)
+      `((,name (,value)
+               (let ((,coerced-value (coerce ,value ',type)))
+                 (declare (type ,type ,coerced-value))
+                 (when (or ,firstp
+                           (> ,coerced-value ,var))
+                   (setq ,var ,coerced-value
+                         ,firstp nil))))))))
 
 (defmethod scope-functions
     ((client standard-client) (instance extremum-scope) (reference (eql :min)) name)
   (let ((var (var-spec (var instance)))
         (type (type-spec (var instance)))
-        (firstp (scope-reference instance :firstp))
-        (value-var (gensym "VALUE"))
-        (coerced-var (gensym "COERCED")))
-    `((,name (,value-var)
-        (let ((,coerced-var (coerce ,value-var ',type)))
-          (declare (type ,type ,coerced-var))
-          (when (or ,firstp
-                    (< ,coerced-var ,var))
-            (setq ,var ,coerced-var
-                  ,firstp nil)))))))
+        (firstp (scope-reference instance :firstp)))
+    (with-gensyms (value coerced-value)
+      `((,name (,value)
+               (let ((,coerced-value (coerce ,value ',type)))
+                 (declare (type ,type ,coerced-value))
+                 (when (or ,firstp
+                           (< ,coerced-value ,var))
+                   (setq ,var ,coerced-value
+                         ,firstp nil))))))))
 
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :minimize)) &key)

@@ -125,7 +125,8 @@
                    (of-ref of-ref)
                    (result-type result-type))
       clause
-    (khazern:expand-assignments (var clause) `(map ,result-type
-                                                   (lambda (pos)
-                                                     (elt ,of-ref pos))
-                                                   ,comb-ref))))
+    (khazern:with-gensyms (pos)
+      (khazern:expand-assignments (var clause) `(map ,result-type
+                                                     (lambda (,pos)
+                                                       (elt ,of-ref ,pos))
+                                                     ,comb-ref)))))
