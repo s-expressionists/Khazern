@@ -1,6 +1,6 @@
 (cl:in-package #:khazern-extension)
 
-(defconstant +default-yvector-size+ 16)
+(defconstant +default-vector-size+ 16)
 
 (defun parse-vector-type (type)
   (flet ((normalize-type (head)

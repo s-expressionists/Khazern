@@ -111,7 +111,7 @@
       clause
     (nconc (if initialp
                (khazern:with-unique-names (seq iter from-end-p limit start end pos element
-                                           indices i l q r x y array row-major-index
+                                           indices i l q r x y array row-major-index next
                                            #-(or abcl clasp sbcl) index)
                  `((multiple-value-setq (,iterator-ref ,limit-ref ,from-end-ref ,step-func
                                          ,endp-func ,read-func ,write-func ,index-func)
@@ -196,7 +196,7 @@
                                           (lambda (,seq ,iter ,from-end-p)
                                             (declare (ignore ,from-end-p))
                                             (prog ((,pos (1- (array-rank (the array ,seq)))))
-                                             next
+                                             ,next
                                                (cond ((minusp ,pos)
                                                       (mapl (lambda (,i ,l)
                                                               (rplaca ,i (1- (car ,l))))
@@ -205,14 +205,14 @@
                                                       (setf (elt ,iter ,pos)
                                                             (1- (elt ,end ,pos)))
                                                       (decf ,pos)
-                                                      (go next))
+                                                      (go ,next))
                                                      (t
                                                       (decf (elt ,iter ,pos)))))
                                             ,iter)
                                           (lambda (,seq ,iter ,from-end-p)
                                             (declare (ignore ,from-end-p))
                                             (prog ((,pos (1- (array-rank (the array ,seq)))))
-                                             next
+                                             ,next
                                                (cond ((minusp ,pos)
                                                       (mapl (lambda (,i ,l)
                                                               (rplaca ,i (car ,l)))
@@ -221,7 +221,7 @@
                                                            (1+ (elt ,iter ,pos)))
                                                       (setf (elt ,iter ,pos) (elt ,start ,pos))
                                                       (decf ,pos)
-                                                      (go next))
+                                                      (go ,next))
                                                      (t
                                                       (incf (elt ,iter ,pos)))))
                                             ,iter))
@@ -273,7 +273,7 @@
                                       (lambda (,array ,row-major-index)
                                         (mapl (lambda (,y ,x)
                                                 (multiple-value-bind (,q ,r)
-                                                    (floor row-major-index
+                                                    (floor ,row-major-index
                                                            (apply '* (cdr ,x)))
                                                   (setf ,row-major-index ,r)
                                                   (rplaca ,y ,q)))
