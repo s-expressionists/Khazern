@@ -65,7 +65,7 @@
                    (limit-ref limit-ref))
       clause
     (nconc (if initialp
-               (khazern:with-gensyms (seq len)
+               (khazern:with-unique-names (seq len)
                  `((setq ,len-ref (map 'list
                                        (lambda (,seq)
                                          (if (numberp ,seq)
@@ -87,7 +87,7 @@
                    (len-ref len-ref)
                    (result-type result-type))
       clause
-    (khazern:with-gensyms (arr div q r iter)
+    (khazern:with-unique-names (arr div q r iter)
       (khazern:expand-assignments (var clause)
                                   `(let ((,iter ,iter-ref))
                                      (map ,result-type

@@ -89,16 +89,16 @@
         `((setq ,len-ref (length ,of-ref)
                 ,comb-ref (make-array ,choose-ref :element-type 'fixnum))
           ,@(unless multip
-              `((prog ((pos ,choose-ref))
-                 next
-                   (when (plusp pos)
-                     (decf pos)
-                     (setf (aref ,comb-ref pos) pos)
-                     (go next))))))
-        (let ((next1-tag (gensym (symbol-name :next)))
-              (next2-tag (gensym (symbol-name :next))))
+              (khazern:with-unique-names (pos next)
+                `((prog ((,pos ,choose-ref))
+                   ,next
+                     (when (plusp ,pos)
+                       (decf ,pos)
+                       (setf (aref ,comb-ref ,pos) ,pos)
+                       (go ,next)))))))
+        (khazern:with-unique-names (next1 next2)
           `(  (setq ,pos-ref (1- ,choose-ref))
-            ,next1-tag
+            ,next1
               (when (minusp ,pos-ref)
                 (go ,khazern:*epilogue-tag*))
               (unless (or (and (= (1+ ,pos-ref) ,choose-ref)
@@ -107,17 +107,17 @@
                                (< (1+ (aref ,comb-ref ,pos-ref))
                                   (aref ,comb-ref (1+ ,pos-ref)))))
                 (decf ,pos-ref)
-                (go ,next1-tag))
+                (go ,next1))
               (incf (aref ,comb-ref ,pos-ref))
               (incf ,pos-ref)
-            ,next2-tag
+            ,next2
               (when (< ,pos-ref ,choose-ref)
                 (setf (aref ,comb-ref ,pos-ref)
                       ,(if multip
                            `(aref ,comb-ref (1- ,pos-ref))
                            `(1+ (aref ,comb-ref (1- ,pos-ref)))))
                 (incf ,pos-ref)
-                (go ,next2-tag)))))))
+                (go ,next2)))))))
 
 (defmethod khazern:step-outro-forms ((clause being-combinations) initialp)
   (declare (ignore initialp))
@@ -125,7 +125,7 @@
                    (of-ref of-ref)
                    (result-type result-type))
       clause
-    (khazern:with-gensyms (pos)
+    (khazern:with-unique-names (pos)
       (khazern:expand-assignments (var clause) `(map ,result-type
                                                      (lambda (,pos)
                                                        (elt ,of-ref ,pos))

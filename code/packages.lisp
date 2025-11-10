@@ -85,6 +85,6 @@
            #:var
            #:var-spec
            #:variable-list
-           #:with-gensyms
            #:with-region
+           #:with-unique-names
            #:wrap-forms))

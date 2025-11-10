@@ -69,7 +69,7 @@
                    (of-ref of-ref)
                    (pos-ref pos-ref))
       clause
-    (khazern:with-gensyms (pos next temp)
+    (khazern:with-unique-names (pos next temp)
       (if initialp
           `((setq ,len-ref (length ,of-ref)
                   ,perm-ref (make-array ,len-ref :element-type 'fixnum)
@@ -102,7 +102,7 @@
                    (of-ref of-ref)
                    (result-type result-type))
       clause
-    (khazern:with-gensyms (pos)
+    (khazern:with-unique-names (pos)
       (khazern:expand-assignments (var clause) `(map ,result-type
                                                      (lambda (,pos)
                                                        (elt ,of-ref ,pos))

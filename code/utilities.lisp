@@ -197,7 +197,7 @@
                (find-keyword name keyword-or-keywords))
              names))
 
-(defmacro with-gensyms (names &body body)
+(defmacro with-unique-names (names &body body)
   `(let ,(mapcar (lambda (sym)
                    `(,sym (gensym ,(symbol-name sym))))
                   names)

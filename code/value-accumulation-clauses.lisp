@@ -95,7 +95,7 @@
 (defmethod scope-functions
     ((client standard-client) (instance list-scope) (reference (eql :collect)) name)
   (let ((tail (scope-reference instance :tail)))
-    (with-gensyms (value)
+    (with-unique-names (value)
       (values `((,name (,value)
                   (rplacd ,tail
                           (setq ,tail (cons ,value nil)))))
@@ -104,7 +104,7 @@
 (defmethod scope-functions
     ((client standard-client) (instance list-scope) (reference (eql :append)) name)
   (let ((tail (scope-reference instance :tail)))
-    (with-gensyms (value repeat)
+    (with-unique-names (value repeat)
       `((,name (,value)
           (tagbody
            ,repeat
@@ -119,7 +119,7 @@
 (defmethod scope-functions
     ((client standard-client) (instance list-scope) (reference (eql :nconc)) name)
   (let ((tail (scope-reference instance :tail)))
-    (with-gensyms (value repeat)
+    (with-unique-names (value repeat)
       `((,name (,value)
           (tagbody
              (rplacd ,tail ,value)
@@ -300,7 +300,7 @@
     ((client standard-client) (instance summation-scope) (reference (eql :count))
      name)
   (let ((var (var-spec (var instance))))
-    (with-gensyms (value)
+    (with-unique-names (value)
       (values `((,name (,value)
                        (when ,value
                          (incf ,var))))
@@ -310,7 +310,7 @@
     ((client standard-client) (instance summation-scope) (reference (eql :sum))
      name)
   (let ((var (var-spec (var instance))))
-    (with-gensyms (value)
+    (with-unique-names (value)
       (values `((,name (,value)
                        (incf ,var ,value)))
               `((inline ,name))))))
@@ -346,7 +346,7 @@
   (let ((var (var-spec (var instance)))
         (type (type-spec (var instance)))
         (firstp (scope-reference instance :firstp)))
-    (with-gensyms (value coerced-value)
+    (with-unique-names (value coerced-value)
       `((,name (,value)
                (let ((,coerced-value (coerce ,value ',type)))
                  (declare (type ,type ,coerced-value))
@@ -360,7 +360,7 @@
   (let ((var (var-spec (var instance)))
         (type (type-spec (var instance)))
         (firstp (scope-reference instance :firstp)))
-    (with-gensyms (value coerced-value)
+    (with-unique-names (value coerced-value)
       `((,name (,value)
                (let ((,coerced-value (coerce ,value ',type)))
                  (declare (type ,type ,coerced-value))
