@@ -10,7 +10,7 @@
 (defclass termination-test-clause (body-clause)
   ())
 
-(defmethod (setf clause-group) :after ((group (eql :variable)) (clause termination-test-clause))
+#+(or)(defmethod (setf clause-group) :after ((group (eql :variable)) (clause termination-test-clause))
   (warn 'possible-invalid-clause-order
         :clause (subseq *body* (start clause) (end clause))
         :found-group group
