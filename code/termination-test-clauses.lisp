@@ -50,7 +50,7 @@
                                  :start *start*
                                  :end *index*)))
     (setf (count-ref instance) (add-simple-binding instance
-                                                   :var "REPEAT"
+                                                   :var :repeat
                                                    :type 'fixnum
                                                    :form (if (numberp form)
                                                              (max 0 (ceiling form))

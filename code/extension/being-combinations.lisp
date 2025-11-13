@@ -17,14 +17,14 @@
   (declare (ignore initargs))
   (khazern:add-binding instance (var instance))
   (setf (comb-ref instance) (khazern:add-simple-binding instance
-                                                        :var "COMB"
+                                                        :var :comb
                                                         :form '(make-array 0
                                                                 :element-type 'fixnum)
                                                         :type '(vector fixnum))
         (len-ref instance) (khazern:add-simple-binding instance
-                                                       :var "LEN" :type 'fixnum)
+                                                       :var :len :type 'fixnum)
         (pos-ref instance) (khazern:add-simple-binding instance
-                                                       :var "POS" :type 'fixnum)))
+                                                       :var :pos :type 'fixnum)))
   
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :combination)) &key var)
@@ -52,7 +52,7 @@
 
 (defun parse-being-combinations-of (instance)
   (setf (of-ref instance) (khazern:add-simple-binding instance
-                                                      :var "OF"
+                                                      :var :of
                                                       :form (khazern:parse-token)
                                                       :type 'sequence)))
 
@@ -67,7 +67,7 @@
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-combinations) (key (eql :choose)))
   (setf (choose-ref instance) (khazern:add-simple-binding instance
-                                                          :var "CHOOSE"
+                                                          :var :choose
                                                           :form (khazern:parse-token)
                                                           :type 'fixnum)))
 

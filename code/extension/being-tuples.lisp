@@ -13,13 +13,13 @@
   (declare (ignore initargs))
   (khazern:add-binding instance (var instance))
   (setf (iter-ref instance) (khazern:add-simple-binding instance
-                                                        :var "ITER"
+                                                        :var :iter
                                                         :type 'fixnum)
         (limit-ref instance) (khazern:add-simple-binding instance
-                                                         :var "LIMIT"
+                                                         :var :limit
                                                          :type 'fixnum)
         (len-ref instance) (khazern:add-simple-binding instance
-                                                       :var "LEN"
+                                                       :var :len
                                                        :type 'list)))
   
 (defmethod khazern:parse-clause
@@ -38,7 +38,7 @@
 
 (defun parse-being-tuples-of (instance)
   (setf (of-ref instance) (khazern:add-simple-binding instance
-                                                      :var "OF"
+                                                      :var :of
                                                       :form (khazern:parse-token)
                                                       :type 'sequence)))
 

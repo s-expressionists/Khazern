@@ -130,15 +130,14 @@
      (return (nreverse forms))))
 
 (defmacro parse-conjunctive-clauses (client region read-name-p &rest args)
-  (let ((clauses-var (gensym "CLAUSES"))
-        (next-tag (gensym "NEXT")))
-    `(prog (,clauses-var)
-      ,next-tag
+  (with-unique-names (clauses next)
+    `(prog (,clauses)
+      ,next
         (push (do-parse-clause ,client ,region *index* ,read-name-p ,@args)
-              ,clauses-var)
+              ,clauses)
         (when (maybe-parse-token :keywords '(:and))
-          (go ,next-tag))
-        (return (nreverse ,clauses-var)))))
+          (go ,next))
+        (return (nreverse ,clauses)))))
 
 (defun parse-body (client)
   (prog ((region (make-instance 'extended-superclause))

@@ -25,7 +25,7 @@
 
 (defun parse-stream-of (instance)
   (setf (values (stream-ref instance) (stream-d-spec instance))
-        (khazern:add-simple-binding instance :var (or (stream-var instance) "STREAM")
+        (khazern:add-simple-binding instance :var (or (stream-var instance) :stream)
                                              :form (khazern:parse-token) :type 'stream)))
 
 (defmethod khazern:parse-preposition
@@ -39,7 +39,7 @@
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-stream-values) (key (eql :close)))
   (setf (close-ref instance) (khazern:add-simple-binding instance
-                                                         :var "CLOSEP"
+                                                         :var :closep
                                                          :form (khazern:parse-token))))
 
 (defmethod khazern:parse-using
@@ -64,7 +64,7 @@
   (khazern:check-nullable-simple-var-spec (var instance))
   (setf (values (temp-ref instance) (temp-var instance))
         (khazern:add-simple-binding instance
-                                    :var "NEXT"
+                                    :var :next
                                     :type `(or stream
                                                ,(khazern:type-spec (var instance))))))
 
@@ -147,7 +147,7 @@
 
 (defclass being-lines (being-stream-values)
   ((%missing-newline-p-var :accessor missing-newline-p-var
-                           :initform (gensym "MISS"))))
+                           :initform (khazern:unique-name :miss))))
 
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :line)) &key var)

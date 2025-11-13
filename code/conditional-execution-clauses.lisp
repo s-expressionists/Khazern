@@ -53,7 +53,7 @@
                                                 :condition `(not ,(parse-token)))))
 
 (defmethod body-forms ((clause conditional-clause))
-  (let ((*it-var* (gensym)))
+  (let ((*it-var* (unique-name :it)))
     `((let ((,*it-var* ,(condition clause)))
         (cond (,*it-var*
                ,@(body-forms (car (then-clauses clause)))

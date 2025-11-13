@@ -197,6 +197,20 @@
                (find-keyword name keyword-or-keywords))
              names))
 
+(defun unique-name (sym)
+  (gensym (symbol-name sym)))
+
+(define-compiler-macro unique-name (&whole form name)
+  (cond ((and (constantp name)
+              (symbolp name))
+         `(gensym ,(symbol-name name)))
+        ((and (consp name)
+              (eq (first name) 'quote)
+              (symbolp (second name)))
+         `(gensym ,(symbol-name (second name))))
+        (t
+         form)))
+
 (defmacro with-unique-names (names &body body)
   `(let ,(mapcar (lambda (sym)
                    `(,sym (gensym ,(symbol-name sym))))

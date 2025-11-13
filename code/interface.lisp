@@ -243,7 +243,7 @@ Each is a list of names or name groups.")
 (trinsic:make-define-interface (:client-form client-form)
     ((loop-sym cl:loop)
      (loop-finish-sym cl:loop-finish))
-  (let ((epilogue-tag (gensym "EPILOGUE")))
+  (let ((epilogue-tag (unique-name :epilogue)))
     `((defmacro ,loop-finish-sym ()
         '(go ,epilogue-tag))
 

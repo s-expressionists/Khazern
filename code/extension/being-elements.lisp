@@ -26,13 +26,13 @@
 (defmethod initialize-instance :after ((instance being-elements) &rest initargs &key)
   (declare (ignore initargs))
   (khazern:add-binding instance (var instance))
-  (setf (limit-ref instance) (khazern:add-simple-binding instance :var "LIMIT")
-        (iterator-ref instance) (khazern:add-simple-binding instance :var "ITER")
-        (step-func instance) (khazern:add-simple-binding instance :var "STEP")
-        (endp-func instance) (khazern:add-simple-binding instance :var "ENDP")
-        (read-func instance) (khazern:add-simple-binding instance :var "READ")
-        (write-func instance) (khazern:add-simple-binding instance :var "WRITE" :ignorable t)
-        (index-func instance) (khazern:add-simple-binding instance :var "INDEX" :ignorable t)))
+  (setf (limit-ref instance) (khazern:add-simple-binding instance :var :limit)
+        (iterator-ref instance) (khazern:add-simple-binding instance :var :iter)
+        (step-func instance) (khazern:add-simple-binding instance :var :step)
+        (endp-func instance) (khazern:add-simple-binding instance :var :endp)
+        (read-func instance) (khazern:add-simple-binding instance :var :read)
+        (write-func instance) (khazern:add-simple-binding instance :var :write :ignorable t)
+        (index-func instance) (khazern:add-simple-binding instance :var :index :ignorable t)))
 
 (defmethod khazern:preposition-names ((client extension-client) (instance being-elements))
   (values '((:in :of) :start :end :from-end)
@@ -41,7 +41,7 @@
 
 (defun parse-being-elements-of (instance)
   (setf (in-ref instance) (khazern:add-simple-binding instance
-                                                      :var "IN"
+                                                      :var :in
                                                       :form (khazern:parse-token)
                                                       :type '(or array sequence))))
 
@@ -56,20 +56,20 @@
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-elements) (key (eql :start)))
   (setf (start-ref instance) (khazern:add-simple-binding instance
-                                                         :var "START"
+                                                         :var :start
                                                          :form (khazern:parse-token)
                                                          :fold t :type 'fixnum)))
 
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-elements) (key (eql :end)))
   (setf (end-ref instance) (khazern:add-simple-binding instance
-                                                       :var "END" :form (khazern:parse-token)
+                                                       :var :end :form (khazern:parse-token)
                                                        :fold t :type 'fixnum)))
 
 (defmethod khazern:parse-preposition
     ((client extension-client) (instance being-elements) (key (eql :from-end)))
   (setf (from-end-ref instance) (khazern:add-simple-binding instance
-                                                            :var "FROM-END-"
+                                                            :var :from-end-
                                                             :form (khazern:parse-token))))
 
 (defun parse-index (instance)
@@ -93,7 +93,7 @@
   (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
     (setf (khazern:type-spec (var instance)) t))
   (unless (from-end-ref instance)
-    (setf (from-end-ref instance) (khazern:add-simple-binding instance :var "FROM-END-"
+    (setf (from-end-ref instance) (khazern:add-simple-binding instance :var :from-end-
                                                               :form nil))))
 
 (defmethod khazern:step-intro-forms ((clause being-elements) initialp)

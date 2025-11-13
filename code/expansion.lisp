@@ -18,7 +18,7 @@
 
 (defun default-accumulation-variable ()
   (or *accumulation-variable*
-      (setf *accumulation-variable* (gensym "ACC"))))
+      (setf *accumulation-variable* (unique-name :acc))))
 
 (defun get-scope (var)
   (gethash var *scopes*))
@@ -28,26 +28,26 @@
 (defvar *epilogue-tag*)
 
 (defun prologue-body-epilogue (body-clause)
-  (let* ((start-tag (gensym "BODY"))
-         (body `(tagbody
-                   ,@(prologue-forms body-clause)
-                   ,@(step-intro-forms body-clause t)
-                   ,@(step-outro-forms body-clause t)
-                 ,start-tag
-                   ,@(body-forms body-clause)
-                   ,@(step-intro-forms body-clause nil)
-                   ,@(step-outro-forms body-clause nil)
-                   (go ,start-tag)
-                 ,*epilogue-tag*
-                   ,@(epilogue-forms body-clause)
-                   (return-from ,*loop-name*
-                     ,*accumulation-variable*)))
-         (afterword (afterword-forms body-clause)))
-    (if afterword
-        `((unwind-protect
-               ,body
-            ,@afterword))
-        `(,body))))
+  (with-unique-names (body)
+    (let ((body `(tagbody
+                    ,@(prologue-forms body-clause)
+                    ,@(step-intro-forms body-clause t)
+                    ,@(step-outro-forms body-clause t)
+                  ,body
+                    ,@(body-forms body-clause)
+                    ,@(step-intro-forms body-clause nil)
+                    ,@(step-outro-forms body-clause nil)
+                    (go ,body)
+                  ,*epilogue-tag*
+                    ,@(epilogue-forms body-clause)
+                    (return-from ,*loop-name*
+                      ,*accumulation-variable*)))
+          (afterword (afterword-forms body-clause)))
+      (if afterword
+          `((unwind-protect
+                 ,body
+              ,@afterword))
+          `(,body)))))
     
 (defun expand-extended-loop (client)
   (let* ((*accumulation-variable* nil)
@@ -64,12 +64,12 @@
 
 (defun expand-simple-loop (client)
   (declare (ignore client))
-  (let ((tag (gensym)))
+  (with-unique-names (repeat)
     `(block nil
        (tagbody
-        ,tag
+        ,repeat
           ,@*body*
-          (go ,tag)))))
+          (go ,repeat)))))
 
 (defun expand-body (client *body* *epilogue-tag*)
   (trivial-with-current-source-form:with-current-source-form (*body*)

@@ -14,19 +14,19 @@
   (declare (ignore initargs))
   (khazern:add-binding instance (var instance))
   (setf (perm-ref instance) (khazern:add-simple-binding instance
-                                                        :var "PERM"
+                                                        :var :perm
                                                         :form '(make-array 0
                                                                 :element-type 'fixnum)
                                                         :type '(vector fixnum))
         (state-ref instance) (khazern:add-simple-binding instance
-                                                         :var "STATE"
+                                                         :var :state
                                                          :form '(make-array 0
                                                                  :element-type 'fixnum)
                                                          :type '(vector fixnum))
         (pos-ref instance) (khazern:add-simple-binding instance
-                                                       :var "POS" :type 'fixnum :form 1)
+                                                       :var :pos :type 'fixnum :form 1)
         (len-ref instance) (khazern:add-simple-binding instance
-                                                       :var "LEN" :type 'fixnum)))
+                                                       :var :len :type 'fixnum)))
   
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :permutation)) &key var)
@@ -44,7 +44,7 @@
 
 (defun parse-being-permutations-of (instance)
   (setf (of-ref instance) (khazern:add-simple-binding instance
-                                                      :var "OF"
+                                                      :var :of
                                                       :form (khazern:parse-token)
                                                       :type 'sequence)))
 

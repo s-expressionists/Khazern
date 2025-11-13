@@ -122,13 +122,13 @@
     (ecase name
       ((:to :upto :downto :above :below)
        (setf (values (end-ref instance) (end-var instance))
-             (add-simple-binding instance :var "END" :type 'number :form value :fold t)))
+             (add-simple-binding instance :var :end :type 'number :form value :fold t)))
       ((:from :downfrom :upfrom)
        (setf (values (next-ref instance) (next-var instance))
-             (add-simple-binding instance :var "NEXT" :type 'number :form value)))
+             (add-simple-binding instance :var :next :type 'number :form value)))
       (:by
        (setf (values (by-ref instance) (by-var instance))
-             (add-simple-binding instance :var "BY" :type 'number :form value :fold t))))
+             (add-simple-binding instance :var :by :type 'number :form value :fold t))))
     ;; set the termination test
     (case name
       ((:to :upto :downto)
@@ -207,7 +207,7 @@
         var
       (unless next-var
         (setf (values (next-ref clause) (next-var clause))
-              (add-simple-binding clause :var "NEXT" :type 'number :form 0)))
+              (add-simple-binding clause :var :next :type 'number :form 0)))
       (with-accessors ((next-type type-spec)
                        (next-form form))
           next-var
@@ -277,7 +277,7 @@
           '()))
 
 (defun parse-being-cons-of (instance)
-  (setf (rest-var instance) (add-simple-binding instance :var "REST" :form (parse-token))))
+  (setf (rest-var instance) (add-simple-binding instance :var :rest :form (parse-token))))
 
 (defmethod parse-preposition ((client standard-client) (instance being-cons) (name (eql :in)))
   (parse-being-cons-of instance))
@@ -287,7 +287,7 @@
 
 (defmethod parse-preposition ((client standard-client) (instance being-cons) (name (eql :by)))
   (setf (by-ref instance)
-        (add-simple-binding instance :var "BY" :form (parse-token) :fold t
+        (add-simple-binding instance :var :by :form (parse-token) :fold t
                                      :fold-test 'function-operator-p)))
 
 (defclass being-cars (being-cons)
@@ -349,7 +349,7 @@
 (defmethod initialize-instance :after ((instance for-as-equals-then) &rest initargs &key)
   (declare (ignore initargs))
   (add-binding instance (var instance))
-  (setf (temp-ref instance) (add-simple-binding instance :var "TMP")))
+  (setf (temp-ref instance) (add-simple-binding instance :var :tmp)))
 
 (defmethod preposition-names ((client standard-client) (instance for-as-equals-then))
   (values '(:= :then)
@@ -397,9 +397,9 @@
 (defmethod initialize-instance :after ((instance being-vector-elements) &rest initargs &key)
   (declare (ignore initargs))
   (add-binding instance (var instance))
-  (setf (length-ref instance) (add-simple-binding instance :var "LENGTH" :form 0
+  (setf (length-ref instance) (add-simple-binding instance :var :length :form 0
                                                            :type 'fixnum)
-        (index-ref instance) (add-simple-binding instance :var "INDEX" :form 0
+        (index-ref instance) (add-simple-binding instance :var :index :form 0
                                                           :type 'fixnum)))
 
 (defmethod preposition-names ((client standard-client) (instance being-vector-elements))
@@ -408,7 +408,7 @@
           '()))
 
 (defun parse-being-vector-elements-of (instance)
-  (setf (form-ref instance) (add-simple-binding instance :var "VECTOR"
+  (setf (form-ref instance) (add-simple-binding instance :var :vector
                                                          :form (parse-token)
                                                          :type 'vector)))
 
@@ -457,16 +457,16 @@
    (%temp-key-var :accessor temp-key-var)
    (%temp-value-var :accessor temp-value-var)
    (%iterator-var :reader iterator-var
-                  :initform (gensym "ITER")))
+                  :initform (unique-name :iter)))
   (:default-initargs :other-var (make-instance 'destructuring-binding
                                                :var-spec nil)))
 
 (defmethod initialize-instance :after ((instance being-hash-entries) &rest initargs &key)
   (declare (ignore initargs))
   (add-binding instance (var instance))
-  (setf (temp-entry-p-var instance) (add-simple-binding instance :var "ENTRYP")
-        (temp-key-var instance) (add-simple-binding instance :var "KEY" :ignorable t)
-        (temp-value-var instance) (add-simple-binding instance :var "VALUE" :ignorable t)))
+  (setf (temp-entry-p-var instance) (add-simple-binding instance :var :entryp)
+        (temp-key-var instance) (add-simple-binding instance :var :key :ignorable t)
+        (temp-value-var instance) (add-simple-binding instance :var :value :ignorable t)))
 
 (defclass being-hash-keys (being-hash-entries)
   ())
@@ -511,7 +511,7 @@
                     :hash-value)
           :clause (when (numberp *start*)
                     (subseq *body* *start* *index*))))
-  (setf (form-ref instance) (add-simple-binding instance :var "HT" :form (parse-token)
+  (setf (form-ref instance) (add-simple-binding instance :var :ht :form (parse-token)
                                                          :type 'hash-table)))
 
 (defun parse-being-hash-entries-other (instance)
@@ -568,7 +568,7 @@
 
 (defclass being-package-symbols (for-as-subclause form-ref-mixin)
   ((%entryp-var :accessor entryp-var)
-   (%sym-var :accessor sym-var)
+   (%sym-var :accessor sym-var)g
    (%acc-type-var :accessor acc-type-var)
    (%pkg-var :accessor pkg-var)
    (%acc-type-ref :accessor acc-type-ref
@@ -576,7 +576,7 @@
    (%pkg-ref :accessor pkg-ref
              :initform nil)
    (%iterator-var :reader iterator-var
-                  :initform (gensym "ITER"))
+                  :initform (unique-name :iter))
    (%iterator-keywords :reader iterator-keywords
                        :initarg :iterator-keywords))
   (:default-initargs :form-ref '*package*))
@@ -584,14 +584,14 @@
 (defmethod initialize-instance :after ((instance being-package-symbols) &rest initargs &key)
   (declare (ignore initargs))
   (add-binding instance (var instance))
-  (setf (entryp-var instance) (add-simple-binding instance :var "ENTRYP")
-        (sym-var instance) (add-simple-binding instance :var "SYM"
+  (setf (entryp-var instance) (add-simple-binding instance :var :entryp)
+        (sym-var instance) (add-simple-binding instance :var :sym
                                                         :type 'symbol
                                                         :ignorable t)
-        (acc-type-var instance) (add-simple-binding instance :var "ACC"
+        (acc-type-var instance) (add-simple-binding instance :var :acc
                                                              :type 'symbol
                                                              :ignorable t)
-        (pkg-var instance) (add-simple-binding instance :var "PKG"
+        (pkg-var instance) (add-simple-binding instance :var :pkg
                                                         :type '(or character string symbol
                                                                    package)
                                                         :ignorable t)))
@@ -648,7 +648,7 @@
           '()))
 
 (defun parse-being-package-symbols-of (instance)
-  (setf (form-ref instance) (add-simple-binding instance :var "PKG" :form (parse-token)
+  (setf (form-ref instance) (add-simple-binding instance :var :pkg :form (parse-token)
                                                          :type '(or character string symbol
                                                                     package list))))
 

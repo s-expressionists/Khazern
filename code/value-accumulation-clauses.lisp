@@ -44,7 +44,7 @@
          (when references
            (setf symbol (or (second references)
                             (getf (references instance) (first references))
-                            (gensym (symbol-name (first references))))
+                            (unique-name (first references)))
                  (getf (references instance) (first references)) symbol)
            (multiple-value-bind (definitions declarations)
                (scope-functions client instance (first references) symbol)
@@ -58,7 +58,7 @@
 
 (defmethod scope-reference ((instance scope) ref)
   (or (getf (references instance) ref)
-      (setf (getf (references instance) ref) (gensym (symbol-name ref)))))
+      (setf (getf (references instance) ref) (unique-name ref))))
 
 (defmethod wrap-forms ((instance scope) forms)
   (wrap-labels (function-definitions instance)
@@ -74,12 +74,12 @@
 (defmethod initialize-instance :after ((instance list-scope) &rest initargs &key)
   (declare (ignore initargs))
   (let ((head (add-simple-binding instance
-                                  :var "HEAD" :type 'cons
+                                  :var :head :type 'cons
                                   :form '(cons nil nil)
                                   :dynamic-extent t)))
     (setf (getf (references instance) :head) head
           (getf (references instance) :tail) (add-simple-binding instance
-                                                                 :var "TAIL" :type 'cons
+                                                                 :var :tail :type 'cons
                                                                  :form head))))
 
 (defmethod make-scope
@@ -323,7 +323,7 @@
     ((instance extremum-scope) &rest initargs &key)
   (declare (ignore initargs))
   (setf (references instance) (list :firstp
-                                    (add-simple-binding instance :var "FIRSTP" :type 'boolean
+                                    (add-simple-binding instance :var :firstp :type 'boolean
                                                                  :form t))))
 
 (defmethod make-scope
