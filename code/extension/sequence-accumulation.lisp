@@ -247,7 +247,7 @@
 (defmethod khazern:scope-functions
     ((client extension-client) (instance khazern:list-scope)
      (reference (eql :append)) name)
-  (let ((list-name (unique-name reference))
+  (let ((list-name (khazern:unique-name reference))
         (collect-name (khazern:scope-reference instance :collect)))
     (khazern:with-unique-names (value)
       (multiple-value-bind (definitions declarations)
@@ -264,7 +264,7 @@
 (defmethod khazern:scope-functions
     ((client extension-client) (instance khazern:list-scope)
      (reference (eql :nconc)) name)
-  (let ((list-name (unique-name reference))
+  (let ((list-name (khazern:unique-name reference))
         (collect-name (khazern:scope-reference instance :collect)))
     (khazern:with-unique-names (value)
       (multiple-value-bind (definitions declarations)
@@ -534,7 +534,7 @@
      (reference (eql :nunion)) name)
   (let ((head (khazern:scope-reference instance :head))
         (tail (khazern:scope-reference instance :tail))
-        (seq-name (unique-name reference)))
+        (seq-name (khazern:unique-name reference)))
     (khazern:with-unique-names (value args next)
       (multiple-value-bind (definitions declarations)
           (call-next-method client instance reference seq-name)
