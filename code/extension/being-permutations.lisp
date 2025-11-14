@@ -14,19 +14,19 @@
   (declare (ignore initargs))
   (khazern:add-binding instance (var instance))
   (setf (perm-ref instance) (khazern:add-simple-binding instance
-                                                        :var "PERM"
+                                                        :var :perm
                                                         :form '(make-array 0
                                                                 :element-type 'fixnum)
                                                         :type '(vector fixnum))
         (state-ref instance) (khazern:add-simple-binding instance
-                                                         :var "STATE"
+                                                         :var :state
                                                          :form '(make-array 0
                                                                  :element-type 'fixnum)
                                                          :type '(vector fixnum))
         (pos-ref instance) (khazern:add-simple-binding instance
-                                                       :var "POS" :type 'fixnum :form 1)
+                                                       :var :pos :type 'fixnum :form 1)
         (len-ref instance) (khazern:add-simple-binding instance
-                                                       :var "LEN" :type 'fixnum)))
+                                                       :var :len :type 'fixnum)))
   
 (defmethod khazern:parse-clause
     ((client extension-client) (region khazern:being-region) (name (eql :permutation)) &key var)
@@ -44,7 +44,7 @@
 
 (defun parse-being-permutations-of (instance)
   (setf (of-ref instance) (khazern:add-simple-binding instance
-                                                      :var "OF"
+                                                      :var :of
                                                       :form (khazern:parse-token)
                                                       :type 'sequence)))
 
@@ -69,30 +69,30 @@
                    (of-ref of-ref)
                    (pos-ref pos-ref))
       clause
-    (if initialp
-        `((setq ,len-ref (length ,of-ref)
-                ,perm-ref (make-array ,len-ref :element-type 'fixnum)
-                ,state-ref (make-array ,len-ref :element-type 'fixnum))
-          (prog ((pos ,len-ref))
-           next
-             (when (plusp pos)
-               (decf pos)
-               (setf (aref ,perm-ref pos) pos)
-               (go next))))
-        (let ((next-tag (gensym "NEXT")))
-          `(,next-tag
+    (khazern:with-unique-names (pos next temp)
+      (if initialp
+          `((setq ,len-ref (length ,of-ref)
+                  ,perm-ref (make-array ,len-ref :element-type 'fixnum)
+                  ,state-ref (make-array ,len-ref :element-type 'fixnum))
+            (prog ((,pos ,len-ref))
+               ,next
+               (when (plusp ,pos)
+                 (decf ,pos)
+                 (setf (aref ,perm-ref ,pos) ,pos)
+                 (go ,next))))
+          `(,next
               (unless (< ,pos-ref ,len-ref)
                 (go ,khazern:*epilogue-tag*))
               (unless (< (aref ,state-ref ,pos-ref) ,pos-ref)
                 (setf (aref ,state-ref ,pos-ref) 0)
                 (incf ,pos-ref)
-                (go ,next-tag))
-              (let ((temp (aref ,perm-ref ,pos-ref))
-                    (pos (if (zerop (mod ,pos-ref 2))
-                             0
-                             (aref ,state-ref ,pos-ref))))
-                (setf (aref ,perm-ref ,pos-ref) (aref ,perm-ref pos)
-                      (aref ,perm-ref pos) temp))
+                (go ,next))
+              (let ((,temp (aref ,perm-ref ,pos-ref))
+                    (,pos (if (zerop (mod ,pos-ref 2))
+                              0
+                              (aref ,state-ref ,pos-ref))))
+                (setf (aref ,perm-ref ,pos-ref) (aref ,perm-ref ,pos)
+                      (aref ,perm-ref ,pos) ,temp))
               (incf (aref ,state-ref ,pos-ref))
               (setq ,pos-ref 1))))))
 
@@ -102,7 +102,8 @@
                    (of-ref of-ref)
                    (result-type result-type))
       clause
-    (khazern:expand-assignments (var clause) `(map ,result-type
-                                                   (lambda (pos)
-                                                     (elt ,of-ref pos))
-                                                   ,perm-ref))))
+    (khazern:with-unique-names (pos)
+      (khazern:expand-assignments (var clause) `(map ,result-type
+                                                     (lambda (,pos)
+                                                       (elt ,of-ref ,pos))
+                                                     ,perm-ref)))))

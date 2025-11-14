@@ -10,7 +10,7 @@
 (defclass termination-test-clause (body-clause)
   ())
 
-(defmethod (setf clause-group) :after ((group (eql :variable)) (clause termination-test-clause))
+#+(or)(defmethod (setf clause-group) :after ((group (eql :variable)) (clause termination-test-clause))
   (warn 'possible-invalid-clause-order
         :clause (subseq *body* (start clause) (end clause))
         :found-group group
@@ -27,7 +27,7 @@
     ((client standard-client) name type (category (eql :every)) references)
   (declare (ignore references))
   (let ((instance (make-instance 'every-accumulation-clause)))
-    (add-simple-binding instance :var name :type type :category category :form t)
+    (add-simple-binding instance :var name :type type :category category :form t :ignorable t)
     instance))
 
 (defclass some-accumulation-clause (clause)
@@ -37,7 +37,7 @@
     ((client standard-client) name type (category (eql :some)) references)
   (declare (ignore references))
   (let ((instance (make-instance 'some-accumulation-clause)))
-    (add-simple-binding instance :var name :type type :category category :form nil)
+    (add-simple-binding instance :var name :type type :category category :form nil :ignorable t)
     instance))
 
 (defclass repeat-clause (termination-test-clause)
@@ -50,7 +50,7 @@
                                  :start *start*
                                  :end *index*)))
     (setf (count-ref instance) (add-simple-binding instance
-                                                   :var "REPEAT"
+                                                   :var :repeat
                                                    :type 'fixnum
                                                    :form (if (numberp form)
                                                              (max 0 (ceiling form))

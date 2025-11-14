@@ -81,9 +81,11 @@
            #:subclauses
            #:symbol-equal
            #:type-spec
+           #:unique-name
            #:unparse-token
            #:var
            #:var-spec
            #:variable-list
            #:with-region
+           #:with-unique-names
            #:wrap-forms))

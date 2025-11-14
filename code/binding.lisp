@@ -38,7 +38,7 @@
                       (let ((car-p (traverse (car d-var-spec)))
                             (cdr-p (traverse (cdr d-var-spec))))
                         (when (and car-p cdr-p)
-                          (setf (gethash d-var-spec temps) (gensym "DE")))
+                          (setf (gethash d-var-spec temps) (unique-name :de)))
                         (or car-p cdr-p))))))
       (traverse (var-spec binding))
       (setf (temps binding) temps))))

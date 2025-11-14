@@ -44,7 +44,7 @@
          (when references
            (setf symbol (or (second references)
                             (getf (references instance) (first references))
-                            (gensym (symbol-name (first references))))
+                            (unique-name (first references)))
                  (getf (references instance) (first references)) symbol)
            (multiple-value-bind (definitions declarations)
                (scope-functions client instance (first references) symbol)
@@ -58,7 +58,7 @@
 
 (defmethod scope-reference ((instance scope) ref)
   (or (getf (references instance) ref)
-      (setf (getf (references instance) ref) (gensym (symbol-name ref)))))
+      (setf (getf (references instance) ref) (unique-name ref))))
 
 (defmethod wrap-forms ((instance scope) forms)
   (wrap-labels (function-definitions instance)
@@ -74,12 +74,12 @@
 (defmethod initialize-instance :after ((instance list-scope) &rest initargs &key)
   (declare (ignore initargs))
   (let ((head (add-simple-binding instance
-                                  :var "HEAD" :type 'cons
+                                  :var :head :type 'cons
                                   :form '(cons nil nil)
                                   :dynamic-extent t)))
     (setf (getf (references instance) :head) head
           (getf (references instance) :tail) (add-simple-binding instance
-                                                                 :var "TAIL" :type 'cons
+                                                                 :var :tail :type 'cons
                                                                  :form head))))
 
 (defmethod make-scope
@@ -95,35 +95,38 @@
 (defmethod scope-functions
     ((client standard-client) (instance list-scope) (reference (eql :collect)) name)
   (let ((tail (scope-reference instance :tail)))
-    (values `((,name (value)
-                (rplacd ,tail
-                        (setq ,tail (cons value nil)))))
-            `((inline ,name)))))
+    (with-unique-names (value)
+      (values `((,name (,value)
+                  (rplacd ,tail
+                          (setq ,tail (cons ,value nil)))))
+              `((inline ,name))))))
 
 (defmethod scope-functions
     ((client standard-client) (instance list-scope) (reference (eql :append)) name)
   (let ((tail (scope-reference instance :tail)))
-    `((,name (value)
-        (tagbody
-         repeat
-           (cond ((consp value)
-                  (rplacd ,tail
-                          (setq ,tail (cons (car value) nil)))
-                  (setq value (cdr value))
-                  (go repeat))
-                 (t
-                  (rplacd ,tail value))))))))
+    (with-unique-names (value repeat)
+      `((,name (,value)
+          (tagbody
+           ,repeat
+             (cond ((consp ,value)
+                    (rplacd ,tail
+                            (setq ,tail (cons (car ,value) nil)))
+                    (setq ,value (cdr ,value))
+                    (go ,repeat))
+                   (t
+                    (rplacd ,tail ,value)))))))))
 
 (defmethod scope-functions
     ((client standard-client) (instance list-scope) (reference (eql :nconc)) name)
   (let ((tail (scope-reference instance :tail)))
-    `((,name (value)
-        (tagbody
-           (rplacd ,tail value)
-         repeat
-           (when (consp (cdr ,tail))
-             (setq ,tail (cdr ,tail))
-             (go repeat)))))))
+    (with-unique-names (value repeat)
+      `((,name (,value)
+          (tagbody
+             (rplacd ,tail ,value)
+           ,repeat
+             (when (consp (cdr ,tail))
+               (setq ,tail (cdr ,tail))
+               (go ,repeat))))))))
 
 (defmethod wrap-forms :around ((instance list-scope) forms)
   (declare (ignore forms))
@@ -297,18 +300,20 @@
     ((client standard-client) (instance summation-scope) (reference (eql :count))
      name)
   (let ((var (var-spec (var instance))))
-    (values `((,name (value)
-                (when value
-                  (incf ,var))))
-            `((inline ,name)))))
+    (with-unique-names (value)
+      (values `((,name (,value)
+                       (when ,value
+                         (incf ,var))))
+              `((inline ,name))))))
 
 (defmethod scope-functions
     ((client standard-client) (instance summation-scope) (reference (eql :sum))
      name)
   (let ((var (var-spec (var instance))))
-    (values `((,name (value)
-                (incf ,var value)))
-            `((inline ,name)))))
+    (with-unique-names (value)
+      (values `((,name (,value)
+                       (incf ,var ,value)))
+              `((inline ,name))))))
 
 ;;; MINIMIZE/MAXIMIZE clause
 
@@ -318,7 +323,7 @@
     ((instance extremum-scope) &rest initargs &key)
   (declare (ignore initargs))
   (setf (references instance) (list :firstp
-                                    (add-simple-binding instance :var "FIRSTP" :type 'boolean
+                                    (add-simple-binding instance :var :firstp :type 'boolean
                                                                  :form t))))
 
 (defmethod make-scope
@@ -341,26 +346,28 @@
   (let ((var (var-spec (var instance)))
         (type (type-spec (var instance)))
         (firstp (scope-reference instance :firstp)))
-    `((,name (value)
-        (let ((coerced-value (coerce value ',type)))
-          (declare (type ,type coerced-value))
-          (when (or ,firstp
-                    (> coerced-value ,var))
-            (setq ,var coerced-value
-                  ,firstp nil)))))))
+    (with-unique-names (value coerced-value)
+      `((,name (,value)
+               (let ((,coerced-value (coerce ,value ',type)))
+                 (declare (type ,type ,coerced-value))
+                 (when (or ,firstp
+                           (> ,coerced-value ,var))
+                   (setq ,var ,coerced-value
+                         ,firstp nil))))))))
 
 (defmethod scope-functions
     ((client standard-client) (instance extremum-scope) (reference (eql :min)) name)
   (let ((var (var-spec (var instance)))
         (type (type-spec (var instance)))
         (firstp (scope-reference instance :firstp)))
-    `((,name (value)
-        (let ((coerced-value (coerce value ',type)))
-          (declare (type ,type coerced-value))
-          (when (or ,firstp
-                    (< coerced-value ,var))
-            (setq ,var coerced-value
-                  ,firstp nil)))))))
+    (with-unique-names (value coerced-value)
+      `((,name (,value)
+               (let ((,coerced-value (coerce ,value ',type)))
+                 (declare (type ,type ,coerced-value))
+                 (when (or ,firstp
+                           (< ,coerced-value ,var))
+                   (setq ,var ,coerced-value
+                         ,firstp nil))))))))
 
 (defmethod parse-clause
     ((client standard-client) (region selectable-region) (keyword (eql :minimize)) &key)

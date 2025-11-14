@@ -101,7 +101,7 @@
   binding)
 
 (defun add-simple-binding (clause
-                           &key (var "FORM") (type t) category (form nil formp)
+                           &key (var :form) (type t) category (form nil formp)
                                 ((:ignorable ignorablep) nil)
                                 ((:dynamic-extent dynamic-extent-p) nil)
                                 ((:fold foldp) nil) (fold-test 'constantp))
@@ -109,9 +109,9 @@
 deduced based on the type."
   (if (and foldp (funcall fold-test form))
       (values form nil)
-      (let ((ref (if (symbolp var)
-                     var
-                     (gensym var))))
+      (let ((ref (if (keywordp var)
+                     (unique-name var)
+                     var)))
         (values ref
                 (add-binding clause
                              (make-instance 'simple-binding

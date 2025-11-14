@@ -6,16 +6,16 @@
    (%entry-p-var :accessor entry-p-var)
    (%key-value-var :accessor key-value-var)
    (%iterator-var :reader iterator-var
-                  :initform (gensym "ITER"))
+                  :initform (khazern:unique-name :iter))
    (%in-ref :accessor in-ref
             :initform nil)))
 
 (defmethod initialize-instance :after ((instance being-entries) &rest initargs &key)
   (declare (ignore initargs))
   (khazern:add-binding instance (var instance))
-  (setf (entry-p-var instance) (khazern:add-simple-binding instance :var "ENTRYP")
+  (setf (entry-p-var instance) (khazern:add-simple-binding instance :var :entryp)
         (key-value-var instance) (khazern:add-simple-binding instance
-                                                             :var "KV"
+                                                             :var :kv
                                                              :form '(list nil nil)
                                                              :ignorable t)))
                                                              
@@ -26,7 +26,7 @@
 
 (defun parse-being-entries-of (instance)
   (setf (in-ref instance) (khazern:add-simple-binding instance
-                                                      :var "IN"
+                                                      :var :in
                                                       :form (khazern:parse-token)
                                                       :type 'hash-table)))
 
