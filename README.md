@@ -86,7 +86,7 @@ d")
 ## Replacing Builtin LOOP with Khazern
 
 Replacing a Common Lisp's LOOP implementation with Khazern can be done
-with the khazern-instrinsic system. This system is actually intended
+with the khazern-intrinsic system. This system is actually intended
 for use as the CL implementation's original LOOP implementation.
 Because LOOP is in the COMMON-LISP package ASDF logic regarding
 recompilation of systems dependent on khazern-intrinsic may not be
@@ -99,13 +99,14 @@ then SHADOWING-IMPORT-FROM in DEFPACKAGE.
 
 
 (asdf:defsystem "quux"
-  :depends-on ("khazern-extrinsic")
+  :depends-on ((:feature (:not :loop/khazern) "khazern-extrinsic"))
   :components ((:file "quux")))
 
 ;;; quux.lisp
 
 (cl:defpackage #:quux
   (:use #:common-lisp)
+  #-loop/khazern
   (:shadowing-import-from #:khazern-extrinsic
                           #:loop
                           #:loop-finish))
@@ -117,6 +118,10 @@ then SHADOWING-IMPORT-FROM in DEFPACKAGE.
         do (print i)))
 ```
 
+The feature expressions involving `loop/khazern` avoid using
+khazern-extrinsic if the CL implementation uses Khazern as its LOOP
+provider. Currently SICL and Clasp use Khazern in this way.
+
 To use the extension system one need only replace the dependency in
 the ASD file.
 
@@ -125,13 +130,14 @@ the ASD file.
 
 
 (asdf:defsystem "quux"
-  :depends-on ("khazern-extension-extrinsic")
+  :depends-on ((:feature (:not :loop/khazern-extension)) "khazern-extension-extrinsic")
   :components ((:file "quux")))
 
 ;;; quux.lisp
 
 (cl:defpackage #:quux
   (:use #:common-lisp)
+  #-loop/khazern-extension
   (:shadowing-import-from #:khazern-extension-extrinsic
                           #:loop
                           #:loop-finish))
@@ -142,6 +148,10 @@ the ASD file.
   (loop for i being the elements in s
         do (print i)))
 ```
+
+The feature expressions involving `loop/khazern-extension` perform the
+same role as the feature expressions involving `loop/khazern` in the
+previous example. Currently Clasp uses khazern-extension.
 
 ## Khazern Extensions
 
