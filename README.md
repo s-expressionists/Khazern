@@ -130,7 +130,7 @@ the ASD file.
 
 
 (asdf:defsystem "quux"
-  :depends-on ((:feature (:not :loop/khazern-extension)) "khazern-extension-extrinsic")
+  :depends-on ((:feature (:not :loop/khazern-extension) "khazern-extension-extrinsic"))
   :components ((:file "quux")))
 
 ;;; quux.lisp
