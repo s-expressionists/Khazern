@@ -90,33 +90,29 @@
            (make-parser-name client region (parse-token)))
          args))
 
-(defun parse-type-spec (&key (default-type-spec t) ((:var-spec *var-spec*) nil))
-  (if (maybe-parse-token :keywords '(:of-type))
-      (parse-token :type 'd-type-spec)
-      (multiple-value-bind (foundp type-spec)
-          (maybe-parse-token :type 'simple-type-spec)
-        (if foundp
-            type-spec
-            default-type-spec))))
+(defmethod parse-type-spec
+    ((client standard-client) (var-spec destructuring-binding) simplep &key)
+  (multiple-value-bind (foundp type-spec)
+      (maybe-parse-token :type 'simple-type-spec)
+    (when foundp
+      (setf (type-spec var-spec) type-spec))))
 
-(defun parse-var-spec (&key (type-spec t) ((:ignorable ignorablep) nil)
-                            ((:dynamic-extent dynamic-extent-p) nil))
-  (let ((var-spec (parse-token :type 'd-var-spec)))
-    (make-instance 'destructuring-binding
-                   :var-spec var-spec
-                   :type-spec type-spec
-                   :ignorable ignorablep
-                   :dynamic-extent dynamic-extent-p)))
+(defmethod parse-type-spec
+    ((client standard-client) (var-spec destructuring-binding) (simplep null) &key)
+  (declare (ignore simplep))
+  (setf (type-spec var-spec) (parse-token :type 'd-type-spec)))
 
-(defun parse-d-spec (&key (type-spec t) ((:ignorable ignorablep) nil)
-                          ((:dynamic-extent dynamic-extent-p) nil))
-  (let ((var-spec (parse-token :type 'd-var-spec)))
-    (make-instance 'destructuring-binding
-                   :var-spec var-spec
-                   :type-spec (parse-type-spec :default-type-spec type-spec
-                                               :var-spec var-spec)
-                   :ignorable ignorablep
-                   :dynamic-extent dynamic-extent-p)))
+(defmethod parse-var-spec ((client standard-client) &key (type-spec t))
+  (make-instance 'destructuring-binding
+                 :var-spec (parse-token :type 'd-var-spec)
+                 :type-spec type-spec
+                 :ignorable t))
+
+(defun parse-d-spec (client &rest args)
+  (let ((binding (apply #'parse-var-spec client args)))
+    (parse-type-spec client binding
+                     (not (maybe-parse-token :keywords '(:of-type))))
+    binding))
 
 (defun parse-compound-forms ()
   (prog (forms)
@@ -151,19 +147,20 @@
 
 (defparameter *placeholder-result* (cons nil nil))
 
-(defun parse-into (&key (default-type-spec t) ((:parse-type-spec parse-type-spec-p) nil)
+(defun parse-into (client
+                   &key (default-type-spec t) ((:parse-type-spec parse-type-spec-p) nil)
                         category scope-references)
-  (let ((var-spec (if (maybe-parse-token :keywords '(:into))
-                      (parse-token :type 'symbol)
-                      (default-accumulation-variable))))
-    (make-instance 'simple-binding
-                   :var-spec var-spec
-                   :type-spec (if parse-type-spec-p
-                                  (parse-type-spec :default-type-spec default-type-spec
-                                                   :var-spec var-spec)
-                                  default-type-spec)
-                   :category category
-                   :scope-references scope-references)))
+  (let ((binding (make-instance 'simple-binding
+                                :var-spec (if (maybe-parse-token :keywords '(:into))
+                                              (parse-token :type 'symbol)
+                                              (default-accumulation-variable))
+                                :type-spec default-type-spec
+                                :category category
+                                :scope-references scope-references)))
+    (when parse-type-spec-p
+      (parse-type-spec client binding
+                       (not (maybe-parse-token :keywords '(:of-type)))))
+    binding))
 
 (defun parse-usings (client instance using-names using)
   (trivial-with-current-source-form:with-current-source-form (using)
@@ -216,7 +213,8 @@
                                 category scope-references)
   (setf (start instance) *start*
         (form instance) (parse-token)
-        (var instance) (parse-into :default-type-spec default-type-spec
+        (var instance) (parse-into client
+                                   :default-type-spec default-type-spec
                                    :parse-type-spec parse-type-spec-p
                                    :category category
                                    :scope-references scope-references))

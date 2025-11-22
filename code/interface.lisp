@@ -215,6 +215,12 @@ the accumulation variable.")
 (defgeneric parse-clause (client region name &key)
   (:documentation "Parse a clause based on its keyword name."))
 
+(defgeneric parse-var-spec (client &key)
+  (:documentation "Parse a var spec"))
+
+(defgeneric parse-type-spec (client var-spec simplep &key)
+  (:documentation "Parse a type spec"))
+
 (defgeneric preposition-names (client instance)
   (:documentation "Return (VALUES PREPOSITION-NAMES REQUIRED-PREPOSITION-NAMES USING-NAMES).
 Each is a list of names or name groups.")

@@ -72,8 +72,8 @@
                                                             :var :from-end-
                                                             :form (khazern:parse-token))))
 
-(defun parse-index (instance)
-  (let ((var (khazern:parse-d-spec :type-spec khazern:*placeholder-result* :ignorable t)))
+(defun parse-index (client instance)
+  (let ((var (khazern:parse-d-spec client :type-spec khazern:*placeholder-result*)))
     (when (eq (khazern:type-spec var) khazern:*placeholder-result*)
       (setf (khazern:type-spec var)
             (if (listp (khazern:var-spec var))
@@ -83,11 +83,11 @@
 
 (defmethod khazern:parse-using
     ((client extension-client) (instance being-elements) (key (eql :index)))
-  (parse-index instance))
+  (parse-index client instance))
   
 (defmethod khazern:parse-using
     ((client extension-client) (instance being-elements) (key (eql :indices)))
-  (parse-index instance))
+  (parse-index client instance))
   
 (defmethod khazern:analyze ((client extension-client) (instance being-elements))
   (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
