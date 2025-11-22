@@ -25,8 +25,7 @@
   (let ((instance (make-instance 'for-as-clause :start *start*)))
     (setf (subclauses instance)
           (parse-conjunctive-clauses client instance t
-                                     :var (parse-d-spec :type-spec *placeholder-result*
-                                                        :ignorable t))
+                                     :var (parse-d-spec client :type-spec *placeholder-result*))
           (end instance) *index*)
     instance))
   
@@ -514,17 +513,17 @@
   (setf (form-ref instance) (add-simple-binding instance :var :ht :form (parse-token)
                                                          :type 'hash-table)))
 
-(defun parse-being-hash-entries-other (instance)
+(defun parse-being-hash-entries-other (client instance)
   (setf (other-var instance) (add-binding instance
-                                          (parse-var-spec :ignorable t))))
+                                          (parse-var-spec client))))
 
 (defmethod parse-using
     ((client standard-client) (instance being-hash-keys) (key (eql :hash-value)))
-  (parse-being-hash-entries-other instance))
+  (parse-being-hash-entries-other client instance))
 
 (defmethod parse-using
     ((client standard-client) (instance being-hash-values) (key (eql :hash-key)))
-  (parse-being-hash-entries-other instance))
+  (parse-being-hash-entries-other client instance))
 
 (defmethod analyze ((client standard-client) (clause being-hash-entries))
   (when (eq (type-spec (var clause)) *placeholder-result*)
@@ -772,7 +771,7 @@
   (let ((instance (make-instance 'with-clause :start *start*)))
     (setf (subclauses instance)
           (parse-conjunctive-clauses client instance nil
-                                     :var (parse-d-spec :ignorable t))
+                                     :var (parse-d-spec client))
           (end instance) *index*)
     instance))
 
