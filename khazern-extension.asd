@@ -23,4 +23,5 @@
                              (:file "being-tuples")
                              (:file "cleanup-clause")
                              (:file "sequence-accumulation")
-                             (:file "use-clause")))))
+                             (:file "use-clause")
+                             (:file "values-spec")))))

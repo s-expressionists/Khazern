@@ -13,6 +13,45 @@
                     :initarg :dynamic-extent
                     :initform nil)))
 
+(defclass values-binding (binding)
+  ())
+
+(defun make-values-binding (spec
+                            &key (type t) ((:ignorable ignorablep) nil)
+                                 ((:dynamic-extent dynamic-extent-p) nil))
+  "Make a values binding."
+  (make-instance 'values-binding
+                 :var-spec spec
+                 :type-spec type
+                 :ignorable ignorablep
+                 :dynamic-extent dynamic-extent-p))
+
+(defmethod (setf type-spec) :after (type-spec (instance values-binding))
+  (if (and (consp type-spec)
+           (eq (car type-spec) 'values))
+      (prog ((mode nil)
+             (type-head (cdr type-spec))
+             (var-head (var-spec instance)))
+       next
+         (cond ((null var-head)
+                (return nil))
+               ((null type-head)
+                (error "wibble"))
+               ((or (and (null mode)
+                         (eq (car type-head) '&optional))
+                    (and (or (null mode)
+                             (eq mode '&optional))
+                         (eq (car type-head) '&rest)))
+                (setf mode (pop type-head)))
+               ((eq mode '&rest)
+                (setf (type-spec (pop var-head)) (car type-head)))
+               (t
+                (setf (type-spec (pop var-head)) (pop type-head))))
+         (go next))
+      (mapc (lambda (var)
+              (setf (type-spec var) type-spec))
+            (var-spec instance))))
+
 (defclass simple-binding (binding)
   ((%category :accessor category
                            :initarg :category
@@ -78,11 +117,23 @@
       (traverse (var-spec binding) form)
       (nreverse assignments))))
 
+(defmethod assignment-pairs ((binding values-binding) form)
+  (mapcan #'assignment-pairs (var-spec binding) form))
+
 (defmethod assignment-pairs ((binding simple-binding) form)
   (when (var-spec binding)
     (list (var-spec binding) form)))
-  
-(defmethod map-variables progn (function (binding binding))
+
+(defmethod map-variables progn (function (binding values-binding))
+  (mapc (lambda (var)
+          (map-variables function var))
+        (var-spec binding)))
+
+(defmethod map-variables progn (function (binding simple-binding))
+  (when (var-spec binding)
+    (funcall function (var-spec binding) (type-spec binding))))
+
+(defmethod map-variables progn (function (binding destructuring-binding))
   (labels ((traverse (var-spec type-spec)
              (cond ((null var-spec))
                    ((symbolp var-spec)
@@ -98,7 +149,9 @@
              nil))
     (traverse (var-spec binding) (type-spec binding))))
 
-(defun check-type-spec (instance)
+(defgeneric check-type-spec (instance))
+
+(defmethod check-type-spec ((instance destructuring-binding))
   "Check the types and initial values of a destructuring binding."
   (labels ((deduce (type-spec)
              (cond ((nth-value 1 (deduce-initial-value type-spec))
@@ -125,6 +178,9 @@
     (setf (type-spec instance)
           (traverse (var-spec instance) (type-spec instance)))))
 
+(defmethod check-type-spec ((instance values-binding))
+  (mapc #'check-type-spec (var-spec instance)))
+
 (defmethod declarations ((binding destructuring-binding))
   (let ((result '())
         (variables '()))
@@ -140,6 +196,12 @@
     (when (dynamic-extent-p binding)
       (push `(dynamic-extent ,@variables) result))
     (nreverse result)))
+
+(defmethod declarations ((binding values-binding))
+  (mapcan #'declarations (var-spec binding)))
+
+(defmethod variable-list ((binding values-binding))
+  (mapcan #'variable-list (var-spec binding)))
 
 (defmethod variable-list ((binding destructuring-binding))
   (let ((result '()))

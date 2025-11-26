@@ -348,7 +348,13 @@
 (defmethod initialize-instance :after ((instance for-as-equals-then) &rest initargs &key)
   (declare (ignore initargs))
   (add-binding instance (var instance))
-  (setf (temp-ref instance) (add-simple-binding instance :var :tmp)))
+  (setf (temp-ref instance)
+        (if (typep (var instance) 'values-binding)
+            (mapcar (lambda (v)
+                      (declare (ignore v))
+                      (add-simple-binding instance :var :tmp))
+                    (var-spec (var instance)))
+            (add-simple-binding instance :var :tmp))))
 
 (defmethod preposition-names ((client standard-client) (instance for-as-equals-then))
   (values '(:= :then)
@@ -375,9 +381,12 @@
   (check-type-spec (var clause)))
 
 (defmethod step-intro-forms ((clause for-as-equals-then) initialp)
-  `((setq ,(temp-ref clause) ,(if initialp
-                                  (initial-form clause)
-                                  (subsequent-form clause)))))
+  `((setf ,(if (listp (temp-ref clause))
+               (cons 'values (temp-ref clause))
+               (temp-ref clause))
+          ,(if initialp
+               (initial-form clause)
+               (subsequent-form clause)))))
 
 (defmethod step-outro-forms ((clause for-as-equals-then) initialp)
   (declare (ignore initialp))
@@ -756,7 +765,8 @@
           '()
           '()))
 
-(defmethod parse-preposition ((client standard-client) (instance with-subclause) (name (eql :=)))
+(defmethod parse-preposition
+    ((client standard-client) (instance with-subclause) (name (eql :=)))
   (change-class instance 'with-subclause-with-form)
   (setf (form-ref instance) (add-simple-binding instance :form (parse-token))))
 
