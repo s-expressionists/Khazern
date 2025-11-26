@@ -91,15 +91,15 @@
          args))
 
 (defmethod parse-type-spec
-    ((client standard-client) (var-spec destructuring-binding) simplep &key)
+    ((client standard-client) var-spec simplep &key)
+  (declare (ignore simplep))
   (multiple-value-bind (foundp type-spec)
       (maybe-parse-token :type 'simple-type-spec)
     (when foundp
       (setf (type-spec var-spec) type-spec))))
 
 (defmethod parse-type-spec
-    ((client standard-client) (var-spec destructuring-binding) (simplep null) &key)
-  (declare (ignore simplep))
+    ((client standard-client) var-spec (simplep null) &key)
   (setf (type-spec var-spec) (parse-token :type 'd-type-spec)))
 
 (defmethod parse-var-spec ((client standard-client) &key (type-spec t))
@@ -108,10 +108,15 @@
                  :type-spec type-spec
                  :ignorable t))
 
+(defun parse-t-spec (client binding &rest args)
+  (apply #'parse-type-spec
+         client binding
+         (not (maybe-parse-token :keywords '(:of-type)))
+         args))
+
 (defun parse-d-spec (client &rest args)
   (let ((binding (apply #'parse-var-spec client args)))
-    (parse-type-spec client binding
-                     (not (maybe-parse-token :keywords '(:of-type))))
+    (parse-t-spec client binding)
     binding))
 
 (defun parse-compound-forms ()
@@ -158,9 +163,17 @@
                                 :category category
                                 :scope-references scope-references)))
     (when parse-type-spec-p
-      (parse-type-spec client binding
-                       (not (maybe-parse-token :keywords '(:of-type)))))
+      (parse-t-spec client binding))
     binding))
+
+(defmacro with-tokens (tokens &body body)
+  `(let ((*tokens* ,tokens)
+         (*toplevel* nil))
+     (trivial-with-current-source-form:with-current-source-form (*tokens*)
+       ,@body)))
+
+(defun more-tokens-p ()
+  (and *tokens* t))
 
 (defun parse-usings (client instance using-names using)
   (trivial-with-current-source-form:with-current-source-form (using)

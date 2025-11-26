@@ -51,6 +51,7 @@
            #:make-scope
            #:map-variables
            #:maybe-parse-token
+           #:more-tokens-p
            #:nullable-simple-var
            #:other-var
            #:parallel-superclause
@@ -87,5 +88,6 @@
            #:var-spec
            #:variable-list
            #:with-region
+           #:with-tokens
            #:with-unique-names
            #:wrap-forms))
