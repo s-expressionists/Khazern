@@ -131,7 +131,9 @@
 
 (defmethod map-variables progn (function (binding simple-binding))
   (when (var-spec binding)
-    (funcall function (var-spec binding) (type-spec binding))))
+    (funcall function
+             (var-spec binding) (type-spec binding)
+             (category binding) (scope-references binding))))
 
 (defmethod map-variables progn (function (binding destructuring-binding))
   (labels ((traverse (var-spec type-spec)
