@@ -139,7 +139,16 @@ deduced based on the type."
   
 (defmethod declarations ((clause clause))
   (mapcan #'declarations (bindings clause)))
-  
+
+(defmethod form-temps (instance (binding destructuring-binding))
+  (add-simple-binding instance :var :tmp))
+
+(defmethod form-temps (instance (binding values-binding))
+  (mapcar (lambda (v)
+            (declare (ignore v))
+            (add-simple-binding instance :var :tmp))
+          (var-spec (var instance))))
+
 (defclass simple-superclause (clause)
   ((%subclauses :accessor subclauses
                 :initarg :subclauses
