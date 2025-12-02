@@ -54,11 +54,11 @@
 
 (defclass simple-binding (binding)
   ((%category :accessor category
-                           :initarg :category
-                           :initform nil)
+              :initarg :category
+              :initform nil)
    (%scope-references :accessor scope-references
-                             :initarg :scope-references
-                             :initform nil)
+                      :initarg :scope-references
+                      :initform nil)
    (%form :accessor form
           :initarg :form
           :initform nil)))
