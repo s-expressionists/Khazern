@@ -29,13 +29,40 @@
 (defun it-keyword-p (symbol)
   (symbol-equal symbol :it))
 
+(defun multiple-values-binding-p (pair)
+  (consp (first pair)))
+
 (defun wrap-let (variable-list declarations forms)
-  (cond ((and variable-list declarations)
-         `((let ,variable-list
-             (declare ,@declarations)
-             ,@forms)))
+  (print variable-list)
+  (cond ((some #'multiple-values-binding-p variable-list)
+         `((multiple-value-call
+               (lambda ,(mapcan (lambda (pair)
+                                  (if (multiple-values-binding-p pair)
+                                      (copy-list (first pair))
+                                      (list (first pair))))
+                         variable-list)
+                 ,(when declarations
+                    `(declare ,@declarations))
+                 ,@forms)
+             ,@(mapcar (lambda (pair)
+                         (cond ((and (multiple-values-binding-p pair)
+                                     (cdar pair))
+                                (let ((names (unique-names (first pair)))
+                                      (rest (unique-name :rest)))
+                                  `(multiple-value-call
+                                       (lambda (&optional ,@names &rest ,rest)
+                                         (declare (ignore ,rest))
+                                         (values ,@names))
+                                     ,(second pair))))
+                               ((constantp (second pair))
+                                (second pair))
+                               (t
+                                `(values ,(second pair)))))
+                       variable-list))))
         (variable-list
          `((let ,variable-list
+             ,(when declarations
+                `(declare ,@declarations))
              ,@forms)))
         (declarations
          `((locally
@@ -210,6 +237,9 @@
          `(gensym ,(symbol-name (second name))))
         (t
          form)))
+
+(defun unique-names (syms)
+  (mapcar #'unique-name syms))
 
 (defmacro with-unique-names (names &body body)
   `(let ,(mapcar (lambda (sym)

@@ -130,10 +130,16 @@
         (var-spec binding)))
 
 (defmethod map-variables progn (function (binding simple-binding))
-  (when (var-spec binding)
-    (funcall function
-             (var-spec binding) (type-spec binding)
-             (category binding) (scope-references binding))))
+  (cond ((consp (var-spec binding))
+         (mapc (lambda (var)
+                 (funcall function
+                          var (type-spec binding)
+                          (category binding) (scope-references binding)))
+               (var-spec binding)))
+        ((var-spec binding)
+         (funcall function
+                  (var-spec binding) (type-spec binding)
+                  (category binding) (scope-references binding)))))
 
 (defmethod map-variables progn (function (binding destructuring-binding))
   (labels ((traverse (var-spec type-spec)
@@ -226,14 +232,17 @@
       binding
     (let (decl)
       (when var-spec
-        (unless (eq type-spec t)
-          (push `(type ,type-spec ,var-spec)
-                decl))
-        (when ignorablep
-          (push `(ignorable ,var-spec) decl))
-        (when dynamic-extent-p
-          (push `(dynamic-extent ,var-spec) decl)))
-      decl)))
+        (let ((vars (if (consp var-spec)
+                        var-spec
+                        (list var-spec))))
+          (unless (eq type-spec t)
+            (push `(type ,type-spec ,@vars)
+                  decl))
+          (when ignorablep
+            (push `(ignorable ,@vars) decl))
+          (when dynamic-extent-p
+            (push `(dynamic-extent ,@vars) decl)))
+        decl))))
 
 (defmethod variable-list ((binding simple-binding))
   (with-accessors ((var-spec var-spec)
