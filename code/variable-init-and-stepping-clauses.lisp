@@ -762,7 +762,15 @@
 (defmethod parse-preposition
     ((client standard-client) (instance with-subclause) (name (eql :=)))
   (change-class instance 'with-subclause-with-form)
-  (setf (form-ref instance) (add-simple-binding instance :form (parse-token))))
+  (setf (form-ref instance)
+        (add-simple-binding instance
+                            :var (if (typep (var instance) 'values-binding)
+                                     (mapcar (lambda (v)
+                                               (declare (ignore v))
+                                               (unique-name :tmp))
+                                             (var-spec (var instance)))
+                                     :tmp)
+                            :form (parse-token))))
 
 (defmethod initialize-instance :after ((instance with-subclause) &rest initargs &key)
   (declare (ignore initargs))
