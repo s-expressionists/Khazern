@@ -33,7 +33,6 @@
   (consp (first pair)))
 
 (defun wrap-let (variable-list declarations forms)
-  (print variable-list)
   (cond ((some #'multiple-values-binding-p variable-list)
          `((multiple-value-call
                (lambda ,(mapcan (lambda (pair)
