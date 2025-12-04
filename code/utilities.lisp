@@ -30,7 +30,11 @@
   (symbol-equal symbol :it))
 
 (defun multiple-values-binding-p (pair)
-  (consp (first pair)))
+  (and (consp (first pair))
+       (not (constantp (second pair)))
+       (or (not (consp (second pair)))
+           (not (eq (caadr pair) 'values))
+           (notevery #'constantp (cdadr pair)))))
 
 (defun wrap-let (variable-list declarations forms)
   (cond ((some #'multiple-values-binding-p variable-list)
@@ -44,7 +48,7 @@
                     `(declare ,@declarations))
                  ,@forms)
              ,@(mapcar (lambda (pair)
-                         (cond ((and (multiple-values-binding-p pair)
+                         (cond ((and (consp (first pair))
                                      (cdar pair))
                                 (let ((names (unique-names (first pair)))
                                       (rest (unique-name :rest)))
@@ -59,7 +63,17 @@
                                 `(values ,(second pair)))))
                        variable-list))))
         (variable-list
-         `((let ,variable-list
+         `((let ,(mapcan (lambda (pair)
+                           (cond ((atom (first pair))
+                                  (list pair))
+                                 ((atom (second pair))
+                                  (cons `(,(caar pair) ,(second pair))
+                                        (mapcar (lambda (var)
+                                                  `(,var nil))
+                                                (cdar pair))))
+                                 (t
+                                  (mapcar #'list (car pair) (cdadr pair)))))
+                           variable-list)
              ,(when declarations
                 `(declare ,@declarations))
              ,@forms)))
@@ -161,6 +175,20 @@
                        "" #P"")))
 
 (defun deduce-initial-value (type)
+  (when (and (consp type)
+             (eq (car type) 'values))
+    (return-from deduce-initial-value
+      (values (mapcar (lambda (arg)
+                        (if (member arg '(values &optional &rest))
+                            arg
+                            (multiple-value-bind (type validp)
+                                (deduce-initial-value arg)
+                              (if validp
+                                  type
+                                  (return-from deduce-initial-value
+                                    (values nil nil))))))
+                      type)
+              t)))
   (mapc (lambda (value)
           (when (typep value type)
             (return-from deduce-initial-value
