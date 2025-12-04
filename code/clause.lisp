@@ -118,9 +118,12 @@ deduced based on the type."
                                             :var-spec ref
                                             :type-spec type
                                             :category category
-                                            :form (if formp
-                                                      form
-                                                      (deduce-initial-value type))
+                                            :form (cond (formp
+                                                         form)
+                                                        ((consp var)
+                                                         (deduce-initial-value `(values ,@type)))
+                                                        (t
+                                                         (deduce-initial-value type)))
                                             :ignorable ignorablep
                                             :dynamic-extent dynamic-extent-p))))))
 

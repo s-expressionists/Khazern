@@ -231,18 +231,23 @@
                    (dynamic-extent-p dynamic-extent-p))
       binding
     (let (decl)
-      (when var-spec
-        (let ((vars (if (consp var-spec)
-                        var-spec
-                        (list var-spec))))
-          (unless (eq type-spec t)
-            (push `(type ,type-spec ,@vars)
-                  decl))
-          (when ignorablep
-            (push `(ignorable ,@vars) decl))
-          (when dynamic-extent-p
-            (push `(dynamic-extent ,@vars) decl)))
-        decl))))
+      (cond ((consp var-spec)
+             (mapc (lambda (var type)
+                     (unless (eq type t)
+                       (push `(type ,type ,var) decl)))
+                   var-spec type-spec)
+             (when ignorablep
+               (push `(ignorable ,@var-spec) decl))
+             (when dynamic-extent-p
+               (push `(dynamic-extent ,@var-spec) decl)))
+            (t
+             (unless (eq type-spec t)
+               (push `(type ,type-spec ,var-spec) decl))
+             (when ignorablep
+               (push `(ignorable ,var-spec) decl))
+             (when dynamic-extent-p
+               (push `(dynamic-extent ,var-spec) decl))))
+      decl)))
 
 (defmethod variable-list ((binding simple-binding))
   (with-accessors ((var-spec var-spec)
@@ -276,3 +281,20 @@
        (go next))
      (return (when (cdr head)
                `((setq ,.(cdr head)))))))
+
+(defmethod temp-variables ((binding binding))
+  (unique-name :tmp))
+
+(defmethod temp-variables ((binding values-binding))
+  (mapcar (lambda (var)
+            (declare (ignore var))
+            (unique-name :tmp))
+          (var-spec binding)))
+
+(defmethod temp-types ((binding destructuring-binding))
+  (if (consp (var-spec binding))
+      t
+      (type-spec binding)))
+
+(defmethod temp-types ((binding values-binding))
+  (mapcar #'type-spec (var-spec binding)))
