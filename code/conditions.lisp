@@ -119,6 +119,9 @@
 (define-condition non-nullable-simple-d-var-spec (loop-syntax-error)
   ((%var-spec :initarg :var-spec :reader var-spec)))
 
+(define-condition invalid-multiple-values-d-var-spec (loop-syntax-error)
+  ((%var-spec :initarg :var-spec :reader var-spec)))
+
 ;;; The root of all semantic errors.
 (define-condition loop-semantic-error (program-error acclimation:condition)
   ())
@@ -163,7 +166,13 @@
 	   (error 'invalid-data-type
                   :subtype subtype :supertype supertype)))))
 
+(defun check-single-values-var-spec (d-spec)
+  (when (typep d-spec 'values-binding)
+    (error 'invalid-multiple-values-d-var-spec
+           :var-spec `(values ,@(mapcar #'var-spec (var-spec d-spec))))))
+
 (defun check-nullable-simple-var-spec (d-spec)
+  (check-single-values-var-spec d-spec)
   (unless (and (symbolp (var-spec d-spec))
                (or (not (constantp (var-spec d-spec)))
                    (null (var-spec d-spec))))
