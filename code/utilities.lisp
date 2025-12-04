@@ -135,11 +135,12 @@
                        "" #P"")))
 
 (defun deduce-initial-value (type)
-  (loop for value in +initial-values+
-        when (typep value type)
-          do (return-from deduce-initial-value
-               (values (coerce value type)
-                       t)))
+  (mapc (lambda (value)
+          (when (typep value type)
+            (return-from deduce-initial-value
+              (values (coerce value type)
+                      t))))
+        +initial-values+)
   (if (consp type)
       (case (first type)
         ((integer rational short-float single-float double-float long-float float real)
