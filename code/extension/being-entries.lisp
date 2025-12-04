@@ -14,9 +14,9 @@
   (declare (ignore initargs))
   (khazern:add-binding instance (var instance))
   (setf (entry-p-var instance) (khazern:add-simple-binding instance :var :entryp)
-        (key-value-var instance) (khazern:add-simple-binding instance
-                                                             :var :kv
-                                                             :form '(list nil nil)
+        #+(or)(key-value-var instance) #+(or)(khazern:add-simple-binding instance
+                                                             :var (khazern::temp-variables (var instance))
+                                                             :type (khazern::temp-types (var instance))
                                                              :ignorable t)))
                                                              
 (defmethod khazern:preposition-names ((client extension-client) (instance being-entries))
@@ -41,6 +41,11 @@
 (defmethod khazern:analyze ((client extension-client) (instance being-entries))
   (when (eq (khazern:type-spec (var instance)) khazern:*placeholder-result*)
     (setf (khazern:type-spec (var instance)) t))
+    (setf (key-value-var instance) (khazern:add-simple-binding instance
+                                                             :var (khazern::temp-variables (var instance))
+                                                             :type (khazern::temp-types (var instance))
+                                                             :ignorable t))
+
   #+(or)(khazern:check-type-spec (var instance)))
 
 (defmethod khazern:wrap-forms ((subclause being-entries) forms)
@@ -55,11 +60,9 @@
                    (iterator-var iterator-var)
                    (var var))
       clause
-    `((setf ,@(unless (consp (khazern:var-spec var))
-                `(,key-value-var (list nil nil)))
-            (values ,entry-p-var
-                    (first ,key-value-var)
-                    (second ,key-value-var))
+    `((setf (values ,entry-p-var ,@(if (consp key-value-var)
+                                       key-value-var
+                                       (list key-value-var)))
             (,iterator-var))
       (unless ,entry-p-var
         (go ,khazern:*epilogue-tag*)))))
