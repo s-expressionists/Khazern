@@ -181,6 +181,14 @@ accumulation.~:@>"
           (var-spec condition)))
 
 (defmethod acclimation:report-condition
+    ((condition invalid-multiple-values-d-var-spec)
+     stream
+     (language acclimation:english))
+  (format stream
+          "~@<Specified d-var-spec ~s is not a single value.~:@>"
+          (var-spec condition)))
+
+(defmethod acclimation:report-condition
     ((condition conflicting-types)
      stream
      (language acclimation:english))

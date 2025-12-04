@@ -152,7 +152,6 @@
 
 (defun parse-for-as-arithmetic (client keyword var)
   (declare (ignore client))
-  (check-nullable-simple-var-spec var)
   (unparse-token keyword)
   (make-instance 'for-as-arithmetic :start *start* :var var))
 
@@ -202,6 +201,7 @@
                    (var var)
                    (by-ref by-ref))
       clause
+    (check-nullable-simple-var-spec var)
     (with-accessors ((var-type type-spec))
         var
       (unless next-var
@@ -288,6 +288,9 @@
   (setf (by-ref instance)
         (add-simple-binding instance :var :by :form (parse-token) :fold t
                                      :fold-test 'function-operator-p)))
+
+(defmethod analyze :after ((client standard-client) (clause being-cons))
+  (check-single-values-var-spec (var clause)))
 
 (defclass being-cars (being-cons)
   ())
@@ -430,6 +433,9 @@
   (unparse-token :of)
   (make-instance 'being-vector-elements :start *start* :var var))
 
+(defmethod analyze :after ((client standard-client) (clause being-vector-elements))
+  (check-single-values-var-spec (var clause)))
+
 (defmethod step-intro-forms ((clause being-vector-elements) initialp)
   `(,(if initialp
          `(setq ,(length-ref clause) (length ,(form-ref clause)))
@@ -534,6 +540,7 @@
 (defmethod analyze ((client standard-client) (clause being-hash-entries))
   (when (eq (type-spec (var clause)) *placeholder-result*)
     (setf (type-spec (var clause)) t))
+  (check-single-values-var-spec (var clause))
   (check-type-spec (var clause)))
 
 (defmethod wrap-forms ((subclause being-hash-entries) forms)
