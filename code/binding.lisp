@@ -16,6 +16,16 @@
 (defclass values-binding (binding)
   ())
 
+(defmethod nth-var-spec (n (binding values-binding))
+  (if (< n (length (var-spec binding)))
+      (var-spec (elt (var-spec binding) n))
+      nil))
+
+(defmethod nth-var-spec (n (binding values-binding))
+  (if (< n (length (var-spec binding)))
+      (type-spec (elt (var-spec binding) n))
+      nil))
+
 (defun make-values-binding (spec
                             &key (type t) ((:ignorable ignorablep) nil)
                                  ((:dynamic-extent dynamic-extent-p) nil))

@@ -146,11 +146,21 @@ INVALID-CLAUSE-ORDER or warn POSSIBLE-INVALID-CLAUSE-ORDER."))
 (defgeneric (setf var-spec) (value binding)
   (:documentation "Set the var-spec of the binding."))
 
+(defgeneric nth-var-spec (n binding)
+  (:method (n binding)
+    (and (zerop n)
+         (var-spec binding))))
+
 (defgeneric type-spec (binding)
   (:documentation "Return the type-spec of the binding. This is possibly a d-type-spec."))
 
 (defgeneric (setf type-spec) (value binding)
   (:documentation "Set the type-spec of the binding."))
+
+(defgeneric nth-type-spec (n binding)
+  (:method (n binding)
+    (and (zerop n)
+         (type-spec binding))))
 
 (defgeneric ignorablep (binding)
   (:documentation "Return non-NIL if the binding is declared IGNORABLE."))
