@@ -74,7 +74,14 @@
           :initform nil)))
 
 (defclass destructuring-binding (binding)
-  ((%temps :accessor temps)))
+  ((%temps :accessor temps)
+   (%form :accessor form
+          :initarg :form)))
+
+(defclass destructuring-binding-with-form (destructuring-binding)
+  ((%form :accessor form
+          :initarg :form
+          :initform nil)))
 
 (defun set-destructuring-temps (binding)
   (let ((temps (make-hash-table)))
@@ -196,6 +203,8 @@
     (setf (type-spec instance)
           (traverse (var-spec instance) (type-spec instance)))))
 
+(defmethod check-type-spec ((instance destructuring-binding-with-form)))
+
 (defmethod check-type-spec ((instance values-binding))
   (mapc #'check-type-spec (var-spec instance)))
 
@@ -233,6 +242,25 @@
                (push `(,temp nil) result))
              (temps binding))
     (nreverse result)))
+
+(defmethod variable-list ((binding destructuring-binding-with-form))
+  (let ((result '())
+        (temps (temps binding)))
+    (labels ((traverse (d-var-spec form)
+               (cond ((null d-var-spec))
+                     ((symbolp d-var-spec)
+                      (push (list d-var-spec form) result))
+                     (t
+                      (let ((temp (gethash d-var-spec temps)))
+                        (cond (temp
+                               (push (list temp form) result)
+                               (traverse (car d-var-spec) `(car ,temp))
+                               (traverse (cdr d-var-spec) `(cdr ,temp)))
+                              (t
+                               (traverse (car d-var-spec) `(car ,form))
+                               (traverse (cdr d-var-spec) `(cdr ,form)))))))))
+      (traverse (var-spec binding) (form binding))
+      (nreverse result))))
 
 (defmethod declarations ((binding simple-binding))
   (with-accessors ((var-spec var-spec)
