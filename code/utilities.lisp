@@ -74,8 +74,8 @@
                                  (t
                                   (mapcar #'list (car pair) (cdadr pair)))))
                            variable-list)
-             ,(when declarations
-                `(declare ,@declarations))
+             ,@(when declarations
+                `((declare ,@declarations)))
              ,@forms)))
         (declarations
          `((locally

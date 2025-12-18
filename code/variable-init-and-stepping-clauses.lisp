@@ -776,11 +776,10 @@
         (add-simple-binding instance
                             :var (temp-variables (var instance))
                             :type (temp-types (var instance))
-                            :form (parse-token))))
-
-(defmethod initialize-instance :after ((instance with-subclause) &rest initargs &key)
-  (declare (ignore initargs))
-  (add-binding instance (var instance)))
+                            :form (parse-token)))
+  (change-class (var instance)
+                'destructuring-binding-with-form
+                :form (form-ref instance)))
 
 ;;; WITH Parsers
 
@@ -806,6 +805,7 @@
 (defmethod analyze ((client standard-client) (instance with-subclause))
   (check-type-spec (var instance)))
 
-(defmethod wrap-forms ((subclause with-subclause-with-form) forms)
-  (nconc (expand-assignments (var subclause) (form-ref subclause))
-         forms))
+(defmethod wrap-forms ((subclause with-subclause) forms)
+  (wrap-let* (variable-list (var subclause))
+             (declarations (var subclause))
+             forms))
