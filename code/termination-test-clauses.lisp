@@ -57,6 +57,17 @@
                                                              `(max 0 (ceiling ,form)))))
     instance))
 
+(defmethod variable-list ((clause repeat-clause))
+  nil)
+
+(defmethod declarations ((clause repeat-clause))
+  nil)
+
+(defmethod wrap-forms ((clause repeat-clause) forms)
+  (wrap-let (mapcan #'variable-list (bindings clause))
+            (mapcan #'declarations (bindings clause))
+            forms))
+
 (defun expand-repeat (clause group)
   (when (eq (clause-group clause) group)
     `((when (minusp (decf ,(count-ref clause)))
