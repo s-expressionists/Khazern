@@ -66,11 +66,22 @@
     (decf *index*))
   (push token *tokens*))
 
+(defun parse-clause-error (client region found)
+  (error 'expected-token-but-found
+         :found found
+         :expected-keywords (sort (mapcan (lambda (method)
+                                            (destructuring-bind (client-specializer region-specializer
+                                                                 name-specializer)
+                                                (closer-mop:method-specializers method)
+                                              (when (and (typep client client-specializer)
+                                                         (typep region region-specializer)
+                                                         (typep name-specializer 'closer-mop:eql-specializer))
+                                                (list (closer-mop:eql-specializer-object name-specializer)))))
+                                          (closer-mop:generic-function-methods #'parse-clause))
+                                  #'string< :key #'string)))
+
 (defmethod parse-clause (client region name &key &allow-other-keys)
-  (error 'unknown-parser
-         :client client
-         :region region
-         :name name))
+  (parse-clause-error client region name))
 
 (defun make-parser-name (client region token)
   (when (symbolp token)
@@ -78,10 +89,7 @@
         (find-symbol (symbol-name token) :keyword)
       (when status
         (return-from make-parser-name name))))
-  (error 'unknown-parser
-         :client client
-         :region region
-         :name token))
+  (parse-clause-error client region token))
 
 (defun do-parse-clause (client region *start* read-name-p &rest args)
   (apply #'parse-clause

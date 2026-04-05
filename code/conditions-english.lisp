@@ -5,13 +5,6 @@
 ;;; Condition reporters for parse errors.
 
 (defmethod acclimation:report-condition
-    ((condition unknown-parser) stream (language acclimation:english))
-  (format stream
-          "~@<Unknown parser ~a with client ~a and region ~a.~:@>"
-          (name condition) (class-name (class-of (client condition)))
-          (class-name (class-of (region condition)))))
-
-(defmethod acclimation:report-condition
     ((condition invalid-preposition-order) stream (language acclimation:english))
   (format stream
           "~@<Preposition order of ~a followed by ~a is invalid for ~:[~;inclusive ~]iteration ~

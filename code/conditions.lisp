@@ -16,14 +16,6 @@
   ((%found :reader found
            :initarg :found)))
 
-(define-condition unknown-parser (loop-parse-error)
-  ((%client :reader client
-            :initarg :client)
-   (%region :reader region
-           :initarg :region)
-   (%name :reader name
-          :initarg :name)))
-
 (define-condition invalid-preposition-order (style-warning acclimation:condition)
   ((%name :reader name
           :initarg :name)
