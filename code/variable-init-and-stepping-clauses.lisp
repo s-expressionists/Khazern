@@ -232,7 +232,10 @@
         (check-type-spec var)))))
 
 (defmethod step-intro-forms ((clause for-as-arithmetic-up) initialp)
-  (nconc (unless initialp
+  (nconc (when (and (var-spec (var clause))
+                    initialp)
+           `((setq ,(var-spec (var clause)) ,(var-spec (next-var clause)))))
+         (unless initialp
            `((incf ,(var-spec (next-var clause)) ,(by-ref clause))))
          (when (termination-test clause)
            `((unless (,(termination-test clause)
@@ -241,7 +244,10 @@
                (go ,*epilogue-tag*))))))
 
 (defmethod step-intro-forms ((clause for-as-arithmetic-down) initialp)
-  (nconc (unless initialp
+  (nconc (when (and (var-spec (var clause))
+                    initialp)
+           `((setq ,(var-spec (var clause)) ,(var-spec (next-var clause)))))
+         (unless initialp
            `((decf ,(var-spec (next-var clause)) ,(by-ref clause))))
          (when (termination-test clause)
            `((unless (,(termination-test clause)
@@ -250,8 +256,8 @@
                (go ,*epilogue-tag*))))))
 
 (defmethod step-outro-forms ((clause for-as-arithmetic) initialp)
-  (declare (ignore initialp))
-  (when (var-spec (var clause))
+  (when (and (var-spec (var clause))
+             (not initialp))
     `((setq ,(var-spec (var clause)) ,(var-spec (next-var clause))))))
 
 ;;; 6.1.2.1.2/6.1.2.1.3 FOR-AS-IN-LIST/FOR-AS-ON-LIST subclauses
