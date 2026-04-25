@@ -69,16 +69,18 @@
 (defun parse-clause-error (client region found)
   (error 'expected-token-but-found
          :found found
-         :expected-keywords (sort (mapcan (lambda (method)
-                                            (destructuring-bind (client-specializer region-specializer
-                                                                 name-specializer)
-                                                (closer-mop:method-specializers method)
-                                              (when (and (typep client client-specializer)
-                                                         (typep region region-specializer)
-                                                         (typep name-specializer 'closer-mop:eql-specializer))
-                                                (list (closer-mop:eql-specializer-object name-specializer)))))
-                                          (closer-mop:generic-function-methods #'parse-clause))
-                                  #'string< :key #'string)))
+         :expected-keywords (let (keywords)
+                              (mapc (lambda (method)
+                                      (destructuring-bind (client-specializer region-specializer
+                                                           name-specializer)
+                                          (closer-mop:method-specializers method)
+                                        (when (and (typep client client-specializer)
+                                                   (typep region region-specializer)
+                                                   (typep name-specializer 'closer-mop:eql-specializer))
+                                          (pushnew (closer-mop:eql-specializer-object name-specializer)
+                                                   keywords))))
+                                    (closer-mop:generic-function-methods #'parse-clause))
+                              (sort keywords #'string< :key #'string))))
 
 (defmethod parse-clause (client region name &key &allow-other-keys)
   (parse-clause-error client region name))
