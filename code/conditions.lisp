@@ -25,7 +25,10 @@
    (%first-preposition :reader first-preposition
                        :initarg :first-preposition)
    (%second-preposition :reader second-preposition
-                        :initarg :second-preposition)))
+                        :initarg :second-preposition)
+   (%clause :reader clause
+            :initarg :clause
+            :initform nil)))
 
 (define-condition unable-to-deduce-initial-value (style-warning acclimation:condition)
   ((%type-spec :reader type-spec

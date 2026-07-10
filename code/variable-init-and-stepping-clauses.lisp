@@ -520,7 +520,7 @@
 (defmethod parse-preposition ((client standard-client) (instance being-hash-entries) key)
   (declare (ignore key))
   (when (var-spec (other-var instance))
-    (warn 'preposition-order
+    (warn 'invalid-preposition-order
           :first-preposition :using
           :second-preposition :in
           :name (if (typep instance 'being-hash-keys)
