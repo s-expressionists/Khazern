@@ -142,14 +142,6 @@ accumulation.~:@>"
           (second-clause condition)))
 
 (defmethod acclimation:report-condition
-    ((condition loop-path-non-inclusive)
-     stream
-     (language acclimation:english))
-  (format stream
-          "~@<Inclusive iteration is not possible with the ~a LOOP iteration path.~:@>"
-          (path condition)))
-
-(defmethod acclimation:report-condition
     ((condition unknown-data-type)
      stream
      (language acclimation:english))

@@ -470,7 +470,9 @@
 ;;; not permit such an ordering.
 
 (defclass being-hash-entries (for-as-subclause form-ref-mixin other-var-mixin)
-  ((%temp-entry-p-var :accessor temp-entry-p-var)
+  ((%name :accessor name
+          :initarg :name)
+   (%temp-entry-p-var :accessor temp-entry-p-var)
    (%temp-key-var :accessor temp-key-var)
    (%temp-value-var :accessor temp-value-var)
    (%iterator-var :reader iterator-var
@@ -493,19 +495,19 @@
 
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :hash-key)) &key var)
-  (make-instance 'being-hash-keys :var var :start *start*))
+  (make-instance 'being-hash-keys :name name :var var :start *start*))
 
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :hash-keys)) &key var)
-  (make-instance 'being-hash-keys :var var :start *start*))
+  (make-instance 'being-hash-keys :name name :var var :start *start*))
 
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :hash-value)) &key var)
-  (make-instance 'being-hash-values :var var :start *start*))
+  (make-instance 'being-hash-values :name name :var var :start *start*))
 
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :hash-values)) &key var)
-  (make-instance 'being-hash-values :var var :start *start*))
+  (make-instance 'being-hash-values :name name :var var :start *start*))
 
 (defmethod preposition-names ((client standard-client) (instance being-hash-keys))
   (values '((:in :of))
@@ -517,18 +519,22 @@
           '((:in :of))
           '(:hash-key)))
 
-(defmethod parse-preposition ((client standard-client) (instance being-hash-entries) key)
+(defmethod parse-being-hash-entries-of (instance key)
   (when (var-spec (other-var instance))
     (warn 'invalid-preposition-order
           :first-preposition :using
           :second-preposition key
-          :name (if (typep instance 'being-hash-keys)
-                    :hash-key
-                    :hash-value)
+          :name (name instance)
           :clause (when (numberp *start*)
-                    (subseq *body* *start* *index*))))
+                    (subseq *body* *start* (1+ *index*)))))
   (setf (form-ref instance) (add-simple-binding instance :var :ht :form (parse-token)
                                                          :type 'hash-table)))
+
+(defmethod parse-preposition ((client standard-client) (instance being-hash-entries) (key (eql :in)))
+  (parse-being-hash-entries-of instance key))
+
+(defmethod parse-preposition ((client standard-client) (instance being-hash-entries) (key (eql :of)))
+  (parse-being-hash-entries-of instance key))
 
 (defun parse-being-hash-entries-other (client instance)
   (setf (other-var instance) (add-binding instance
@@ -584,7 +590,9 @@
 ;;; path extension.
 
 (defclass being-package-symbols (for-as-subclause form-ref-mixin)
-  ((%entryp-var :accessor entryp-var)
+  ((%name :accessor name
+          :initarg :name)
+   (%entryp-var :accessor entryp-var)
    (%sym-var :accessor sym-var)g
    (%acc-type-var :accessor acc-type-var)
    (%pkg-var :accessor pkg-var)
@@ -618,6 +626,7 @@
   (make-instance 'being-package-symbols
                  :start *start*
                  :var var
+                 :name name
                  :iterator-keywords '(:internal :external :inherited)))
 
 (defmethod parse-clause
@@ -625,6 +634,7 @@
   (make-instance 'being-package-symbols
                  :start *start*
                  :var var
+                 :name name
                  :iterator-keywords '(:internal :external :inherited)))
 
 (defmethod parse-clause
@@ -633,6 +643,7 @@
   (make-instance 'being-package-symbols
                  :start *start*
                  :var var
+                 :name name
                  :iterator-keywords '(:internal :external)))
 
 (defmethod parse-clause
@@ -641,6 +652,7 @@
   (make-instance 'being-package-symbols
                  :start *start*
                  :var var
+                 :name name
                  :iterator-keywords '(:internal :external)))
 
 (defmethod parse-clause
@@ -649,6 +661,7 @@
   (make-instance 'being-package-symbols
                  :start *start*
                  :var var
+                 :name name
                  :iterator-keywords '(:external)))
 
 (defmethod parse-clause
@@ -657,6 +670,7 @@
   (make-instance 'being-package-symbols
                  :start *start*
                  :var var
+                 :name name
                  :iterator-keywords '(:external)))
 
 (defmethod preposition-names ((client standard-client) (instance being-package-symbols))
@@ -664,18 +678,25 @@
           '()
           '()))
 
-(defun parse-being-package-symbols-of (instance)
+(defun parse-being-package-symbols-of (instance key)
+  (when (or (acc-type-ref instance) (pkg-ref instance))
+    (warn 'invalid-preposition-order
+          :first-preposition :using
+          :second-preposition key
+          :name (name instance)
+          :clause (when (numberp *start*)
+                    (subseq *body* *start* (1+ *index*)))))
   (setf (form-ref instance) (add-simple-binding instance :var :pkg :form (parse-token)
                                                          :type '(or character string symbol
                                                                     package list))))
 
 (defmethod parse-preposition
     ((client standard-client) (instance being-package-symbols) (key (eql :in)))
-  (parse-being-package-symbols-of instance))
+  (parse-being-package-symbols-of instance key))
 
 (defmethod parse-preposition
     ((client standard-client) (instance being-package-symbols) (key (eql :of)))
-  (parse-being-package-symbols-of instance))
+  (parse-being-package-symbols-of instance key))
 
 (defmethod parse-using
     ((client standard-client) (instance being-package-symbols) (key (eql :accessibility-type)))

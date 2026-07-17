@@ -1,22 +1,18 @@
 (cl:in-package #:khazern)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Conditions for parsing
-;;;
-;;; FIXME: Remove condition reporters from the DEFINE-CONDITION forms
-;;; and put them in a separate (language-specific) file.  
-
-(define-condition loop-parse-error (parse-error acclimation:condition)
+(define-condition loop-clause-condition (acclimation:condition)
   ((%clause :reader clause
             :initarg :clause
             :initform nil)))
 
-(define-condition loop-parse-error-found (loop-parse-error)
-  ((%found :reader found
-           :initarg :found)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Conditions for parsing
+;;;
 
-(define-condition invalid-preposition-order (style-warning acclimation:condition)
+(define-condition loop-parse-style-warning (style-warning loop-clause-condition) ())
+
+(define-condition invalid-preposition-order (loop-parse-style-warning)
   ((%name :reader name
           :initarg :name)
    (%inclusive :reader inclusivep
@@ -25,15 +21,13 @@
    (%first-preposition :reader first-preposition
                        :initarg :first-preposition)
    (%second-preposition :reader second-preposition
-                        :initarg :second-preposition)
-   (%clause :reader clause
-            :initarg :clause
-            :initform nil)))
+                        :initarg :second-preposition)))
 
-(define-condition unable-to-deduce-initial-value (style-warning acclimation:condition)
-  ((%type-spec :reader type-spec
-               :initarg :type-spec
-               :initform nil)))
+(define-condition loop-parse-error (parse-error loop-clause-condition) ())
+
+(define-condition loop-parse-error-found (loop-parse-error)
+  ((%found :reader found
+           :initarg :found)))
 
 (define-condition expected-token (loop-parse-error)
   ((%expected-type :accessor expected-type
@@ -63,12 +57,23 @@
 ;;; FIXME: Define English language condition reporters for these
 ;;;        conditions.
 
+(define-condition loop-syntax-style-warning (style-warning acclimation:condition) ())
+
+(define-condition possible-invalid-clause-order
+    (loop-syntax-style-warning)
+  ((%clause :reader clause
+            :initarg :clause)
+   (%found-group :reader found-group
+                 :initarg :found-group)
+   (%expected-group :reader expected-group
+                    :initarg :expected-group)))
+
 ;;; The root of all syntax errors.
 (define-condition loop-syntax-error (program-error acclimation:condition)
   ())
 
 ;;; This condition is signaled when a NIL is found
-;;; in a simple LOOOP
+;;; in a simple LOOP
 (define-condition non-compound-form (loop-syntax-error) ())
 
 ;;; This condition is signaled when the first clause is a name-clause
@@ -85,45 +90,59 @@
    (%expected-group :reader expected-group
                     :initarg :expected-group)))
 
-(define-condition possible-invalid-clause-order
-    (style-warning acclimation:condition)
-  ((%clause :reader clause
-            :initarg :clause)
-   (%found-group :reader found-group
-                 :initarg :found-group)
-   (%expected-group :reader expected-group
-                    :initarg :expected-group)))
-
 ;;; This condition is signaled when there are multiple occurrences of
 ;;; a variable to be bound by any loop clause.
 (define-condition multiple-variable-occurrences (loop-syntax-error)
-  ((%bound-variable :initarg :bound-variable :reader bound-variable)))
+  ((%bound-variable :reader bound-variable
+                    :initarg :bound-variable)))
 
 ;;; This condition is signaled when there are overlaps betweeen
 ;;; iteration and accumulation variables.
 (define-condition iteration-accumulation-overlap (loop-syntax-error)
-  ((%bound-variable :initarg :bound-variable :reader bound-variable)))
+  ((%bound-variable :reader bound-variable
+                    :initarg :bound-variable)))
 
 ;;; This condition is signaled when there are multiple occurrences of
 ;;; a variable used in accumulation clauses.
 (define-condition multiple-accumulation-occurrences (loop-syntax-error)
-  ((%bound-variable :initarg :bound-variable :reader bound-variable)
-   (%first-clause :initarg :first-clause :reader first-clause)
-   (%second-clause :initarg :second-clause :reader second-clause)))
+  ((%bound-variable :reader bound-variable
+                    :initarg :bound-variable)
+   (%first-clause :reader first-clause
+                  :initarg :first-clause)
+   (%second-clause :reader second-clause
+                   :initarg :second-clause)))
 
 (define-condition non-nullable-simple-d-var-spec (loop-syntax-error)
-  ((%var-spec :initarg :var-spec :reader var-spec)))
+  ((%var-spec :reader var-spec
+              :initarg :var-spec)))
 
 (define-condition invalid-multiple-values-d-var-spec (loop-syntax-error)
-  ((%var-spec :initarg :var-spec :reader var-spec)))
+  ((%var-spec :reader var-spec
+              :initarg :var-spec)))
+
+(define-condition loop-semantic-style-warning (style-warning acclimation:condition) ())
+
+(define-condition unable-to-deduce-initial-value (loop-semantic-style-warning)
+  ((%type-spec :reader type-spec
+               :initarg :type-spec
+               :initform nil)))
+
+(define-condition conflicting-types (loop-semantic-style-warning)
+  ((%name :reader name
+          :initarg :name)
+   (%type1 :reader type1
+           :initarg :type1
+           :initform nil)
+   (%type2 :reader type2
+           :initarg :type2
+           :initform nil)
+   (%replacement-type :reader replacement-type
+                      :initarg :replacement-type
+                      :initform nil)))
 
 ;;; The root of all semantic errors.
 (define-condition loop-semantic-error (program-error acclimation:condition)
   ())
-
-(define-condition loop-path-non-inclusive (loop-semantic-error)
-  ((%path :reader path
-          :initarg :path)))
 
 (define-condition invalid-data-type (loop-semantic-error)
   ((%subtype :reader subtype
@@ -136,20 +155,6 @@
              :initarg :subtype)
    (%supertype :reader supertype
                :initarg :supertype)))
-
-(define-condition conflicting-types
-    (style-warning acclimation:condition)
-  ((%name :reader name
-          :initarg :name)
-   (%type1 :reader type1
-           :initarg :type1
-           :initform nil)
-   (%type2 :reader type2
-           :initarg :type2
-           :initform nil)
-   (%replacement-type :reader replacement-type
-                      :initarg :replacement-type
-                      :initform nil)))
 
 (defun check-subtype (subtype supertype)
   (multiple-value-bind (subtype-p valid-p)
