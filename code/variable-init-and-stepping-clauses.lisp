@@ -470,8 +470,8 @@
 ;;; not permit such an ordering.
 
 (defclass being-hash-entries (for-as-subclause form-ref-mixin other-var-mixin)
-  ((%name :accessor name
-          :initarg :name)
+  ((%path-name :accessor path-name
+               :initarg :path-name)
    (%temp-entry-p-var :accessor temp-entry-p-var)
    (%temp-key-var :accessor temp-key-var)
    (%temp-value-var :accessor temp-value-var)
@@ -495,19 +495,19 @@
 
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :hash-key)) &key var)
-  (make-instance 'being-hash-keys :name name :var var :start *start*))
+  (make-instance 'being-hash-keys :path-name name :var var :start *start*))
 
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :hash-keys)) &key var)
-  (make-instance 'being-hash-keys :name name :var var :start *start*))
+  (make-instance 'being-hash-keys :path-name name :var var :start *start*))
 
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :hash-value)) &key var)
-  (make-instance 'being-hash-values :name name :var var :start *start*))
+  (make-instance 'being-hash-values :path-name name :var var :start *start*))
 
 (defmethod parse-clause
     ((client standard-client) (region being-region) (name (eql :hash-values)) &key var)
-  (make-instance 'being-hash-values :name name :var var :start *start*))
+  (make-instance 'being-hash-values :path-name name :var var :start *start*))
 
 (defmethod preposition-names ((client standard-client) (instance being-hash-keys))
   (values '((:in :of))
@@ -524,7 +524,7 @@
     (warn 'invalid-preposition-order
           :first-preposition :using
           :second-preposition key
-          :name (name instance)
+          :name (path-name instance)
           :clause (when (numberp *start*)
                     (subseq *body* *start* (1+ *index*)))))
   (setf (form-ref instance) (add-simple-binding instance :var :ht :form (parse-token)
@@ -590,8 +590,8 @@
 ;;; path extension.
 
 (defclass being-package-symbols (for-as-subclause form-ref-mixin)
-  ((%name :accessor name
-          :initarg :name)
+  ((%path-name :accessor path-name
+               :initarg :path-name)
    (%entryp-var :accessor entryp-var)
    (%sym-var :accessor sym-var)g
    (%acc-type-var :accessor acc-type-var)
@@ -626,7 +626,7 @@
   (make-instance 'being-package-symbols
                  :start *start*
                  :var var
-                 :name name
+                 :path-name name
                  :iterator-keywords '(:internal :external :inherited)))
 
 (defmethod parse-clause
@@ -634,7 +634,7 @@
   (make-instance 'being-package-symbols
                  :start *start*
                  :var var
-                 :name name
+                 :path-name name
                  :iterator-keywords '(:internal :external :inherited)))
 
 (defmethod parse-clause
@@ -643,7 +643,7 @@
   (make-instance 'being-package-symbols
                  :start *start*
                  :var var
-                 :name name
+                 :path-name name
                  :iterator-keywords '(:internal :external)))
 
 (defmethod parse-clause
@@ -652,7 +652,7 @@
   (make-instance 'being-package-symbols
                  :start *start*
                  :var var
-                 :name name
+                 :path-name name
                  :iterator-keywords '(:internal :external)))
 
 (defmethod parse-clause
@@ -661,7 +661,7 @@
   (make-instance 'being-package-symbols
                  :start *start*
                  :var var
-                 :name name
+                 :path-name name
                  :iterator-keywords '(:external)))
 
 (defmethod parse-clause
@@ -670,7 +670,7 @@
   (make-instance 'being-package-symbols
                  :start *start*
                  :var var
-                 :name name
+                 :path-name name
                  :iterator-keywords '(:external)))
 
 (defmethod preposition-names ((client standard-client) (instance being-package-symbols))
@@ -683,7 +683,7 @@
     (warn 'invalid-preposition-order
           :first-preposition :using
           :second-preposition key
-          :name (name instance)
+          :name (path-name instance)
           :clause (when (numberp *start*)
                     (subseq *body* *start* (1+ *index*)))))
   (setf (form-ref instance) (add-simple-binding instance :var :pkg :form (parse-token)
