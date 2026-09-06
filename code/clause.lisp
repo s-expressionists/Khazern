@@ -106,26 +106,34 @@
                                 ((:dynamic-extent dynamic-extent-p) nil)
                                 ((:fold foldp) nil) (fold-test 'constantp))
   "Make a simple binding with an initial form. If the form is not specified then it will be
-deduced based on the type."
+deduced based on the type; a type whose initial value cannot be deduced is declared to admit NIL,
+which is what the binding then holds until the first step."
   (if (and foldp (funcall fold-test form))
       (values form nil)
       (let ((ref (if (keywordp var)
                      (unique-name var)
                      var)))
-        (values ref
-                (add-binding clause
-                             (make-instance 'simple-binding
-                                            :var-spec ref
-                                            :type-spec type
-                                            :category category
-                                            :form (cond (formp
-                                                         form)
-                                                        ((consp var)
-                                                         (deduce-initial-value `(values ,@type)))
-                                                        (t
-                                                         (deduce-initial-value type)))
-                                            :ignorable ignorablep
-                                            :dynamic-extent dynamic-extent-p))))))
+        (multiple-value-bind (initial-form validp)
+            (cond (formp
+                   (values form t))
+                  ((consp var)
+                   (deduce-initial-value `(values ,@type)))
+                  (t
+                   (deduce-initial-value type)))
+          (values ref
+                  (add-binding clause
+                               (make-instance 'simple-binding
+                                              :var-spec ref
+                                              :type-spec (cond (validp
+                                                                type)
+                                                               ((consp var)
+                                                                (mapcar #'type-or-null type))
+                                                               (t
+                                                                (type-or-null type)))
+                                              :category category
+                                              :form initial-form
+                                              :ignorable ignorablep
+                                              :dynamic-extent dynamic-extent-p)))))))
 
 (defun add-destructuring-binding (clause
                                   &key var (type t) ((:ignorable ignorablep) nil)
