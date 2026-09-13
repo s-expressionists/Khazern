@@ -380,11 +380,11 @@
 (defmethod analyze ((client standard-client) (clause for-as-equals-then))
   (when (eq (type-spec (var clause)) *placeholder-result*)
     (setf (type-spec (var clause)) t))
+  (check-type-spec (var clause))
   (setf (temp-ref clause)
         (add-simple-binding clause
                             :var (temp-variables (var clause))
-                            :type (temp-types (var clause))))
-  (check-type-spec (var clause)))
+                            :type (temp-types (var clause)))))
 
 (defmethod step-intro-forms ((clause for-as-equals-then) initialp)
   `((setf ,(if (listp (temp-ref clause))
