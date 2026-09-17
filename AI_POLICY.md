@@ -1,8 +1,6 @@
 # AI Usage Policy
 
-We welcome contributions made with the help of AI coding assistants
-(such as Claude Code, Cursor, GitHub Copilot, or ChatGPT). However, to
-maintain code quality and respect maintainer review bandwidth, all
+To maintain code quality and respect maintainer review bandwidth, all
 contributors must follow these rules:
 
 ## 1. Mandatory Disclosure
