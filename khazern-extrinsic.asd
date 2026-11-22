@@ -38,7 +38,7 @@
                              (:file "test")
                              (:file "ansi-test")))))
 
-(asdf:defsystem "khazern-extrinsic/benchmark"
+#+(or)(asdf:defsystem "khazern-extrinsic/benchmark"
   :description "Benchmark system for Khazern"
   :license "MIT"
   :author ("Tarn W. Burton")
